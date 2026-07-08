@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 40 30% 97%;
+    --foreground: 30 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 12%;
+    --primary: 35 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 40 20% 20%;
+    --muted: 40 15% 94%;
+    --muted-foreground: 40 10% 42%;
+    --accent: 280 60% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 35 80% 55%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 280 20% 10%;
+    --foreground: 40 10% 94%;
+    --card: 280 15% 14%;
+    --card-foreground: 40 10% 94%;
+    --popover: 280 15% 14%;
+    --popover-foreground: 40 10% 94%;
+    --primary: 35 80% 55%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 280 15% 18%;
+    --secondary-foreground: 40 10% 94%;
+    --muted: 280 12% 18%;
+    --muted-foreground: 40 10% 58%;
+    --accent: 280 60% 55%;
+    --accent-foreground: 0 0% 8%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 280 12% 22%;
+    --input: 280 12% 22%;
+    --ring: 35 80% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Festival animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(35 80% 55% / 0.3); }
+  50% { box-shadow: 0 0 40px hsl(35 80% 55% / 0.6); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Festival gradients */
+.festival-gradient {
+  background: linear-gradient(135deg, hsl(280 20% 14%), hsl(300 25% 12%), hsl(280 20% 14%));
+}
+
+.text-festival-gradient {
+  background: linear-gradient(135deg, hsl(35 80% 55%), hsl(50 70% 60%), hsl(340 70% 60%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
