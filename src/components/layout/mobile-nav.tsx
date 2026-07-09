@@ -6,7 +6,7 @@ import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X } from "lucide-react";
+import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { updatePassword } from "@/lib/supabase-queries";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ const mainNavItems = [
 
 const moreNavItems = [
   { href: "/profil", icon: UserCircle, label: "Mon Profil", emoji: "🎭" },
+  { href: "/alcool", icon: Wine, label: "Alcool", emoji: "🍻" },
   { href: "/spots", icon: Droplets, label: "Baignade", emoji: "🏊" },
   { href: "/sondages", icon: BarChart3, label: "Sondages", emoji: "📊" },
   { href: "/chat", icon: MessageCircle, label: "Chat", emoji: "💬" },

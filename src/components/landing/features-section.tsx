@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Gamepad2, CalendarDays, Droplets, BarChart3, MessageCircle, ImageIcon, UserCircle } from "lucide-react";
+import { Users, Gamepad2, CalendarDays, Droplets, BarChart3, MessageCircle, ImageIcon, UserCircle, Wine } from "lucide-react";
 
 const features = [
   {
@@ -9,6 +9,14 @@ const features = [
     desc: "Personnalise ton identité de festival.",
     emoji: "🎭",
     href: "/profil",
+    glow: "gold" as const,
+  },
+  {
+    icon: Wine,
+    title: "Compatibilité Alcool",
+    desc: "Qui partage tes goûts ? Même favori = BFF 🍻",
+    emoji: "🍻",
+    href: "/alcool",
     glow: "gold" as const,
   },
   {
