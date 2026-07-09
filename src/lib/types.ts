@@ -2,6 +2,7 @@ export type ParticipantStatus = "confirmed" | "pending" | "declined";
 export type GameCategory = "quiz" | "physical" | "alcohol" | "disgusting" | "culture" | "creative" | "other";
 export type ProgramDay = "friday" | "saturday" | "sunday";
 export type DangerLevel = "easy" | "normal" | "hard" | "extreme";
+export type TaskStatus = "pending" | "accepted" | "done";
 
 export interface Participant {
   id: string;
@@ -16,6 +17,16 @@ export interface Participant {
   hype_level: number;
   created_at: string;
   updated_at: string;
+  // Profil personnalisé
+  tagline: string | null;
+  emoji_avatar: string | null;
+  fun_title: string | null;
+  special_skill: string | null;
+  festival_role: string | null;
+  catchphrase: string | null;
+  theme_song: string | null;
+  superpower: string | null;
+  weakness: string | null;
 }
 
 export interface Game {
@@ -44,6 +55,37 @@ export interface Program {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  // Nouveau : assignation de tâches
+  responsible_id: string | null;
+  task_status: TaskStatus;
+  volunteer_note: string | null;
+  // Joined
+  responsible?: Participant;
+}
+
+export interface ProgramProposal {
+  id: string;
+  program_id: string | null;
+  proposer_id: string;
+  title: string;
+  description: string | null;
+  emoji: string;
+  day: ProgramDay;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  vote_count: number;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  // Joined
+  proposer?: Participant;
+}
+
+export interface ProgramProposalVote {
+  id: string;
+  proposal_id: string;
+  participant_id: string;
+  created_at: string;
 }
 
 export interface Spot {

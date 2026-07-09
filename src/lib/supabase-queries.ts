@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, Spot, Poll, PollVote, Message, Photo } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, Spot, Poll, PollVote, Message, Photo } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -258,6 +258,221 @@ export async function updatePassword(id: string, password: string): Promise<bool
 
   if (error) {
     console.error("Error updating password:", error);
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// PROGRAM — CRUD Admin
+// ============================================
+
+export async function createProgram(entry: {
+  title: string;
+  description?: string;
+  emoji: string;
+  day: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  sort_order?: number;
+}): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .insert(entry);
+
+  if (error) {
+    console.error("Error creating program entry:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateProgram(id: string, updates: Partial<Program>): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating program entry:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteProgram(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting program entry:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function getProgramWithResponsible(): Promise<Program[]> {
+  const { data, error } = await supabase
+    .from("program")
+    .select("*, responsible:participants(*)")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching program:", error);
+    return [];
+  }
+  return data as Program[];
+}
+
+export async function volunteerForTask(programId: string, participantId: string, note?: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .update({
+      responsible_id: participantId,
+      task_status: "accepted",
+      volunteer_note: note || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", programId);
+
+  if (error) {
+    console.error("Error volunteering for task:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function markTaskDone(programId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .update({ task_status: "done", updated_at: new Date().toISOString() })
+    .eq("id", programId);
+
+  if (error) {
+    console.error("Error marking task done:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function unassignTask(programId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program")
+    .update({
+      responsible_id: null,
+      task_status: "pending",
+      volunteer_note: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", programId);
+
+  if (error) {
+    console.error("Error unassigning task:", error);
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// PROGRAM PROPOSALS
+// ============================================
+
+export async function getProgramProposals(): Promise<ProgramProposal[]> {
+  const { data, error } = await supabase
+    .from("program_proposals")
+    .select("*, proposer:participants(*)")
+    .order("vote_count", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching proposals:", error);
+    return [];
+  }
+  return data as ProgramProposal[];
+}
+
+export async function submitProposal(proposal: {
+  proposer_id: string;
+  title: string;
+  description?: string;
+  emoji?: string;
+  day: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+}): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_proposals")
+    .insert(proposal);
+
+  if (error) {
+    console.error("Error submitting proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function voteProposal(proposalId: string, participantId: string): Promise<boolean> {
+  // Check if already voted
+  const { data: existing } = await supabase
+    .from("program_proposal_votes")
+    .select("id")
+    .eq("proposal_id", proposalId)
+    .eq("participant_id", participantId)
+    .single();
+
+  if (existing) {
+    // Unvote
+    await supabase.from("program_proposal_votes").delete().eq("id", existing.id);
+    await supabase.rpc("decrement_vote_count", { p_id: proposalId });
+  } else {
+    // Vote
+    await supabase.from("program_proposal_votes").insert({
+      proposal_id: proposalId,
+      participant_id: participantId,
+    });
+    await supabase.rpc("increment_vote_count", { p_id: proposalId });
+  }
+
+  return true;
+}
+
+export async function getProposalVotes(proposalId: string): Promise<ProgramProposalVote[]> {
+  const { data, error } = await supabase
+    .from("program_proposal_votes")
+    .select("*")
+    .eq("proposal_id", proposalId);
+
+  if (error) {
+    console.error("Error fetching proposal votes:", error);
+    return [];
+  }
+  return data as ProgramProposalVote[];
+}
+
+export async function approveProposal(proposalId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_proposals")
+    .update({ status: "approved" })
+    .eq("id", proposalId);
+
+  if (error) {
+    console.error("Error approving proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function rejectProposal(proposalId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_proposals")
+    .update({ status: "rejected" })
+    .eq("id", proposalId);
+
+  if (error) {
+    console.error("Error rejecting proposal:", error);
     return false;
   }
   return true;

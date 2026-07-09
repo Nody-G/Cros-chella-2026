@@ -9,10 +9,10 @@ import { getSpots } from "@/lib/supabase-queries";
 import type { Spot, DangerLevel } from "@/lib/types";
 
 const DANGER_CONFIG: Record<DangerLevel, { label: string; icon: React.ElementType; color: string; emoji: string }> = {
-  easy: { label: "Tranquille", icon: ShieldCheck, color: "bg-green-500/10 text-green-600 border-green-500/20", emoji: "😊" },
-  normal: { label: "Normal", icon: Shield, color: "bg-blue-500/10 text-blue-600 border-blue-500/20", emoji: "😎" },
-  hard: { label: "Costaud", icon: ShieldAlert, color: "bg-orange-500/10 text-orange-600 border-orange-500/20", emoji: "😬" },
-  extreme: { label: "Extrême", icon: Skull, color: "bg-red-500/10 text-red-600 border-red-500/20", emoji: "💀" },
+  easy: { label: "Tranquille", icon: ShieldCheck, color: "bg-green-500/10 text-green-400 border-green-500/20", emoji: "😊" },
+  normal: { label: "Normal", icon: Shield, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", emoji: "😎" },
+  hard: { label: "Costaud", icon: ShieldAlert, color: "bg-orange-500/10 text-orange-400 border-orange-500/20", emoji: "😬" },
+  extreme: { label: "Extrême", icon: Skull, color: "bg-red-500/10 text-red-400 border-red-500/20", emoji: "💀" },
 };
 
 export default function SpotsPage() {

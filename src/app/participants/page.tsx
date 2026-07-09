@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
 
 const STATUS_CONFIG = {
-  confirmed: { label: "Confirmé ✅", color: "bg-green-500/10 text-green-600 border-green-500/20" },
-  pending: { label: "Pas sûr 🤔", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
-  declined: { label: "Pas dispo ❌", color: "bg-red-500/10 text-red-600 border-red-500/20" },
+  confirmed: { label: "Confirmé ✅", color: "bg-green-500/10 text-green-400 border-green-500/20" },
+  pending: { label: "Pas sûr 🤔", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  declined: { label: "Pas dispo ❌", color: "bg-red-500/10 text-red-400 border-red-500/20" },
 };
 
 const EMOJIS = ["😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸", "👑", "🍕"];
@@ -98,7 +98,7 @@ export default function ParticipantsPage() {
                         {/* Avatar */}
                         <Avatar className="h-12 w-12 flex-shrink-0">
                           <AvatarFallback className="text-xl bg-primary/10">
-                            {getEmoji(p.name)}
+                            {p.emoji_avatar || getEmoji(p.name)}
                           </AvatarFallback>
                         </Avatar>
 
@@ -120,10 +120,46 @@ export default function ParticipantsPage() {
                             </p>
                           )}
 
+                          {p.fun_title && (
+                            <p className="text-[11px] text-accent font-medium mt-0.5">
+                              {p.fun_title}
+                            </p>
+                          )}
+
+                          {p.tagline && (
+                            <p className="text-xs text-muted-foreground mt-1 italic">
+                              &ldquo;{p.tagline}&rdquo;
+                            </p>
+                          )}
+
                           {p.bio && (
                             <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                               {p.bio}
                             </p>
+                          )}
+
+                          {/* Festival profile details */}
+                          {(p.festival_role || p.special_skill || p.superpower || p.catchphrase) && (
+                            <div className="mt-2 space-y-1">
+                              {p.festival_role && (
+                                <p className="text-[10px] text-muted-foreground">🎪 Rôle : <span className="text-foreground">{p.festival_role}</span></p>
+                              )}
+                              {p.special_skill && (
+                                <p className="text-[10px] text-muted-foreground">🎯 Spécialité : <span className="text-foreground">{p.special_skill}</span></p>
+                              )}
+                              {p.superpower && (
+                                <p className="text-[10px] text-muted-foreground">⚡ Super-pouvoir : <span className="text-primary">{p.superpower}</span></p>
+                              )}
+                              {p.weakness && (
+                                <p className="text-[10px] text-muted-foreground">💀 Faiblesse : <span className="text-destructive">{p.weakness}</span></p>
+                              )}
+                              {p.catchphrase && (
+                                <p className="text-[10px] text-muted-foreground">🗣️ &ldquo;{p.catchphrase}&rdquo;</p>
+                              )}
+                              {p.theme_song && (
+                                <p className="text-[10px] text-muted-foreground">🎵 Hymne : <span className="text-foreground">{p.theme_song}</span></p>
+                              )}
+                            </div>
                           )}
 
                           {p.bed_assignment && (

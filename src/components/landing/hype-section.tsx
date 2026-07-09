@@ -41,7 +41,7 @@ export function HypeSection() {
   if (submitted) {
     return (
       <section className="px-4 py-16 max-w-lg mx-auto text-center" id="hype">
-        <div className="p-8 rounded-2xl bg-card border border-primary/20 shadow-lg shadow-primary/5">
+        <div className="p-8 rounded-2xl bg-card border border-primary/20 card-glow-gold">
           <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">
             Merci {name} ! 🎉

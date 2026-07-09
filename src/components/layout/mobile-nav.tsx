@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut } from "lucide-react";
+import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -19,6 +19,7 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { href: "/profil", icon: UserCircle, label: "Mon Profil", emoji: "🎭" },
   { href: "/spots", icon: Droplets, label: "Baignade", emoji: "🏊" },
   { href: "/sondages", icon: BarChart3, label: "Sondages", emoji: "📊" },
   { href: "/chat", icon: MessageCircle, label: "Chat", emoji: "💬" },
@@ -55,7 +56,7 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-heavy border-t border-border safe-area-inset-bottom">
       <div className="flex items-center justify-around max-w-lg mx-auto h-16">
         {mainNavItems.map((item) => {
           const isActive = pathname === item.href;
