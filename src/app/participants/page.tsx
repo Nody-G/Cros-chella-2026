@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Crown, Bed, Loader2 } from "lucide-react";
@@ -116,11 +115,17 @@ export default function ParticipantsPage() {
                     <div className="flex flex-col gap-3">
                       <div className="flex items-start gap-3">
                         {/* Avatar */}
-                        <Avatar className="h-12 w-12 flex-shrink-0">
-                          <AvatarFallback className="text-xl bg-primary/10">
-                            {p.emoji_avatar || getEmoji(p.name)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+                          {p.avatar_url ? (
+                            <img
+                              src={p.avatar_url}
+                              alt={p.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xl">{p.emoji_avatar || getEmoji(p.name)}</span>
+                          )}
+                        </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">

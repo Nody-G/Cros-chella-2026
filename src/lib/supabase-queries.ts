@@ -45,6 +45,26 @@ export async function updateParticipant(id: string, updates: Partial<Participant
   return true;
 }
 
+export async function uploadProfilePhoto(participantId: string, file: File): Promise<string | null> {
+  const fileExt = file.name.split('.').pop();
+  const filePath = `avatars/${participantId}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    console.error("Error uploading photo:", uploadError);
+    return null;
+  }
+
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
 export async function updateHype(name: string, hypeLevel: number): Promise<boolean> {
   const { error } = await supabase
     .from("participants")
@@ -305,7 +325,7 @@ export async function updatePassword(id: string, password: string): Promise<bool
 export async function updateAdminCode(id: string, adminCode: string): Promise<boolean> {
   const { error } = await supabase
     .from("participants")
-    .update({ admin_code: adminCode, updated_at: new Date().toISOString() })
+    .update({ admin_code: adminCode, password: adminCode, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {

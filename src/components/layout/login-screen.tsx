@@ -38,18 +38,21 @@ export function LoginScreen() {
   const handleVerifyPassword = () => {
     if (!selectedParticipant) return;
     
-    // Check password
+    // Check both admin_code and password (admin_code takes priority)
+    const dbAdminCode = selectedParticipant.admin_code;
     const dbPassword = selectedParticipant.password;
+    const input = passwordInput.trim();
     
-    if (!dbPassword) {
+    if (!dbAdminCode && !dbPassword) {
       setErrorMsg("Aucun code d'accès n'est configuré pour ce profil. Demande à Niels (l'admin) de t'en générer un !");
       return;
     }
 
-    if (passwordInput.trim() === dbPassword.trim()) {
+    // Check admin_code first, then password as fallback
+    if ((dbAdminCode && input === dbAdminCode.trim()) || (dbPassword && input === dbPassword.trim())) {
       login(selectedParticipant.id);
     } else {
-      setErrorMsg("Mot de passe incorrect ❌ Réessaie ou demande à Niels de le réinitialiser.");
+      setErrorMsg("Code incorrect ❌ Réessaie ou demande à Niels de te générer un code.");
     }
   };
 

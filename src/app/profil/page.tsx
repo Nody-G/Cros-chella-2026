@@ -6,8 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserCircle, Loader2, Save, CheckCircle2 } from "lucide-react";
-import { updateParticipant } from "@/lib/supabase-queries";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Upload } from "lucide-react";
+import { updateParticipant, uploadProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
 
@@ -52,6 +52,8 @@ export default function ProfilPage() {
   const [favoriteAlcohol, setFavoriteAlcohol] = useState("");
   const [showAlcoholPicker, setShowAlcoholPicker] = useState(false);
   const [personalCode, setPersonalCode] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (currentParticipant) {
@@ -69,8 +71,23 @@ export default function ProfilPage() {
       setAlcoholPreferences(currentParticipant.alcohol_preferences || []);
       setFavoriteAlcohol(currentParticipant.favorite_alcohol || "");
       setPersonalCode(currentParticipant.password || "");
+      setAvatarUrl(currentParticipant.avatar_url || null);
     }
   }, [currentParticipant]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentParticipant) return;
+
+    setUploading(true);
+    const url = await uploadProfilePhoto(currentParticipant.id, file);
+    if (url) {
+      setAvatarUrl(url);
+      await updateParticipant(currentParticipant.id, { avatar_url: url });
+      await refreshAuth();
+    }
+    setUploading(false);
+  };
 
   const handleSave = async () => {
     if (!currentParticipant) return;
@@ -123,7 +140,32 @@ export default function ProfilPage() {
         <Card className="mb-6 card-glow-gold overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="text-5xl">{emojiAvatar}</div>
+              <div className="relative group">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={currentParticipant.name}
+                    className="w-16 h-16 rounded-xl object-cover border-2 border-primary/30"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center text-3xl">
+                    {emojiAvatar}
+                  </div>
+                )}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  {uploading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-white" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="font-bold text-lg">{currentParticipant.name}</h2>
@@ -194,6 +236,54 @@ export default function ProfilPage() {
                   {emoji}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Photo upload */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+              📸 Ta photo de profil
+            </label>
+            <div className="flex items-center gap-4">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-20 h-20 rounded-xl object-cover border-2 border-primary/30"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-xl bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-primary/50" />
+                </div>
+              )}
+              <div className="flex-1">
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Upload...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {avatarUrl ? "Changer la photo" : "Ajouter une photo"}
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  JPG, PNG ou GIF. Max 5MB.
+                </p>
+              </div>
             </div>
           </div>
 
