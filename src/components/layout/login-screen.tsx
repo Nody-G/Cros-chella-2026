@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getParticipant } from "@/lib/supabase-queries";
 import type { Participant } from "@/lib/types";
 
 const EMOJIS = ["😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸", "👑", "🍕"];
@@ -20,6 +21,7 @@ export function LoginScreen() {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [passwordInput, setPasswordInput] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   if (loading) {
     return (
@@ -35,16 +37,27 @@ export function LoginScreen() {
     setErrorMsg("");
   };
 
-  const handleVerifyPassword = () => {
+  const handleVerifyPassword = async () => {
     if (!selectedParticipant) return;
     
-    // Check both admin_code and password (admin_code takes priority)
-    const dbAdminCode = selectedParticipant.admin_code;
-    const dbPassword = selectedParticipant.password;
+    setVerifying(true);
+    setErrorMsg("");
+
+    // Re-fetch the participant from DB to get the latest admin_code/password
+    const freshParticipant = await getParticipant(selectedParticipant.id);
+    if (!freshParticipant) {
+      setErrorMsg("Erreur: impossible de vérifier le profil. Réessaie.");
+      setVerifying(false);
+      return;
+    }
+
+    const dbAdminCode = freshParticipant.admin_code;
+    const dbPassword = freshParticipant.password;
     const input = passwordInput.trim();
     
     if (!dbAdminCode && !dbPassword) {
       setErrorMsg("Aucun code d'accès n'est configuré pour ce profil. Demande à Niels (l'admin) de t'en générer un !");
+      setVerifying(false);
       return;
     }
 
@@ -54,6 +67,7 @@ export function LoginScreen() {
     } else {
       setErrorMsg("Code incorrect ❌ Réessaie ou demande à Niels de te générer un code.");
     }
+    setVerifying(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -145,10 +159,14 @@ export function LoginScreen() {
               </Button>
               <Button 
                 onClick={handleVerifyPassword}
-                disabled={!selectedParticipant.password && !passwordInput}
+                disabled={verifying || !passwordInput}
                 className="flex-1 bg-primary text-primary-foreground font-bold hover:opacity-90"
               >
-                Valider
+                {verifying ? (
+                  <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Vérif...</>
+                ) : (
+                  "Valider"
+                )}
               </Button>
             </div>
           </div>
