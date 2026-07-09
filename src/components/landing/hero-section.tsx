@@ -81,7 +81,7 @@ export function HeroSection() {
           <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-left">
             <p className="text-white/90 text-sm leading-relaxed">
               <span className="text-lg mr-1">🏠</span>{" "}
-              <strong>La maison d&apos;Ardèche de Niels</strong> — 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
+              <strong>Le Moulin du Cros</strong> — 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
             </p>
           </div>
         </div>

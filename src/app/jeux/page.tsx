@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Gamepad2, Lock, Eye, EyeOff, Loader2, Plus, Sparkles } from "lucide-react";
-import { getGames, submitGame, revealGame, revealAllGames } from "@/lib/supabase-queries";
+import { Gamepad2, Lock, Eye, EyeOff, Loader2, Plus, Sparkles, Trash2, Edit3, RotateCcw, X, Save } from "lucide-react";
+import { getGames, submitGame, revealGame, revealAllGames, deleteGame, updateGame, unrevealGame } from "@/lib/supabase-queries";
 import type { Game, GameCategory } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -19,6 +19,11 @@ const CATEGORIES: { value: GameCategory; label: string; emoji: string }[] = [
   { value: "disgusting", label: "Dégoûtant", emoji: "🤢" },
   { value: "culture", label: "Culture", emoji: "🎓" },
   { value: "creative", label: "Créatif", emoji: "🎨" },
+  { value: "strategy", label: "Stratégie", emoji: "♟️" },
+  { value: "speed", label: "Rapidité", emoji: "⚡" },
+  { value: "luck", label: "Chance", emoji: "🍀" },
+  { value: "social", label: "Social", emoji: "🤝" },
+  { value: "mystery", label: "Mystère", emoji: "🔮" },
   { value: "other", label: "Autre", emoji: "🎲" },
 ];
 
@@ -30,6 +35,10 @@ export default function JeuxPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<GameCategory>("other");
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState<GameCategory>("other");
   const { currentParticipant } = useAuth();
   const isAdmin = currentParticipant?.is_admin || false;
 
@@ -42,13 +51,17 @@ export default function JeuxPage() {
     fetch();
   }, []);
 
+  const refreshGames = async () => {
+    const updated = await getGames();
+    setGames(updated);
+  };
+
   const handleSubmit = async () => {
     if (!currentParticipant || !title.trim()) return;
     setSubmitting(true);
     const success = await submitGame(currentParticipant.id, title.trim(), description.trim(), category);
     if (success) {
-      const updated = await getGames();
-      setGames(updated);
+      await refreshGames();
       setShowForm(false);
       setTitle("");
       setDescription("");
@@ -59,18 +72,48 @@ export default function JeuxPage() {
 
   const handleReveal = async (id: string) => {
     await revealGame(id);
-    const updated = await getGames();
-    setGames(updated);
+    await refreshGames();
+  };
+
+  const handleUnreveal = async (id: string) => {
+    await unrevealGame(id);
+    await refreshGames();
   };
 
   const handleRevealAll = async () => {
     await revealAllGames();
-    const updated = await getGames();
-    setGames(updated);
+    await refreshGames();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer ce jeu ?")) return;
+    await deleteGame(id);
+    await refreshGames();
+  };
+
+  const handleStartEdit = (game: Game) => {
+    setEditingId(game.id);
+    setEditTitle(game.title);
+    setEditDescription(game.description || "");
+    setEditCategory(game.category);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editTitle.trim()) return;
+    await updateGame(editingId, editTitle.trim(), editDescription.trim(), editCategory);
+    setEditingId(null);
+    await refreshGames();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   const revealedGames = games.filter((g) => g.is_revealed);
   const hiddenCount = games.filter((g) => !g.is_revealed).length;
+
+  // Games authored by current user
+  const myGames = games.filter((g) => g.author_id === currentParticipant?.id);
 
   return (
     <main className="pb-20 min-h-screen">
@@ -88,13 +131,28 @@ export default function JeuxPage() {
             </Button>
           )}
         </div>
-        <p className="text-muted-foreground text-sm mb-6">
+        <p className="text-muted-foreground text-sm mb-4">
           {loading
             ? "Chargement..."
             : games.length === 0
               ? "Aucun jeu soumis pour l'instant..."
               : `${revealedGames.length} révélé${revealedGames.length > 1 ? "s" : ""}, ${hiddenCount} mystère${hiddenCount > 1 ? "s" : ""}`}
         </p>
+
+        {/* Explicit secrecy message */}
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🔐</span>
+            <div>
+              <p className="text-sm font-bold text-amber-300 mb-1">Règle d&apos;or des jeux mystères</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong>Rien ne sera révélé tant que vous ne décidez pas de le révéler.</strong>{" "}
+                Chaque jeu reste secret jusqu&apos;au moment où son auteur (ou l&apos;admin) choisit de le dévoiler.
+                Vous pouvez modifier, supprimer ou annuler la révélation de votre jeu à tout moment. 🤫
+              </p>
+            </div>
+          </div>
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -112,6 +170,96 @@ export default function JeuxPage() {
                 <p className="text-xs text-muted-foreground">
                   Quelqu&apos;un a préparé quelque chose... Bonne chance. 🤫
                 </p>
+              </div>
+            )}
+
+            {/* My games section */}
+            {myGames.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  🎯 Mes jeux ({myGames.length})
+                </p>
+                <div className="space-y-2">
+                  {myGames.map((game) => {
+                    const cat = CATEGORIES.find((c) => c.value === game.category);
+                    const isEditing = editingId === game.id;
+
+                    if (isEditing) {
+                      return (
+                        <Card key={game.id} className="border-primary/30">
+                          <CardContent className="p-4 space-y-3">
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {CATEGORIES.map((c) => (
+                                <button
+                                  key={c.value}
+                                  onClick={() => setEditCategory(c.value)}
+                                  className={`p-1.5 rounded-lg border text-center transition-all ${
+                                    editCategory === c.value
+                                      ? "border-primary bg-primary/10"
+                                      : "border-border hover:border-primary/30"
+                                  }`}
+                                >
+                                  <span className="text-sm block">{c.emoji}</span>
+                                  <span className="text-[8px] text-muted-foreground">{c.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                            <Input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              placeholder="Nom du jeu"
+                            />
+                            <Textarea
+                              value={editDescription}
+                              onChange={(e) => setEditDescription(e.target.value)}
+                              placeholder="Description / Règles"
+                              rows={2}
+                            />
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="flex-1">
+                                <X className="w-3.5 h-3.5 mr-1" /> Annuler
+                              </Button>
+                              <Button size="sm" onClick={handleSaveEdit} className="flex-1">
+                                <Save className="w-3.5 h-3.5 mr-1" /> Sauver
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <div key={game.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-lg">{cat?.emoji || "🎲"}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{game.title}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {game.is_revealed ? "👁️ Révélé" : "🔒 Secret"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          <Button size="sm" variant="ghost" onClick={() => handleStartEdit(game)} title="Modifier">
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </Button>
+                          {game.is_revealed ? (
+                            <Button size="sm" variant="ghost" onClick={() => handleUnreveal(game.id)} title="Re-masquer">
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => handleReveal(game.id)} title="Révéler">
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => handleDelete(game.id)} title="Supprimer" className="text-red-400 hover:text-red-300">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -142,6 +290,12 @@ export default function JeuxPage() {
                             </p>
                           )}
                         </div>
+                        {/* Admin can unreveal any game */}
+                        {isAdmin && (
+                          <Button size="sm" variant="ghost" onClick={() => handleUnreveal(game.id)} title="Re-masquer ce jeu">
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -167,9 +321,14 @@ export default function JeuxPage() {
                           </span>
                         )}
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => handleReveal(game.id)}>
-                        <Eye className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => handleReveal(game.id)}>
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(game.id)} className="text-red-400 hover:text-red-300">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

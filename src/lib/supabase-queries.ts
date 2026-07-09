@@ -127,6 +127,45 @@ export async function revealAllGames(): Promise<boolean> {
   return true;
 }
 
+export async function unrevealGame(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("games")
+    .update({ is_revealed: false, revealed_at: null })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error unrevealing game:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteGame(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("games")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting game:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateGame(id: string, title: string, description: string, category: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("games")
+    .update({ title, description, category, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating game:", error);
+    return false;
+  }
+  return true;
+}
+
 // ============================================
 // PROGRAM
 // ============================================
