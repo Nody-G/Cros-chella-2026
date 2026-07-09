@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Heart, Loader2, CheckCircle2 } from "lucide-react";
 import { updateHype } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 
 const HYPE_LABELS = [
   { value: 1, emoji: "😐", label: "Mouais..." },
-  { value: 2, emoji: "🤔", label: "Pourquoi pas" },
+  { value: 2, emoji: "🤔", label: "Pourquoi pas ?" },
   { value: 3, emoji: "😏", label: "Ça peut être fun" },
   { value: 4, emoji: "😊", label: "J&apos;ai hâte" },
-  { value: 5, emoji: "🔥", label: "ON Y VA" },
-  { value: 6, emoji: "🤯", label: "EXPLOSION" },
+  { value: 5, emoji: "🔥", label: "J&apos;suis chaud !" },
+  { value: 6, emoji: "🤯", label: "J&apos;arrive les frérots !" },
 ];
 
 export function HypeSection() {
@@ -71,20 +70,6 @@ export function HypeSection() {
         </div>
 
         <div className="space-y-5">
-          {/* Name */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              Ton prénom
-            </label>
-            <Input
-              placeholder="Ex: Niels, Hervé, Xav..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={!!currentParticipant}
-              className="text-center disabled:opacity-85 disabled:bg-muted/50 font-medium"
-            />
-          </div>
-
           {/* Hype level */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 block">
