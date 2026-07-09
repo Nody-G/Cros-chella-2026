@@ -30,6 +30,80 @@ const FESTIVAL_ROLES = [
   { value: "wildcard", label: "🃏 Joker", desc: "Imprévisible" },
 ];
 
+const ALCOHOL_LIST = [
+  // Bières
+  { value: "biere_blonde", label: "Blonde", emoji: "🍺", group: "Bières" },
+  { value: "biere_blanche", label: "Blanche", emoji: "🍺", group: "Bières" },
+  { value: "biere_ambree", label: "Ambrée", emoji: "🍺", group: "Bières" },
+  { value: "biere_brune", label: "Brune", emoji: "🍺", group: "Bières" },
+  { value: "biere_ipa", label: "IPA", emoji: "🍺", group: "Bières" },
+  { value: "biere_stout", label: "Stout", emoji: "🍺", group: "Bières" },
+  { value: "biere_pils", label: "Pils", emoji: "🍺", group: "Bières" },
+  { value: "biere_wheat", label: "Weissbier / Blanche de blé", emoji: "🍺", group: "Bières" },
+  { value: "biere_sour", label: "Sour / Gose", emoji: "🍺", group: "Bières" },
+  { value: "biere_lager", label: "Lager", emoji: "🍺", group: "Bières" },
+  { value: "cider", label: "Cidre", emoji: "🍏", group: "Bières" },
+  // Vins
+  { value: "vin_rouge", label: "Rouge", emoji: "🍷", group: "Vins" },
+  { value: "vin_blanc", label: "Blanc", emoji: "🍷", group: "Vins" },
+  { value: "vin_rose", label: "Rosé", emoji: "🍷", group: "Vins" },
+  { value: "vin_petillant", label: "Pétillant / Crémant", emoji: "🍷", group: "Vins" },
+  { value: "champagne", label: "Champagne", emoji: "🥂", group: "Vins" },
+  { value: "prosecco", label: "Prosecco", emoji: "🥂", group: "Vins" },
+  { value: "porto", label: "Porto", emoji: "🍷", group: "Vins" },
+  { value: "sangria", label: "Sangria", emoji: "🍷", group: "Vins" },
+  // Spiritueux
+  { value: "vodka", label: "Vodka", emoji: "🍸", group: "Spiritueux" },
+  { value: "rhum_blanc", label: "Rhum blanc", emoji: "🥃", group: "Spiritueux" },
+  { value: "rhum_ambre", label: "Rhum ambré / vieux", emoji: "🥃", group: "Spiritueux" },
+  { value: "whisky", label: "Whisky / Bourbon", emoji: "🥃", group: "Spiritueux" },
+  { value: "gin", label: "Gin", emoji: "🍸", group: "Spiritueux" },
+  { value: "tequila", label: "Tequila", emoji: "🌵", group: "Spiritueux" },
+  { value: "mezcal", label: "Mezcal", emoji: "🌵", group: "Spiritueux" },
+  { value: "cognac", label: "Cognac / Armagnac", emoji: "🥃", group: "Spiritueux" },
+  { value: "calvados", label: "Calvados", emoji: "🥃", group: "Spiritueux" },
+  { value: "pastis", label: "Pastis / Anis", emoji: "🫗", group: "Spiritueux" },
+  { value: "absinthe", label: "Absinthe", emoji: "🫗", group: "Spiritueux" },
+  { value: "sake", label: "Saké", emoji: "🍶", group: "Spiritueux" },
+  { value: "marc", label: "Marc / Grappa", emoji: "🥃", group: "Spiritueux" },
+  { value: "eau_de_vie", label: "Eau-de-vie (poire, mirabelle…)", emoji: "🥃", group: "Spiritueux" },
+  // Liqueurs
+  { value: "limoncello", label: "Limoncello", emoji: "🍋", group: "Liqueurs" },
+  { value: "baileys", label: "Baileys", emoji: "🥛", group: "Liqueurs" },
+  { value: "kahlua", label: "Kahlúa", emoji: "☕", group: "Liqueurs" },
+  { value: "amaretto", label: "Amaretto", emoji: "🍒", group: "Liqueurs" },
+  { value: "cointreau", label: "Cointreau / Triple sec", emoji: "🍊", group: "Liqueurs" },
+  { value: "aperol", label: "Aperol", emoji: "🟧", group: "Liqueurs" },
+  { value: "campari", label: "Campari", emoji: "🟥", group: "Liqueurs" },
+  { value: "jagermeister", label: "Jägermeister", emoji: "🦌", group: "Liqueurs" },
+  { value: "sambuca", label: "Sambuca", emoji: "🫗", group: "Liqueurs" },
+  { value: "chartreuse", label: "Chartreuse", emoji: "🫗", group: "Liqueurs" },
+  { value: "herbes", label: "Liqueur de herbes", emoji: "🌿", group: "Liqueurs" },
+  { value: "creme_cassis", label: "Crème de cassis", emoji: "🫐", group: "Liqueurs" },
+  // Cocktails classiques
+  { value: "mojito", label: "Mojito", emoji: "🍹", group: "Cocktails" },
+  { value: "pina_colada", label: "Piña Colada", emoji: "🍹", group: "Cocktails" },
+  { value: "margarita", label: "Margarita", emoji: "🍹", group: "Cocktails" },
+  { value: "spritz", label: "Spritz (Aperol/Campari)", emoji: "🍹", group: "Cocktails" },
+  { value: "caipirinha", label: "Caipirinha", emoji: "🍹", group: "Cocktails" },
+  { value: "daiquiri", label: "Daiquiri", emoji: "🍹", group: "Cocktails" },
+  { value: "cosmopolitan", label: "Cosmopolitan", emoji: "🍹", group: "Cocktails" },
+  { value: "long_island", label: "Long Island", emoji: "🍹", group: "Cocktails" },
+  { value: "negroni", label: "Negroni", emoji: "🍹", group: "Cocktails" },
+  { value: "gin_tonic", label: "Gin Tonic", emoji: "🍹", group: "Cocktails" },
+  { value: "bloody_mary", label: "Bloody Mary", emoji: "🍅", group: "Cocktails" },
+  { value: "espresso_martini", label: "Espresso Martini", emoji: "☕", group: "Cocktails" },
+  { value: "sex_on_beach", label: "Sex on the Beach", emoji: "🍹", group: "Cocktails" },
+  { value: "tequila_sunrise", label: "Tequila Sunrise", emoji: "🌅", group: "Cocktails" },
+  { value: "mojito_fraise", label: "Mojito Fraise", emoji: "🍓", group: "Cocktails" },
+  // Sans alcool / Soft
+  { value: "bierre_sans_alcool", label: "Bière sans alcool", emoji: "🚫", group: "Soft" },
+  { value: "virgin_mojito", label: "Virgin Mojito", emoji: "🚫", group: "Soft" },
+  { value: "jus_fruit", label: "Jus de fruits", emoji: "🧃", group: "Soft" },
+  { value: "soda", label: "Soda / Soft drink", emoji: "🥤", group: "Soft" },
+  { value: "eau", label: "Eau (on est responsable)", emoji: "💧", group: "Soft" },
+];
+
 export default function ProfilPage() {
   const { currentParticipant, refreshAuth } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -47,6 +121,9 @@ export default function ProfilPage() {
   const [superpower, setSuperpower] = useState("");
   const [weakness, setWeakness] = useState("");
   const [bio, setBio] = useState("");
+  const [alcoholPreferences, setAlcoholPreferences] = useState<string[]>([]);
+  const [favoriteAlcohol, setFavoriteAlcohol] = useState("");
+  const [showAlcoholPicker, setShowAlcoholPicker] = useState(false);
 
   useEffect(() => {
     if (currentParticipant) {
@@ -61,6 +138,8 @@ export default function ProfilPage() {
       setSuperpower(currentParticipant.superpower || "");
       setWeakness(currentParticipant.weakness || "");
       setBio(currentParticipant.bio || "");
+      setAlcoholPreferences(currentParticipant.alcohol_preferences || []);
+      setFavoriteAlcohol(currentParticipant.favorite_alcohol || "");
     }
   }, [currentParticipant]);
 
@@ -79,6 +158,8 @@ export default function ProfilPage() {
       superpower: superpower || null,
       weakness: weakness || null,
       bio: bio || null,
+      alcohol_preferences: alcoholPreferences.length > 0 ? alcoholPreferences : null,
+      favorite_alcohol: favoriteAlcohol || null,
     });
     if (success) {
       await refreshAuth();
@@ -133,7 +214,7 @@ export default function ProfilPage() {
                 )}
               </div>
             </div>
-            {(superpower || weakness || catchphrase) && (
+            {(superpower || weakness || catchphrase || alcoholPreferences.length > 0) && (
               <div className="mt-4 pt-4 border-t border-border space-y-1.5">
                 {superpower && (
                   <p className="text-xs"><span className="text-primary">⚡ Super-pouvoir :</span> {superpower}</p>
@@ -143,6 +224,20 @@ export default function ProfilPage() {
                 )}
                 {catchphrase && (
                   <p className="text-xs"><span className="text-accent">🗣️ Phrase fétiche :</span> &quot;{catchphrase}&quot;</p>
+                )}
+                {alcoholPreferences.length > 0 && (
+                  <div className="text-xs">
+                    <span className="text-amber-400">🍻 Alcools :</span>{" "}
+                    {alcoholPreferences.map((val) => {
+                      const item = ALCOHOL_LIST.find((a) => a.value === val);
+                      return item?.emoji;
+                    }).join(" ")}
+                    {favoriteAlcohol && (
+                      <span className="ml-1 text-amber-300">
+                        ⭐ {ALCOHOL_LIST.find((a) => a.value === favoriteAlcohol)?.label}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -272,6 +367,118 @@ export default function ProfilPage() {
               className="bg-card border-border"
             />
           </div>
+
+          {/* Alcohol Preferences */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+              🍻 Tes alcools préférés <span className="normal-case text-muted-foreground/60">(choisis-en plusieurs)</span>
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between mb-2"
+              onClick={() => setShowAlcoholPicker(!showAlcoholPicker)}
+            >
+              <span className="text-sm truncate">
+                {alcoholPreferences.length === 0
+                  ? "Sélectionne tes alcools..."
+                  : `${alcoholPreferences.length} sélectionné${alcoholPreferences.length > 1 ? "s" : ""}`}
+              </span>
+              <span>{showAlcoholPicker ? "▲" : "▼"}</span>
+            </Button>
+
+            {showAlcoholPicker && (
+              <Card className="border-border max-h-[350px] overflow-y-auto">
+                <CardContent className="p-3 space-y-3">
+                  {Object.entries(
+                    ALCOHOL_LIST.reduce((acc, item) => {
+                      if (!acc[item.group]) acc[item.group] = [];
+                      acc[item.group].push(item);
+                      return acc;
+                    }, {} as Record<string, typeof ALCOHOL_LIST>)
+                  ).map(([group, items]) => (
+                    <div key={group}>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                        {group}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((item) => {
+                          const selected = alcoholPreferences.includes(item.value);
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              onClick={() => {
+                                setAlcoholPreferences((prev) =>
+                                  selected
+                                    ? prev.filter((v) => v !== item.value)
+                                    : [...prev, item.value]
+                                );
+                              }}
+                              className={`px-2 py-1 rounded-full text-xs border transition-all ${
+                                selected
+                                  ? "border-primary bg-primary/15 text-primary"
+                                  : "border-border hover:border-primary/30 text-muted-foreground"
+                              }`}
+                            >
+                              {item.emoji} {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Selected tags */}
+            {alcoholPreferences.length > 0 && !showAlcoholPicker && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {alcoholPreferences.map((val) => {
+                  const item = ALCOHOL_LIST.find((a) => a.value === val);
+                  return (
+                    <span
+                      key={val}
+                      className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary border border-primary/20"
+                    >
+                      {item?.emoji} {item?.label || val}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Favorite alcohol (single) */}
+          {alcoholPreferences.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                ⭐ Ton alcool N°1 <span className="normal-case text-muted-foreground/60">(parmi tes sélections)</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {alcoholPreferences.map((val) => {
+                  const item = ALCOHOL_LIST.find((a) => a.value === val);
+                  const isFav = favoriteAlcohol === val;
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setFavoriteAlcohol(isFav ? "" : val)}
+                      className={`px-2.5 py-1.5 rounded-full text-xs border transition-all ${
+                        isFav
+                          ? "border-amber-400 bg-amber-400/15 text-amber-300 font-bold shadow-sm shadow-amber-400/20"
+                          : "border-border hover:border-amber-400/30 text-muted-foreground"
+                      }`}
+                    >
+                      {item?.emoji} {item?.label || val}
+                      {isFav ? " ⭐" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Catchphrase */}
           <div>

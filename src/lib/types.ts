@@ -27,6 +27,8 @@ export interface Participant {
   theme_song: string | null;
   superpower: string | null;
   weakness: string | null;
+  alcohol_preferences: string[] | null;
+  favorite_alcohol: string | null;
 }
 
 export interface Game {

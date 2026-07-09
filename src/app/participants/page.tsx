@@ -18,6 +18,43 @@ const STATUS_CONFIG = {
   declined: { label: "Pas dispo ❌", color: "bg-red-500/10 text-red-400 border-red-500/20" },
 };
 
+const ALCOHOL_LABELS: Record<string, { label: string; emoji: string }> = {
+  biere_blonde: { label: "Blonde", emoji: "🍺" }, biere_blanche: { label: "Blanche", emoji: "🍺" },
+  biere_ambree: { label: "Ambrée", emoji: "🍺" }, biere_brune: { label: "Brune", emoji: "🍺" },
+  biere_ipa: { label: "IPA", emoji: "🍺" }, biere_stout: { label: "Stout", emoji: "🍺" },
+  biere_pils: { label: "Pils", emoji: "🍺" }, biere_wheat: { label: "Weissbier", emoji: "🍺" },
+  biere_sour: { label: "Sour/Gose", emoji: "🍺" }, biere_lager: { label: "Lager", emoji: "🍺" },
+  cider: { label: "Cidre", emoji: "🍏" },
+  vin_rouge: { label: "Rouge", emoji: "🍷" }, vin_blanc: { label: "Blanc", emoji: "🍷" },
+  vin_rose: { label: "Rosé", emoji: "🍷" }, vin_petillant: { label: "Pétillant", emoji: "🍷" },
+  champagne: { label: "Champagne", emoji: "🥂" }, prosecco: { label: "Prosecco", emoji: "🥂" },
+  porto: { label: "Porto", emoji: "🍷" }, sangria: { label: "Sangria", emoji: "🍷" },
+  vodka: { label: "Vodka", emoji: "🍸" }, rhum_blanc: { label: "Rhum blanc", emoji: "🥃" },
+  rhum_ambre: { label: "Rhum ambré", emoji: "🥃" }, whisky: { label: "Whisky", emoji: "🥃" },
+  gin: { label: "Gin", emoji: "🍸" }, tequila: { label: "Tequila", emoji: "🌵" },
+  mezcal: { label: "Mezcal", emoji: "🌵" }, cognac: { label: "Cognac", emoji: "🥃" },
+  calvados: { label: "Calvados", emoji: "🥃" }, pastis: { label: "Pastis", emoji: "🫗" },
+  absinthe: { label: "Absinthe", emoji: "🫗" }, sake: { label: "Saké", emoji: "🍶" },
+  marc: { label: "Marc", emoji: "🥃" }, eau_de_vie: { label: "Eau-de-vie", emoji: "🥃" },
+  limoncello: { label: "Limoncello", emoji: "🍋" }, baileys: { label: "Baileys", emoji: "🥛" },
+  kahlua: { label: "Kahlúa", emoji: "☕" }, amaretto: { label: "Amaretto", emoji: "🍒" },
+  cointreau: { label: "Cointreau", emoji: "🍊" }, aperol: { label: "Aperol", emoji: "🟧" },
+  campari: { label: "Campari", emoji: "🟥" }, jagermeister: { label: "Jägermeister", emoji: "🦌" },
+  sambuca: { label: "Sambuca", emoji: "🫗" }, chartreuse: { label: "Chartreuse", emoji: "🫗" },
+  herbes: { label: "Herbes", emoji: "🌿" }, creme_cassis: { label: "Cassis", emoji: "🫐" },
+  mojito: { label: "Mojito", emoji: "🍹" }, pina_colada: { label: "Piña Colada", emoji: "🍹" },
+  margarita: { label: "Margarita", emoji: "🍹" }, spritz: { label: "Spritz", emoji: "🍹" },
+  caipirinha: { label: "Caipirinha", emoji: "🍹" }, daiquiri: { label: "Daiquiri", emoji: "🍹" },
+  cosmopolitan: { label: "Cosmo", emoji: "🍹" }, long_island: { label: "Long Island", emoji: "🍹" },
+  negroni: { label: "Negroni", emoji: "🍹" }, gin_tonic: { label: "Gin Tonic", emoji: "🍹" },
+  bloody_mary: { label: "Bloody Mary", emoji: "🍅" }, espresso_martini: { label: "Espresso Martini", emoji: "☕" },
+  sex_on_beach: { label: "Sex on the Beach", emoji: "🍹" }, tequila_sunrise: { label: "Tequila Sunrise", emoji: "🌅" },
+  mojito_fraise: { label: "Mojito Fraise", emoji: "🍓" },
+  bierre_sans_alcool: { label: "Sans alcool", emoji: "🚫" }, virgin_mojito: { label: "Virgin Mojito", emoji: "🚫" },
+  jus_fruit: { label: "Jus de fruits", emoji: "🧃" }, soda: { label: "Soda", emoji: "🥤" },
+  eau: { label: "Eau", emoji: "💧" },
+};
+
 const EMOJIS = ["😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸", "👑", "🍕"];
 
 function getEmoji(name: string) {
@@ -158,6 +195,17 @@ export default function ParticipantsPage() {
                               )}
                               {p.theme_song && (
                                 <p className="text-[10px] text-muted-foreground">🎵 Hymne : <span className="text-foreground">{p.theme_song}</span></p>
+                              )}
+                              {p.alcohol_preferences && p.alcohol_preferences.length > 0 && (
+                                <p className="text-[10px] text-muted-foreground">
+                                  🍻 Alcools :{" "}
+                                  {p.alcohol_preferences.map((val) => ALCOHOL_LABELS[val]?.emoji || "🍺").join(" ")}
+                                  {p.favorite_alcohol && ALCOHOL_LABELS[p.favorite_alcohol] && (
+                                    <span className="text-amber-300 ml-1">
+                                      ⭐ {ALCOHOL_LABELS[p.favorite_alcohol].label}
+                                    </span>
+                                  )}
+                                </p>
                               )}
                             </div>
                           )}
