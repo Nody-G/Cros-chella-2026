@@ -46,12 +46,15 @@ export async function updateParticipant(id: string, updates: Partial<Participant
 }
 
 export async function uploadProfilePhoto(participantId: string, file: File): Promise<string | null> {
-  const fileExt = file.name.split('.').pop();
-  const filePath = `avatars/${participantId}.${fileExt}`;
+  // Always use .jpg since we compress to JPEG
+  const filePath = `avatars/${participantId}.jpg`;
+
+  // Remove old file first (ignore errors if doesn't exist)
+  await supabase.storage.from('avatars').remove([filePath]);
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file, { upsert: true });
+    .upload(filePath, file, { upsert: true, contentType: "image/jpeg" });
 
   if (uploadError) {
     console.error("Error uploading photo:", uploadError);
@@ -62,7 +65,34 @@ export async function uploadProfilePhoto(participantId: string, file: File): Pro
     .from('avatars')
     .getPublicUrl(filePath);
 
-  return data.publicUrl;
+  // Add cache-busting query param so updated photos show immediately
+  return `${data.publicUrl}?t=${Date.now()}`;
+}
+
+export async function deleteProfilePhoto(participantId: string): Promise<boolean> {
+  const filePath = `avatars/${participantId}.jpg`;
+
+  const { error } = await supabase.storage
+    .from('avatars')
+    .remove([filePath]);
+
+  if (error) {
+    console.error("Error deleting photo:", error);
+    return false;
+  }
+
+  // Clear avatar_url in DB
+  const { error: dbError } = await supabase
+    .from("participants")
+    .update({ avatar_url: null, updated_at: new Date().toISOString() })
+    .eq("id", participantId);
+
+  if (dbError) {
+    console.error("Error clearing avatar_url:", dbError);
+    return false;
+  }
+
+  return true;
 }
 
 export async function updateHype(name: string, hypeLevel: number): Promise<boolean> {
@@ -296,13 +326,12 @@ export async function sendMessage(authorId: string, content: string, imageUrl?: 
 }
 
 export async function uploadChatImage(authorId: string, file: File): Promise<string | null> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${authorId}_${Date.now()}.${fileExt}`;
+  const fileName = `${authorId}_${Date.now()}.jpg`;
   const filePath = `chat/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file, { upsert: false });
+    .upload(filePath, file, { upsert: false, contentType: "image/jpeg" });
 
   if (uploadError) {
     console.error("Error uploading chat image:", uploadError);

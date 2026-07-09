@@ -95,7 +95,15 @@ export function LoginScreen() {
                   onClick={() => handleSelect(p)}
                   className="p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all active:scale-95 text-center flex flex-col items-center justify-center"
                 >
-                  <span className="text-2xl block mb-1">{getEmoji(p.name)}</span>
+                  {p.avatar_url ? (
+                    <img
+                      src={p.avatar_url}
+                      alt={p.name}
+                      className="w-12 h-12 rounded-full object-cover mb-1 border-2 border-white/20"
+                    />
+                  ) : (
+                    <span className="text-2xl block mb-1">{getEmoji(p.name)}</span>
+                  )}
                   <span className="text-white text-sm font-medium block">{p.name}</span>
                   {p.pseudo && (
                     <span className="text-white/50 text-[10px] block mt-0.5">

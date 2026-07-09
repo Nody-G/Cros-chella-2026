@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { getMessages, sendMessage, uploadChatImage } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,14 +56,24 @@ export default function ChatPage() {
     };
   }, []);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
     setShowAttachMenu(false);
+    try {
+      const compressed = await compressImage(file, "chat");
+      setImageFile(compressed);
+      const preview = await readFileAsDataURL(compressed);
+      setImagePreview(preview);
+    } catch (err) {
+      console.error("Image compression error:", err);
+      // Fallback: use original file
+      setImageFile(file);
+      const preview = await readFileAsDataURL(file);
+      setImagePreview(preview);
+    }
+    // Reset input so same file can be re-selected
+    e.target.value = "";
   };
 
   const clearImage = () => {

@@ -6,10 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserCircle, Loader2, Save, CheckCircle2, Camera, Upload } from "lucide-react";
-import { updateParticipant, uploadProfilePhoto } from "@/lib/supabase-queries";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Upload, Trash2 } from "lucide-react";
+import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
+import { compressImage } from "@/lib/image-utils";
 
 const EMOJI_CHOICES = [
   "😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸",
@@ -83,10 +84,30 @@ export default function ProfilPage() {
     if (!file || !currentParticipant) return;
 
     setUploading(true);
-    const url = await uploadProfilePhoto(currentParticipant.id, file);
-    if (url) {
-      setAvatarUrl(url);
-      await updateParticipant(currentParticipant.id, { avatar_url: url });
+    setShowPhotoMenu(false);
+    try {
+      const compressed = await compressImage(file, "profile");
+      const url = await uploadProfilePhoto(currentParticipant.id, compressed);
+      if (url) {
+        setAvatarUrl(url);
+        await updateParticipant(currentParticipant.id, { avatar_url: url });
+        await refreshAuth();
+      }
+    } catch (err) {
+      console.error("Photo upload error:", err);
+    }
+    setUploading(false);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!currentParticipant) return;
+    setUploading(true);
+    setShowPhotoMenu(false);
+    const success = await deleteProfilePhoto(currentParticipant.id);
+    if (success) {
+      setAvatarUrl(null);
       await refreshAuth();
     }
     setUploading(false);
@@ -158,7 +179,7 @@ export default function ProfilPage() {
                 <button
                   type="button"
                   onClick={() => setShowPhotoMenu(!showPhotoMenu)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   {uploading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -167,10 +188,10 @@ export default function ProfilPage() {
                   )}
                 </button>
                 {showPhotoMenu && (
-                  <div className="absolute top-full left-0 mt-2 z-50 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[160px]">
+                  <div className="absolute top-full left-0 mt-2 z-50 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[180px]">
                     <button
                       type="button"
-                      onClick={() => { fileInputRef.current?.click(); setShowPhotoMenu(false); }}
+                      onClick={() => { fileInputRef.current?.click(); }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
                     >
                       <Upload className="w-4 h-4 text-primary" />
@@ -178,12 +199,25 @@ export default function ProfilPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false); }}
+                      onClick={() => { cameraInputRef.current?.click(); }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
                     >
                       <Camera className="w-4 h-4 text-primary" />
                       📸 Prendre une photo
                     </button>
+                    {avatarUrl && (
+                      <>
+                        <div className="border-t border-border my-1" />
+                        <button
+                          type="button"
+                          onClick={handleDeletePhoto}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-destructive/10 transition-colors text-left text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          🗑️ Supprimer la photo
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
                 <input
