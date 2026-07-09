@@ -54,15 +54,15 @@ CREATE POLICY "Allow all on program_proposal_votes" ON program_proposal_votes FO
 
 -- 6) RPC functions for vote counting
 CREATE OR REPLACE FUNCTION increment_vote_count(p_id UUID)
-RETURNS void AS $
+RETURNS void AS $FUNC$
 BEGIN
   UPDATE program_proposals SET vote_count = vote_count + 1 WHERE id = p_id;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$FUNC$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION decrement_vote_count(p_id UUID)
-RETURNS void AS $
+RETURNS void AS $FUNC$
 BEGIN
   UPDATE program_proposals SET vote_count = GREATEST(vote_count - 1, 0) WHERE id = p_id;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$FUNC$ LANGUAGE plpgsql SECURITY DEFINER;
