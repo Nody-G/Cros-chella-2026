@@ -11,6 +11,7 @@ export interface Participant {
   status: ParticipantStatus;
   bed_assignment: string | null;
   bio: string | null;
+  password?: string | null;
   is_admin: boolean;
   hype_level: number;
   created_at: string;

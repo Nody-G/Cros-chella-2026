@@ -6,12 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Loader2 } from "lucide-react";
 import { getPolls, getPollVotes, votePoll } from "@/lib/supabase-queries";
 import type { Poll, PollVote } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SondagesPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votesMap, setVotesMap] = useState<Record<string, PollVote[]>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedParticipant] = useState<string>(""); // TODO: real auth
+  const { currentParticipant } = useAuth();
+  const selectedParticipant = currentParticipant?.id || "";
 
   useEffect(() => {
     async function fetch() {

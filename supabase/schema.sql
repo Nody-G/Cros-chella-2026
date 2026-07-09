@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS participants (
   status TEXT DEFAULT 'pending' CHECK (status IN ('confirmed', 'pending', 'declined')),
   bed_assignment TEXT,
   bio TEXT,
+  password TEXT,
   is_admin BOOLEAN DEFAULT false,
   hype_level INTEGER DEFAULT 0 CHECK (hype_level >= 0 AND hype_level <= 6),
   created_at TIMESTAMPTZ DEFAULT now(),

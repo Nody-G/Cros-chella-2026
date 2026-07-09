@@ -249,3 +249,17 @@ export async function getPhotos(): Promise<Photo[]> {
   }
   return data as Photo[];
 }
+
+export async function updatePassword(id: string, password: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ password, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating password:", error);
+    return false;
+  }
+  return true;
+}
+

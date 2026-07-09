@@ -1,10 +1,9 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heart, Loader2, CheckCircle2 } from "lucide-react";
 import { updateHype } from "@/lib/supabase-queries";
+import { useAuth } from "@/hooks/use-auth";
 
 const HYPE_LABELS = [
   { value: 1, emoji: "😐", label: "Mouais..." },
@@ -16,15 +15,23 @@ const HYPE_LABELS = [
 ];
 
 export function HypeSection() {
+  const { currentParticipant } = useAuth();
   const [name, setName] = useState("");
   const [hype, setHype] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (currentParticipant) {
+      setName(currentParticipant.name);
+    }
+  }, [currentParticipant]);
+
   const handleSubmit = async () => {
-    if (!name.trim() || hype === 0) return;
+    const finalName = currentParticipant?.name || name;
+    if (!finalName.trim() || hype === 0) return;
     setLoading(true);
-    await updateHype(name.trim(), hype);
+    await updateHype(finalName.trim(), hype);
     setSubmitted(true);
     setLoading(false);
   };
@@ -71,7 +78,8 @@ export function HypeSection() {
               placeholder="Ex: Niels, Hervé, Xav..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="text-center"
+              disabled={!!currentParticipant}
+              className="text-center disabled:opacity-85 disabled:bg-muted/50 font-medium"
             />
           </div>
 

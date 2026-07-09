@@ -9,6 +9,7 @@ interface AuthContextType {
   participants: Participant[];
   login: (participantId: string) => void;
   logout: () => void;
+  refreshAuth: () => Promise<void>;
   isAdmin: boolean;
   loading: boolean;
 }
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   participants: [],
   login: () => {},
   logout: () => {},
+  refreshAuth: async () => {},
   isAdmin: false,
   loading: true,
 });
@@ -29,18 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function init() {
-      const data = await getParticipants();
-      setParticipants(data);
+  const init = async () => {
+    const data = await getParticipants();
+    setParticipants(data);
 
-      const savedId = localStorage.getItem(STORAGE_KEY);
-      if (savedId) {
-        const found = data.find((p) => p.id === savedId);
-        if (found) setCurrentParticipant(found);
-      }
-      setLoading(false);
+    const savedId = localStorage.getItem(STORAGE_KEY);
+    if (savedId) {
+      const found = data.find((p) => p.id === savedId);
+      if (found) setCurrentParticipant(found);
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     init();
   }, []);
 
@@ -57,6 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const refreshAuth = async () => {
+    const data = await getParticipants();
+    setParticipants(data);
+    const savedId = localStorage.getItem(STORAGE_KEY);
+    if (savedId) {
+      const found = data.find((p) => p.id === savedId);
+      if (found) setCurrentParticipant(found);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -64,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         participants,
         login,
         logout,
+        refreshAuth,
         isAdmin: currentParticipant?.is_admin || false,
         loading,
       }}

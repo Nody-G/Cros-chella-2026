@@ -8,13 +8,15 @@ import { MessageCircle, Loader2, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getMessages, sendMessage } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [currentUserId] = useState<string>(""); // TODO: real auth
+  const { currentParticipant } = useAuth();
+  const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

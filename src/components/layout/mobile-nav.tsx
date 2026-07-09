@@ -6,8 +6,10 @@ import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut } from "luc
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Droplets, BarChart3, MessageCircle, ImageIcon, Music } from "lucide-react";
+import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { updatePassword } from "@/lib/supabase-queries";
+import { Input } from "@/components/ui/input";
 
 const mainNavItems = [
   { href: "/", icon: Home, label: "Accueil" },
@@ -27,7 +29,30 @@ const moreNavItems = [
 export function MobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { currentParticipant, logout } = useAuth();
+  const { currentParticipant, logout, refreshAuth } = useAuth();
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [updating, setUpdating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const handleChangePassword = async () => {
+    if (!currentParticipant || !newPassword.trim()) return;
+    setUpdating(true);
+    setStatusMsg("");
+    const success = await updatePassword(currentParticipant.id, newPassword.trim());
+    if (success) {
+      await refreshAuth();
+      setStatusMsg("Mot de passe mis à jour ! ✅");
+      setNewPassword("");
+      setTimeout(() => {
+        setShowPasswordForm(false);
+        setStatusMsg("");
+      }, 2000);
+    } else {
+      setStatusMsg("Erreur lors de la mise à jour ❌");
+    }
+    setUpdating(false);
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border safe-area-inset-bottom">
@@ -51,7 +76,7 @@ export function MobileNav() {
           );
         })}
 
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet open={open} onOpenChange={(val) => { setOpen(val); if(!val) { setShowPasswordForm(false); setStatusMsg(""); setNewPassword(""); } }}>
           <SheetTrigger asChild>
             <button
               className={cn(
@@ -92,29 +117,74 @@ export function MobileNav() {
                 );
               })}
             </div>
-            {/* User info + logout */}
+            {/* User info + logout / change password */}
             {currentParticipant && (
-              <div className="flex items-center justify-between pt-4 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm">
-                    {currentParticipant.name[0]}
+              <div className="flex flex-col gap-3 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
+                      {currentParticipant.name[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{currentParticipant.name}</p>
+                      {currentParticipant.pseudo && (
+                        <p className="text-[10px] text-muted-foreground">{currentParticipant.pseudo}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{currentParticipant.name}</p>
-                    {currentParticipant.pseudo && (
-                      <p className="text-[10px] text-muted-foreground">{currentParticipant.pseudo}</p>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowPasswordForm(!showPasswordForm)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border"
+                    >
+                      <KeyRound className="w-3 h-3" />
+                      Code
+                    </button>
+                    <button
+                      onClick={() => { logout(); setOpen(false); }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors border border-border"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      Changer
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => { logout(); setOpen(false); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Changer
-                </button>
+
+                {showPasswordForm && (
+                  <div className="p-3 bg-muted/50 rounded-xl border border-border space-y-2 mt-2">
+                    <label className="text-xs font-semibold text-muted-foreground block">
+                      Définir ton mot de passe personnel :
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="password"
+                        placeholder="Nouveau code..."
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={updating}
+                        className="bg-background h-9 text-xs"
+                      />
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={updating || !newPassword.trim()}
+                        className="bg-primary text-primary-foreground p-2 rounded-lg hover:opacity-90 disabled:opacity-50"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => { setShowPasswordForm(false); setStatusMsg(""); setNewPassword(""); }}
+                        disabled={updating}
+                        className="bg-muted text-muted-foreground p-2 rounded-lg hover:bg-muted/80 border border-border"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {statusMsg && (
+                      <p className="text-[10px] font-semibold text-primary">{statusMsg}</p>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
           </SheetContent>
         </Sheet>
       </div>

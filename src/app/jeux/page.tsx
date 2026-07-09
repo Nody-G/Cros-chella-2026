@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Gamepad2, Lock, Eye, EyeOff, Loader2, Plus, Sparkles } from "lucide-react";
 import { getGames, getParticipants, submitGame, revealGame, revealAllGames } from "@/lib/supabase-queries";
 import type { Game, GameCategory, Participant } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 const CATEGORIES: { value: GameCategory; label: string; emoji: string }[] = [
   { value: "quiz", label: "Quiz", emoji: "🧠" },
@@ -26,12 +27,12 @@ export default function JeuxPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedAuthor, setSelectedAuthor] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<GameCategory>("other");
   const [submitting, setSubmitting] = useState(false);
-  const [isAdmin] = useState(true); // TODO: real auth
+  const { currentParticipant } = useAuth();
+  const isAdmin = currentParticipant?.is_admin || false;
 
   useEffect(() => {
     async function fetch() {
@@ -47,9 +48,9 @@ export default function JeuxPage() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedAuthor || !title.trim()) return;
+    if (!currentParticipant || !title.trim()) return;
     setSubmitting(true);
-    const success = await submitGame(selectedAuthor, title.trim(), description.trim(), category);
+    const success = await submitGame(currentParticipant.id, title.trim(), description.trim(), category);
     if (success) {
       const updated = await getGames();
       setGames(updated);
@@ -57,7 +58,6 @@ export default function JeuxPage() {
       setTitle("");
       setDescription("");
       setCategory("other");
-      setSelectedAuthor("");
     }
     setSubmitting(false);
   };
@@ -196,22 +196,6 @@ export default function JeuxPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Qui es-tu ?</label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                      value={selectedAuthor}
-                      onChange={(e) => setSelectedAuthor(e.target.value)}
-                    >
-                      <option value="">Choisis ton nom...</option>
-                      {participants.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} {p.pseudo ? `(${p.pseudo})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Catégorie</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {CATEGORIES.map((cat) => (
@@ -254,7 +238,7 @@ export default function JeuxPage() {
                     <Button variant="ghost" onClick={() => setShowForm(false)} className="flex-1">
                       Annuler
                     </Button>
-                    <Button onClick={handleSubmit} disabled={!selectedAuthor || !title.trim() || submitting} className="flex-1">
+                    <Button onClick={handleSubmit} disabled={!title.trim() || submitting} className="flex-1">
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       Envoyer 🚀
                     </Button>
