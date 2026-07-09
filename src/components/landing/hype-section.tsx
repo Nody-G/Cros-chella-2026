@@ -10,9 +10,9 @@ const HYPE_LABELS = [
   { value: 1, emoji: "😐", label: "Mouais..." },
   { value: 2, emoji: "🤔", label: "Pourquoi pas ?" },
   { value: 3, emoji: "😏", label: "Ça peut être fun" },
-  { value: 4, emoji: "😊", label: "J&apos;ai hâte" },
-  { value: 5, emoji: "🔥", label: "J&apos;suis chaud !" },
-  { value: 6, emoji: "🤯", label: "J&apos;arrive les frérots !" },
+  { value: 4, emoji: "😊", label: "J\u2019ai hâte" },
+  { value: 5, emoji: "🔥", label: "J\u2019suis chaud !" },
+  { value: 6, emoji: "🤯", label: "J\u2019arrive les frérots !" },
 ];
 
 export function HypeSection() {
@@ -62,10 +62,10 @@ export function HypeSection() {
         <div className="text-center mb-6">
           <Heart className="w-8 h-8 text-primary mx-auto mb-3" />
           <h2 className="text-xl font-bold text-foreground mb-1">
-            T&apos;es chaud ? 🔥
+            {"T'es chaud ?"} 🔥
           </h2>
           <p className="text-muted-foreground text-sm">
-            Dis-nous à quel point t&apos;as hâte
+            {"Dis-nous à quel point t'as hâte"}
           </p>
         </div>
 
