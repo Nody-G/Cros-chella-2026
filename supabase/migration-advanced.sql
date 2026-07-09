@@ -3,6 +3,9 @@
 -- À exécuter APRÈS le schema.sql original
 -- ============================================
 
+-- 0) Admin code séparé du password personnel
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS admin_code TEXT;
+
 -- 1) Profil personnalisé avancé
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS tagline TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS emoji_avatar TEXT DEFAULT '😎';

@@ -13,6 +13,7 @@ export interface Participant {
   bed_assignment: string | null;
   bio: string | null;
   password?: string | null;
+  admin_code?: string | null;
   is_admin: boolean;
   hype_level: number;
   created_at: string;

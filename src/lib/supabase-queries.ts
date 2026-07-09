@@ -302,6 +302,19 @@ export async function updatePassword(id: string, password: string): Promise<bool
   return true;
 }
 
+export async function updateAdminCode(id: string, adminCode: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ admin_code: adminCode, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating admin code:", error);
+    return false;
+  }
+  return true;
+}
+
 // ============================================
 // PROGRAM — CRUD Admin
 // ============================================

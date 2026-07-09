@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Crown, Bed, Loader2 } from "lucide-react";
-import { getParticipants, updatePassword } from "@/lib/supabase-queries";
+import { getParticipants, updateAdminCode } from "@/lib/supabase-queries";
 import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export default function ParticipantsPage() {
   const handleGenerateTempPassword = async (id: string) => {
     // Generate a simple readable code, e.g. CROS-4321
     const randomCode = `CROS-${Math.floor(1000 + Math.random() * 9000)}`;
-    const success = await updatePassword(id, randomCode);
+    const success = await updateAdminCode(id, randomCode);
     if (success) {
       const data = await getParticipants();
       setParticipants(data);
@@ -198,13 +198,13 @@ export default function ParticipantsPage() {
                           <div className="flex items-center gap-2">
                             <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-xs font-semibold text-muted-foreground">Code :</span>
-                            {p.password ? (
+                            {p.admin_code ? (
                               <span 
-                                onClick={() => copyToClipboard(p.password || "", p.id)}
+                                onClick={() => copyToClipboard(p.admin_code || "", p.id)}
                                 className="text-xs font-mono bg-muted px-2 py-0.5 rounded cursor-pointer hover:bg-muted/80 select-all"
                                 title="Cliquer pour copier"
                               >
-                                {p.password} {copiedId === p.id ? "✅ Copié" : ""}
+                                {p.admin_code} {copiedId === p.id ? "✅ Copié" : ""}
                               </span>
                             ) : (
                               <span className="text-xs text-red-500 italic">Non configuré</span>

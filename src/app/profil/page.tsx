@@ -51,6 +51,7 @@ export default function ProfilPage() {
   const [alcoholPreferences, setAlcoholPreferences] = useState<string[]>([]);
   const [favoriteAlcohol, setFavoriteAlcohol] = useState("");
   const [showAlcoholPicker, setShowAlcoholPicker] = useState(false);
+  const [personalCode, setPersonalCode] = useState("");
 
   useEffect(() => {
     if (currentParticipant) {
@@ -67,6 +68,7 @@ export default function ProfilPage() {
       setBio(currentParticipant.bio || "");
       setAlcoholPreferences(currentParticipant.alcohol_preferences || []);
       setFavoriteAlcohol(currentParticipant.favorite_alcohol || "");
+      setPersonalCode(currentParticipant.password || "");
     }
   }, [currentParticipant]);
 
@@ -87,6 +89,7 @@ export default function ProfilPage() {
       bio: bio || null,
       alcohol_preferences: alcoholPreferences.length > 0 ? alcoholPreferences : null,
       favorite_alcohol: favoriteAlcohol || null,
+      password: personalCode || null,
     });
     if (success) {
       await refreshAuth();
@@ -446,6 +449,23 @@ export default function ProfilPage() {
               maxLength={300}
             />
             <p className="text-[10px] text-muted-foreground mt-1 text-right">{bio.length}/300</p>
+          </div>
+
+          {/* Personal code */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              🔑 Mon code secret
+            </label>
+            <Input
+              placeholder="Ex: CROS-1234 ou ton propre code"
+              value={personalCode}
+              onChange={(e) => setPersonalCode(e.target.value)}
+              className="bg-card border-border font-mono"
+              maxLength={20}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Code perso que tu partages avec tes potes. L&apos;admin ne voit PAS ce code. 😏
+            </p>
           </div>
 
           {/* Save button */}
