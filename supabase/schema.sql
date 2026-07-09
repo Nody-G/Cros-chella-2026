@@ -2,10 +2,21 @@
 -- CROS-HELLA — Supabase Schema
 -- ============================================
 
+-- Drop existing tables if they exist to reset clean
+DROP TABLE IF EXISTS photo_likes CASCADE;
+DROP TABLE IF EXISTS photos CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS poll_votes CASCADE;
+DROP TABLE IF EXISTS polls CASCADE;
+DROP TABLE IF EXISTS spots CASCADE;
+DROP TABLE IF EXISTS program CASCADE;
+DROP TABLE IF EXISTS games CASCADE;
+DROP TABLE IF EXISTS participants CASCADE;
+
 -- Participants
 CREATE TABLE IF NOT EXISTS participants (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   pseudo TEXT,
   avatar_url TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('confirmed', 'pending', 'declined')),

@@ -2,8 +2,25 @@ const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
+// Load connectionString from .env.local dynamically to avoid pushing secrets to git
+const envPath = path.join(__dirname, '..', '.env.local');
+let connectionString = process.env.SUPABASE_DB_URL;
+
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const match = envContent.match(/^SUPABASE_DB_URL=(.+)$/m);
+  if (match) {
+    connectionString = match[1].trim();
+  }
+}
+
+if (!connectionString) {
+  console.error("❌ Erreur : SUPABASE_DB_URL non trouvé dans .env.local");
+  process.exit(1);
+}
+
 const client = new Client({
-  connectionString: 'postgresql://postgres.nmapbqtfqbqdivwuawfz:gFjeS7qDnzEQ59LA@aws-0-eu-west-3.pooler.supabase.com:5432/postgres',
+  connectionString,
   ssl: { rejectUnauthorized: false }
 });
 
@@ -12,7 +29,7 @@ async function runMigration() {
     await client.connect();
     console.log('✅ Connecté à Supabase PostgreSQL');
 
-    const sql = fs.readFileSync(path.join(__dirname, 'supabase', 'schema.sql'), 'utf8');
+    const sql = fs.readFileSync(path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
     console.log('📄 Fichier SQL chargé, exécution en cours...');
 
     await client.query(sql);
