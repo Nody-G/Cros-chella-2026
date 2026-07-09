@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Gamepad2, Lock, Eye, EyeOff, Loader2, Plus, Sparkles } from "lucide-react";
-import { getGames, getParticipants, submitGame, revealGame, revealAllGames } from "@/lib/supabase-queries";
-import type { Game, GameCategory, Participant } from "@/lib/types";
+import { getGames, submitGame, revealGame, revealAllGames } from "@/lib/supabase-queries";
+import type { Game, GameCategory } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 
 const CATEGORIES: { value: GameCategory; label: string; emoji: string }[] = [
@@ -24,7 +24,6 @@ const CATEGORIES: { value: GameCategory; label: string; emoji: string }[] = [
 
 export default function JeuxPage() {
   const [games, setGames] = useState<Game[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -36,12 +35,8 @@ export default function JeuxPage() {
 
   useEffect(() => {
     async function fetch() {
-      const [gamesData, participantsData] = await Promise.all([
-        getGames(),
-        getParticipants(),
-      ]);
+      const gamesData = await getGames();
       setGames(gamesData);
-      setParticipants(participantsData);
       setLoading(false);
     }
     fetch();
