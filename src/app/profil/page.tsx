@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,9 @@ export default function ProfilPage() {
   const [personalCode, setPersonalCode] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentParticipant) {
@@ -152,19 +155,52 @@ export default function ProfilPage() {
                     {emojiAvatar}
                   </div>
                 )}
-                <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
                   {uploading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
                   ) : (
                     <Camera className="w-5 h-5 text-white" />
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
-                </label>
+                </button>
+                {showPhotoMenu && (
+                  <div className="absolute top-full left-0 mt-2 z-50 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[160px]">
+                    <button
+                      type="button"
+                      onClick={() => { fileInputRef.current?.click(); setShowPhotoMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                    >
+                      <Upload className="w-4 h-4 text-primary" />
+                      📁 Importer une photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                    >
+                      <Camera className="w-4 h-4 text-primary" />
+                      📸 Prendre une photo
+                    </button>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

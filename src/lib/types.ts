@@ -123,6 +123,7 @@ export interface Message {
   id: string;
   author_id: string;
   content: string;
+  image_url: string | null;
   reactions: Record<string, string[]>;
   created_at: string;
   // Joined

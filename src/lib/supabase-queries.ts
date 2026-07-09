@@ -280,16 +280,40 @@ export async function getMessages(): Promise<Message[]> {
   return data as Message[];
 }
 
-export async function sendMessage(authorId: string, content: string): Promise<boolean> {
+export async function sendMessage(authorId: string, content: string, imageUrl?: string): Promise<boolean> {
+  const insertData: { author_id: string; content: string; image_url?: string } = { author_id: authorId, content };
+  if (imageUrl) insertData.image_url = imageUrl;
+
   const { error } = await supabase
     .from("messages")
-    .insert({ author_id: authorId, content });
+    .insert(insertData);
 
   if (error) {
     console.error("Error sending message:", error);
     return false;
   }
   return true;
+}
+
+export async function uploadChatImage(authorId: string, file: File): Promise<string | null> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${authorId}_${Date.now()}.${fileExt}`;
+  const filePath = `chat/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: false });
+
+  if (uploadError) {
+    console.error("Error uploading chat image:", uploadError);
+    return null;
+  }
+
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
 }
 
 // ============================================
