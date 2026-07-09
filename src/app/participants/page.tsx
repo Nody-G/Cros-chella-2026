@@ -44,14 +44,27 @@ export default function ParticipantsPage() {
     fetch();
   }, []);
 
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [lastGenerated, setLastGenerated] = useState<{id: string, code: string} | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const handleGenerateTempPassword = async (id: string) => {
-    // Generate a simple readable code, e.g. CROS-4321
+    setGeneratingId(id);
+    setLastGenerated(null);
+    setError(null);
     const randomCode = `CROS-${Math.floor(1000 + Math.random() * 9000)}`;
     const success = await updateAdminCode(id, randomCode);
     if (success) {
+      // Update local state immediately for instant display
+      setParticipants(prev => prev.map(p => p.id === id ? { ...p, admin_code: randomCode } : p));
+      setLastGenerated({ id, code: randomCode });
+      // Also re-fetch from DB to be sure
       const data = await getParticipants();
       setParticipants(data);
+    } else {
+      setError("Erreur: impossible de sauvegarder le code. Vérifie que la colonne admin_code existe dans Supabase (exécute migration-advanced.sql)");
     }
+    setGeneratingId(null);
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -75,6 +88,12 @@ export default function ParticipantsPage() {
         <p className="text-muted-foreground text-sm mb-6">
           {loading ? "Chargement..." : `${confirmed} confirmés, ${pending} en attente`}
         </p>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+            ⚠️ {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -198,13 +217,13 @@ export default function ParticipantsPage() {
                           <div className="flex items-center gap-2">
                             <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-xs font-semibold text-muted-foreground">Code :</span>
-                            {p.admin_code ? (
+                            {(p.admin_code || lastGenerated?.id === p.id) ? (
                               <span 
-                                onClick={() => copyToClipboard(p.admin_code || "", p.id)}
+                                onClick={() => copyToClipboard(p.admin_code || lastGenerated?.code || "", p.id)}
                                 className="text-xs font-mono bg-muted px-2 py-0.5 rounded cursor-pointer hover:bg-muted/80 select-all"
                                 title="Cliquer pour copier"
                               >
-                                {p.admin_code} {copiedId === p.id ? "✅ Copié" : ""}
+                                {p.admin_code || lastGenerated?.code} {copiedId === p.id ? "✅ Copié" : "📋"}
                               </span>
                             ) : (
                               <span className="text-xs text-red-500 italic">Non configuré</span>
@@ -214,9 +233,14 @@ export default function ParticipantsPage() {
                             size="sm" 
                             variant="outline" 
                             onClick={() => handleGenerateTempPassword(p.id)}
+                            disabled={generatingId === p.id}
                             className="text-xs h-7 px-2"
                           >
-                            Générer code 🔑
+                            {generatingId === p.id ? (
+                              <><Loader2 className="w-3 h-3 animate-spin mr-1" /> Génération...</>
+                            ) : (
+                              <>Générer code 🔑</>
+                            )}
                           </Button>
                         </div>
                       )}
