@@ -1,12 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Countdown } from "./countdown";
 import { PartyPopper, MapPin, Calendar } from "lucide-react";
+import { Confetti } from "@/components/ui/confetti";
 
 export function HeroSection() {
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    const hasSeenConfetti = sessionStorage.getItem("cros-chella-confetti");
+    if (!hasSeenConfetti) {
+      setShowConfetti(true);
+      sessionStorage.setItem("cros-chella-confetti", "1");
+    }
+  }, []);
+
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
+      <Confetti active={showConfetti} duration={4000} />
       {/* Background decoration */}
       <div className="absolute inset-0 festival-gradient opacity-90" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,oklch(0.7_0.18_50_/_0.15),transparent_50%)]" />
@@ -79,28 +92,12 @@ export function HeroSection() {
           <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-left">
             <p className="text-white/90 text-sm leading-relaxed">
               <span className="text-lg mr-1">🏊</span>{" "}
-              <strong>Baignade, apéro, fête</strong> — on a les spots, la playlist, et zéro excuse pour pas venir.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-left">
-            <p className="text-white/90 text-sm leading-relaxed">
-              <span className="text-lg mr-1">🏠</span>{" "}
-              <a
-                href="https://maps.app.goo.gl/Mzno5hxobVQbWubr8"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
-              >
-                <strong>Le Moulin du Cros</strong>
-              </a>{" "}
-              — 670 le Cros, 07240 · 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
+              <strong>Baignade, apéro, fête</strong> — Le Moulin du Cros nous attend pour un week-end de folie.
+              Préparez vos maillots et vos pires idées.{" "}
+              <span className="text-white/60">(Les spots de baignade sont sur la carte.)</span>
             </p>
           </div>
         </div>
-
-        {/* Scroll hint */}
-        <div className="animate-bounce text-white/40 text-2xl mt-4">↓</div>
       </div>
     </section>
   );

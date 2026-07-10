@@ -25,7 +25,7 @@ const moreNavItems = [
   { href: "/sondages", icon: BarChart3, label: "Sondages", emoji: "📊" },
   { href: "/chat", icon: MessageCircle, label: "Chat", emoji: "💬" },
   { href: "/galerie", icon: ImageIcon, label: "Galerie", emoji: "📸" },
-  { href: "https://open.spotify.com/playlist/2DqmhZTuP8dhiZqCrx0D8f", icon: Music, label: "Playlist", emoji: "🎵", external: true },
+  { href: "/spotify", icon: Music, label: "Playlist", emoji: "🎵" },
 ];
 
 export function MobileNav() {
@@ -99,12 +99,10 @@ export function MobileNav() {
             <div className="grid grid-cols-3 gap-3 mt-6 pb-4">
               {moreNavItems.map((item) => {
                 const isActive = pathname === item.href;
-                const Wrapper = item.external ? "a" : Link;
                 return (
-                  <Wrapper
+                  <Link
                     key={item.href}
                     href={item.href}
-                    {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     onClick={() => setOpen(false)}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
@@ -115,7 +113,7 @@ export function MobileNav() {
                   >
                     <span className="text-2xl">{item.emoji}</span>
                     <span className="text-xs font-medium">{item.label}</span>
-                  </Wrapper>
+                  </Link>
                 );
               })}
             </div>

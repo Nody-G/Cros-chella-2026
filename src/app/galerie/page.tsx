@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Loader2, Camera, Upload, Trash2, X, Pencil, Send, ChevronLeft, ChevronRight } from "lucide-react";
-import { getPhotos, updatePhotoCaption, deletePhoto, getPhotoComments, addPhotoComment, deletePhotoComment } from "@/lib/supabase-queries";
+import { ImageIcon, Loader2, Camera, Upload, Trash2, X, Pencil, Send, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { getPhotos, updatePhotoCaption, deletePhoto, getPhotoComments, addPhotoComment, deletePhotoComment, togglePhotoLike, getPhotoLikeCount, hasLikedPhoto, getPhotoLikers } from "@/lib/supabase-queries";
 import type { Photo, PhotoComment } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -32,10 +32,29 @@ export default function GaleriePage() {
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
+  // Likes state
+  const [photoLikes, setPhotoLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+  const [likersPhotoId, setLikersPhotoId] = useState<string | null>(null);
+  const [likersList, setLikersList] = useState<{ id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[]>([]);
+
+  const loadLikesForAll = async (photoList: Photo[]) => {
+    if (!currentParticipant) return;
+    const likesMap: Record<string, { count: number; liked: boolean }> = {};
+    await Promise.all(photoList.map(async (p) => {
+      const [count, liked] = await Promise.all([
+        getPhotoLikeCount(p.id),
+        hasLikedPhoto(p.id, currentParticipant.id),
+      ]);
+      likesMap[p.id] = { count, liked };
+    }));
+    setPhotoLikes(likesMap);
+  };
+
   const fetchPhotos = async () => {
     const data = await getPhotos();
     setPhotos(data);
     setLoading(false);
+    loadLikesForAll(data);
   };
 
   useEffect(() => {
@@ -47,6 +66,7 @@ export default function GaleriePage() {
     const channel = (supabase as any).channel("photos-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "photos" }, () => { fetchPhotos(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "photo_comments" }, () => { if (commentsPhotoId) loadComments(commentsPhotoId); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "photo_likes" }, () => { fetchPhotos(); })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -78,6 +98,23 @@ export default function GaleriePage() {
   const handleDeleteComment = async (commentId: string) => {
     await deletePhotoComment(commentId);
     if (commentsPhotoId) await loadComments(commentsPhotoId);
+  };
+
+  const handleToggleLike = async (photoId: string) => {
+    if (!currentParticipant) return;
+    await togglePhotoLike(photoId, currentParticipant.id);
+    const [count, liked] = await Promise.all([
+      getPhotoLikeCount(photoId),
+      hasLikedPhoto(photoId, currentParticipant.id),
+    ]);
+    setPhotoLikes((prev) => ({ ...prev, [photoId]: { count, liked } }));
+  };
+
+  const handleShowLikers = async (photoId: string) => {
+    if (likersPhotoId === photoId) { setLikersPhotoId(null); return; }
+    setLikersPhotoId(photoId);
+    const likers = await getPhotoLikers(photoId);
+    setLikersList(likers);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,13 +213,14 @@ export default function GaleriePage() {
         ) : photos.length === 0 ? (
           <div className="p-8 rounded-2xl bg-card border border-border text-center">
             <span className="text-4xl block mb-3">📷</span>
-            <p className="text-muted-foreground text-sm">Aucune photo pour l&apos;instant.</p>
+            <p className="text-muted-foreground text-sm">Aucune photo pour l&apos;instant</p>
             <p className="text-xs text-muted-foreground mt-2">Sois le premier à poster une photo !</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {photos.map((photo, idx) => {
               const isOwner = currentParticipant?.id === photo.author_id;
+              const likes = photoLikes[photo.id];
               return (
                 <Card key={photo.id} className="overflow-hidden group">
                   <CardContent className="p-0">
@@ -210,8 +248,31 @@ export default function GaleriePage() {
                       )}
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-[10px] text-muted-foreground">{photo.author?.emoji_avatar || "👤"} {photo.author?.pseudo || photo.author?.name || "Anonyme"}</span>
-                        <button onClick={() => handleOpenComments(photo.id)} className="text-[10px] text-muted-foreground hover:text-primary">💬 {photo.comment_count || 0}</button>
+                        <div className="flex items-center gap-2">
+                          {/* Like button */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleLike(photo.id); }}
+                            className="flex items-center gap-0.5 text-[10px] transition-colors"
+                          >
+                            <Heart className={`w-3 h-3 ${likes?.liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                            {likes && likes.count > 0 && (
+                              <span
+                                onClick={(e) => { e.stopPropagation(); handleShowLikers(photo.id); }}
+                                className={`${likes.liked ? "text-red-500" : "text-muted-foreground"} hover:underline`}
+                              >
+                                {likes.count}
+                              </span>
+                            )}
+                          </button>
+                          <button onClick={() => handleOpenComments(photo.id)} className="text-[10px] text-muted-foreground hover:text-primary">💬 {photo.comment_count || 0}</button>
+                        </div>
                       </div>
+                      {/* Likers popover */}
+                      {likersPhotoId === photo.id && likersList.length > 0 && (
+                        <div className="mt-1.5 p-2 rounded-lg bg-muted/50 border border-border">
+                          <p className="text-[10px] text-muted-foreground mb-1">❤️ {likersList.map((l) => l.pseudo || l.name).join(", ")}</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -221,6 +282,7 @@ export default function GaleriePage() {
         )}
       </div>
 
+      {/* Fullscreen viewer */}
       {currentPhoto && (
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
           <div className="flex items-center justify-between p-4">
@@ -242,7 +304,19 @@ export default function GaleriePage() {
             )}
           </div>
           <div className="bg-black/80 backdrop-blur-sm max-h-[40vh] flex flex-col">
-            {currentPhoto.caption && <p className="text-white text-sm px-4 pt-3">{currentPhoto.caption}</p>}
+            {/* Like bar in viewer */}
+            <div className="flex items-center gap-3 px-4 pt-3">
+              <button
+                onClick={() => handleToggleLike(currentPhoto.id)}
+                className="flex items-center gap-1.5 transition-colors"
+              >
+                <Heart className={`w-5 h-5 ${photoLikes[currentPhoto.id]?.liked ? "fill-red-500 text-red-500" : "text-white/60 hover:text-white"}`} />
+                {photoLikes[currentPhoto.id] && photoLikes[currentPhoto.id].count > 0 && (
+                  <span className="text-white/80 text-sm">{photoLikes[currentPhoto.id].count}</span>
+                )}
+              </button>
+              {currentPhoto.caption && <p className="text-white/80 text-sm flex-1 truncate">{currentPhoto.caption}</p>}
+            </div>
             <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 min-h-0">
               {loadingComments ? (
                 <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-white/50" /></div>

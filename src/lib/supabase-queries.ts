@@ -862,3 +862,71 @@ export async function updateProposalComment(commentId: string, newContent: strin
   return true;
 }
 
+// ============================================
+// PHOTO LIKES
+// ============================================
+
+export async function getPhotoLikeCount(photoId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("photo_likes")
+    .select("id", { count: "exact", head: true })
+    .eq("photo_id", photoId);
+
+  if (error) {
+    console.error("Error fetching photo like count:", error);
+    return 0;
+  }
+  return count || 0;
+}
+
+export async function hasLikedPhoto(photoId: string, participantId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("photo_likes")
+    .select("id")
+    .eq("photo_id", photoId)
+    .eq("participant_id", participantId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking photo like:", error);
+    return false;
+  }
+  return !!data;
+}
+
+export async function togglePhotoLike(photoId: string, participantId: string): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from("photo_likes")
+    .select("id")
+    .eq("photo_id", photoId)
+    .eq("participant_id", participantId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase.from("photo_likes").delete().eq("id", existing.id);
+    if (error) { console.error("Error removing photo like:", error); return false; }
+  } else {
+    const { error } = await supabase.from("photo_likes").insert({ photo_id: photoId, participant_id: participantId });
+    if (error) { console.error("Error adding photo like:", error); return false; }
+  }
+  return true;
+}
+
+export async function getPhotoLikers(photoId: string): Promise<{ id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[]> {
+  const { data, error } = await supabase
+    .from("photo_likes")
+    .select("participant_id")
+    .eq("photo_id", photoId);
+
+  if (error || !data || data.length === 0) return [];
+
+  const ids = data.map((l) => l.participant_id);
+  const { data: participants } = await supabase
+    .from("participants")
+    .select("id, pseudo, name, emoji_avatar")
+    .in("id", ids);
+
+  return (participants || []) as { id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[];
+}
+
+
