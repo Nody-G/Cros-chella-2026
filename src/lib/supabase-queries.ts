@@ -1168,7 +1168,7 @@ export async function createBillardMatch(match: {
   tournament_id: string;
   round: number;
   match_order: number;
-  team1_id: string;
+  team1_id?: string | null;
   team2_id?: string | null;
   status?: string;
 }): Promise<string | null> {
@@ -1187,22 +1187,18 @@ export async function createBillardMatch(match: {
 
 export async function updateBillardMatchScore(
   matchId: string,
-  team1Score: number,
-  team2Score: number,
   winnerTeamId: string
 ): Promise<boolean> {
   const { error } = await supabase
     .from("billard_matches")
     .update({
-      team1_score: team1Score,
-      team2_score: team2Score,
       winner_team_id: winnerTeamId,
       status: "done",
     })
     .eq("id", matchId);
 
   if (error) {
-    console.error("Error updating match score:", error);
+    console.error("Error updating match:", error);
     return false;
   }
   return true;
@@ -1276,13 +1272,13 @@ export async function generateBillardBracket(tournamentId: string): Promise<bool
     const nextRoundMatchCount = currentMatchCount / 2;
 
     for (let i = 0; i < nextRoundMatchCount; i++) {
-      // Use first team as placeholder — will be replaced when winners advance
       await createBillardMatch({
         tournament_id: tournamentId,
         round: nextRound,
         match_order: i,
-        team1_id: shuffled[0].id,
+        team1_id: null,
         team2_id: null,
+        status: "waiting",
       });
     }
 
@@ -1337,12 +1333,12 @@ async function propagateWinner(allMatches: BillardMatch[], match: BillardMatch):
 }
 
 /**
- * Record a match result: update score, set winner, propagate to next round.
+ * Record a match result: set winner and propagate to next round.
+ * Simple mode: just pick the winner, no scores needed.
  */
 export async function recordBillardResult(
   matchId: string,
-  team1Score: number,
-  team2Score: number
+  winnerTeamId: string
 ): Promise<boolean> {
   // Get the match
   const { data: match, error: fetchError } = await supabase
@@ -1356,11 +1352,8 @@ export async function recordBillardResult(
     return false;
   }
 
-  // Determine winner
-  const winnerTeamId = team1Score > team2Score ? match.team1_id : match.team2_id;
-
   // Update this match
-  const success = await updateBillardMatchScore(matchId, team1Score, team2Score, winnerTeamId);
+  const success = await updateBillardMatchScore(matchId, winnerTeamId);
   if (!success) return false;
 
   // Check if this is the finale
