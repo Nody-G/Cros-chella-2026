@@ -371,6 +371,45 @@ export async function deleteMessage(messageId: string): Promise<boolean> {
   return true;
 }
 
+export async function toggleMessageReaction(messageId: string, participantId: string, emoji: string): Promise<Record<string, string[]> | null> {
+  const { data: msg, error: fetchError } = await supabase
+    .from("messages")
+    .select("reactions")
+    .eq("id", messageId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching message reactions:", fetchError);
+    return null;
+  }
+
+  const reactions: Record<string, string[]> = (msg?.reactions as Record<string, string[]>) || {};
+  const voters = reactions[emoji] || [];
+
+  if (voters.includes(participantId)) {
+    const newVoters = voters.filter((v: string) => v !== participantId);
+    if (newVoters.length === 0) {
+      delete reactions[emoji];
+    } else {
+      reactions[emoji] = newVoters;
+    }
+  } else {
+    reactions[emoji] = [...voters, participantId];
+  }
+
+  const { error: updateError } = await supabase
+    .from("messages")
+    .update({ reactions })
+    .eq("id", messageId);
+
+  if (updateError) {
+    console.error("Error updating reactions:", updateError);
+    return null;
+  }
+
+  return reactions;
+}
+
 export async function uploadChatImage(authorId: string, file: File): Promise<string | null> {
   const ext = file.type === "image/png" ? "png" : "jpg";
   const fileName = `${authorId}_${Date.now()}.${ext}`;

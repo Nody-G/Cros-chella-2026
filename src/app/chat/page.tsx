@@ -4,9 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle } from "lucide-react";
+import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage } from "@/lib/supabase-queries";
+import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, toggleMessageReaction } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -23,6 +23,7 @@ export default function ChatPage() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null);
   const { currentParticipant } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -56,7 +57,7 @@ export default function ChatPage() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === updated.id
-              ? { ...m, content: updated.content, image_url: updated.image_url, edited_at: updated.edited_at, deleted_at: updated.deleted_at }
+              ? { ...m, content: updated.content, image_url: updated.image_url, edited_at: updated.edited_at, deleted_at: updated.deleted_at, reactions: (updated as Message).reactions || m.reactions }
               : m
           )
         );
@@ -166,6 +167,19 @@ export default function ChatPage() {
     setEditingId(msg.id);
     setEditContent(msg.content);
     setActiveMenu(null);
+  };
+
+  const REACTION_EMOJIS = ["❤️", "😂", "🔥", "👍", "👎", "😮", "😢", "🎉", "💀", "🤡"];
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    if (!currentUserId) return;
+    setReactionPickerMsgId(null);
+    const newReactions = await toggleMessageReaction(messageId, currentUserId, emoji);
+    if (newReactions) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reactions: newReactions } : m))
+      );
+    }
   };
 
   const formatTime = (dateStr: string) => {
@@ -294,6 +308,56 @@ export default function ChatPage() {
                         </>
                       )}
                     </div>
+                    {/* Reactions display */}
+                    {!isDeleted && msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {Object.entries(msg.reactions).map(([emoji, voters]) => {
+                          const voterList = voters as string[];
+                          if (voterList.length === 0) return null;
+                          const iReacted = voterList.includes(currentUserId);
+                          return (
+                            <button
+                              key={emoji}
+                              onClick={() => handleReaction(msg.id, emoji)}
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border transition-all ${
+                                iReacted
+                                  ? "bg-primary/20 border-primary/40 text-primary"
+                                  : "bg-muted border-border text-muted-foreground hover:border-primary/30"
+                              }`}
+                              title={`${voterList.length} réaction${voterList.length > 1 ? "s" : ""}`}
+                            >
+                              <span>{emoji}</span>
+                              <span className="text-[10px]">{voterList.length}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Reaction add button + picker */}
+                    {!isDeleted && !isEditing && (
+                      <div className="relative mt-0.5">
+                        <button
+                          onClick={() => setReactionPickerMsgId(reactionPickerMsgId === msg.id ? null : msg.id)}
+                          className="text-muted-foreground/40 hover:text-muted-foreground transition-colors p-0.5"
+                          aria-label="Réagir"
+                        >
+                          <SmilePlus className="w-3.5 h-3.5" />
+                        </button>
+                        {reactionPickerMsgId === msg.id && (
+                          <div className={`absolute ${isMe ? "right-0" : "left-0"} bottom-full mb-1 z-50 bg-card border border-border rounded-xl shadow-xl p-2 flex gap-1 flex-wrap max-w-[260px]`}>
+                            {REACTION_EMOJIS.map((emoji) => (
+                              <button
+                                key={emoji}
+                                onClick={() => handleReaction(msg.id, emoji)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-lg"
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

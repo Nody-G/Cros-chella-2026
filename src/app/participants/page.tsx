@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette } from "lucide-react";
-import { getParticipants, updateAdminCode } from "@/lib/supabase-queries";
+import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown } from "lucide-react";
+import { getParticipants, updateAdminCode, updateParticipant } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +13,19 @@ import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
 import { ALCOHOL_MAP } from "@/lib/alcohol-data";
 import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
+
+const BED_OPTIONS = [
+  "Chambre 1 — Lit king size",
+  "Chambre 2 — Lit 2 places A",
+  "Chambre 2 — Lit 2 places B",
+  "Chambre 2 — Lit superposé haut",
+  "Chambre 2 — Lit superposé bas",
+  "Chambre 3 — Lit 2 places",
+  "Chambre 4 — Lit 2 places",
+  "Chambre 4 — Lit 1 place",
+  "Salon — Canapé-lit",
+  "Matelas supplémentaire",
+];
 
 const STATUS_CONFIG = {
   confirmed: { label: "Confirmé ✅", color: "bg-green-500/10 text-green-400 border-green-500/20" },
@@ -95,6 +108,16 @@ export default function ParticipantsPage() {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [lastGenerated, setLastGenerated] = useState<{id: string, code: string} | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [assigningBed, setAssigningBed] = useState<string | null>(null);
+
+  const handleBedAssignment = async (participantId: string, bed: string) => {
+    setAssigningBed(participantId);
+    const success = await updateParticipant(participantId, { bed_assignment: bed || null } as Partial<Participant>);
+    if (success) {
+      setParticipants(prev => prev.map(p => p.id === participantId ? { ...p, bed_assignment: bed || null } : p));
+    }
+    setAssigningBed(null);
+  };
 
   const handleGenerateTempPassword = async (id: string) => {
     setGeneratingId(id);
@@ -295,6 +318,34 @@ export default function ParticipantsPage() {
                               <>Générer code 🔑</>
                             )}
                           </Button>
+                        </div>
+                      )}
+
+                      {/* Admin bed assignment */}
+                      {isCurrentUserAdmin && (
+                        <div
+                          className="mt-2 pt-2 border-t border-dashed border-border"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Bed className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs font-semibold text-muted-foreground">Lit :</span>
+                            <div className="relative flex-1">
+                              <select
+                                value={p.bed_assignment || ""}
+                                onChange={(e) => handleBedAssignment(p.id, e.target.value)}
+                                disabled={assigningBed === p.id}
+                                className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1 appearance-none cursor-pointer hover:border-primary/30 transition-colors disabled:opacity-50"
+                              >
+                                <option value="">Non assigné</option>
+                                {BED_OPTIONS.map((bed) => (
+                                  <option key={bed} value={bed}>{bed}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                            </div>
+                            {assigningBed === p.id && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                          </div>
                         </div>
                       )}
                     </div>
