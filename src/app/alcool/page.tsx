@@ -8,7 +8,7 @@ import { Wine, Loader2, Users, Star, Heart, Sparkles, ChevronDown, ChevronUp, Ci
 import { getParticipants } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
-import { ALCOHOL_MAP } from "@/lib/alcohol-data";
+import { ALCOHOL_MAP, ALCOHOL_LIST, ALCOHOL_GROUPS } from "@/lib/alcohol-data";
 import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -231,7 +231,7 @@ export default function AlcoolPage() {
           </Card>
         )}
 
-        {/* My favorites summary */}
+        {/* My favorites summary — grouped by type */}
         {myFavorites.length > 0 && (
           <Card className="mb-6 border-primary/20 bg-primary/5">
             <CardContent className="p-4">
@@ -239,23 +239,36 @@ export default function AlcoolPage() {
                 <Star className="w-4 h-4 text-primary" />
                 <h2 className="text-sm font-semibold text-foreground">Tes goûts à toi</h2>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {myFavorites.map((val) => {
-                  const item = ALCOHOL_MAP[val];
-                  if (!item) return null;
-                  const isFav = val === myTopPick;
+              <div className="space-y-2">
+                {ALCOHOL_GROUPS.map((group) => {
+                  const groupItems = ALCOHOL_LIST.filter(
+                    (a) => a.group === group && myFavorites.includes(a.value)
+                  );
+                  if (groupItems.length === 0) return null;
                   return (
-                    <Badge
-                      key={val}
-                      variant="outline"
-                      className={`text-xs px-2 py-0.5 ${isFav
-                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                        : "bg-card"
-                        }`}
-                    >
-                      {item.emoji} {item.label}
-                      {isFav && " ⭐"}
-                    </Badge>
+                    <div key={group}>
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                        {group}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {groupItems.map((item) => {
+                          const isFav = item.value === myTopPick;
+                          return (
+                            <span
+                              key={item.value}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
+                                isFav
+                                  ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                                  : "bg-card border-border text-foreground"
+                              }`}
+                            >
+                              {item.emoji} {item.label}
+                              {isFav && " ⭐"}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -400,64 +413,88 @@ export default function AlcoolPage() {
                           </div>
                         )}
 
-                        {/* Shared alcohols */}
+                        {/* Shared alcohols — grouped by type */}
                         {c.sharedAlcohols.length > 0 && (
                           <div>
                             <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                               <Heart className="w-3 h-3 text-red-400" />
                               Alcools en commun ({c.sharedAlcohols.length})
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {c.sharedAlcohols.map((val) => {
-                                const item = ALCOHOL_MAP[val];
-                                if (!item) return null;
-                                const isBothFav = val === myTopPick && val === theirTopPick;
+                            <div className="space-y-1.5">
+                              {ALCOHOL_GROUPS.map((group) => {
+                                const groupItems = ALCOHOL_LIST.filter(
+                                  (a) => a.group === group && c.sharedAlcohols.includes(a.value)
+                                );
+                                if (groupItems.length === 0) return null;
                                 return (
-                                  <Badge
-                                    key={val}
-                                    variant="outline"
-                                    className={`text-[11px] px-2 py-0.5 ${isBothFav
-                                      ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                                      : "bg-green-500/10 border-green-500/20 text-green-300"
-                                      }`}
-                                  >
-                                    {item.emoji} {item.label}
-                                    {isBothFav && " ⭐"}
-                                  </Badge>
+                                  <div key={group}>
+                                    <p className="text-[9px] text-muted-foreground/70 font-medium uppercase tracking-wider mb-0.5">
+                                      {group}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {groupItems.map((item) => {
+                                        const isBothFav = item.value === myTopPick && item.value === theirTopPick;
+                                        return (
+                                          <span
+                                            key={item.value}
+                                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] border ${
+                                              isBothFav
+                                                ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                                                : "bg-green-500/10 border-green-500/20 text-green-300"
+                                            }`}
+                                          >
+                                            {item.emoji} {item.label}
+                                            {isBothFav && " ⭐"}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
                                 );
                               })}
                             </div>
                           </div>
                         )}
 
-                        {/* Their favorites (not in common) */}
+                        {/* Their favorites (not in common) — grouped by type */}
                         {theirFavorites.filter((a) => !myFavorites.includes(a)).length > 0 && (
                           <div>
                             <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                               <Sparkles className="w-3 h-3 text-purple-400" />
                               Ses goûts à lui/elle (pas les tiens)
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {theirFavorites
-                                .filter((a) => !myFavorites.includes(a))
-                                .map((val) => {
-                                  const item = ALCOHOL_MAP[val];
-                                  if (!item) return null;
-                                  const isTheirFav = val === theirTopPick;
-                                  return (
-                                    <Badge
-                                      key={val}
-                                      variant="outline"
-                                      className={`text-[11px] px-2 py-0.5 ${isTheirFav
-                                        ? "bg-purple-500/15 border-purple-500/30 text-purple-300"
-                                        : "bg-card"
-                                        }`}
-                                    >
-                                      {item.emoji} {item.label}
-                                      {isTheirFav && " ⭐"}
-                                    </Badge>
-                                  );
-                                })}
+                            <div className="space-y-1.5">
+                              {ALCOHOL_GROUPS.map((group) => {
+                                const groupItems = ALCOHOL_LIST.filter(
+                                  (a) => a.group === group && theirFavorites.includes(a.value) && !myFavorites.includes(a.value)
+                                );
+                                if (groupItems.length === 0) return null;
+                                return (
+                                  <div key={group}>
+                                    <p className="text-[9px] text-muted-foreground/70 font-medium uppercase tracking-wider mb-0.5">
+                                      {group}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {groupItems.map((item) => {
+                                        const isTheirFav = item.value === theirTopPick;
+                                        return (
+                                          <span
+                                            key={item.value}
+                                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] border ${
+                                              isTheirFav
+                                                ? "bg-purple-500/15 border-purple-500/30 text-purple-300"
+                                                : "bg-card border-border text-foreground"
+                                            }`}
+                                          >
+                                            {item.emoji} {item.label}
+                                            {isTheirFav && " ⭐"}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}

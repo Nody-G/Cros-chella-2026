@@ -11,7 +11,7 @@ import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
-import { ALCOHOL_MAP } from "@/lib/alcohol-data";
+import { ALCOHOL_MAP, ALCOHOL_LIST, ALCOHOL_GROUPS } from "@/lib/alcohol-data";
 import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
 
 const BED_OPTIONS = [
@@ -518,30 +518,44 @@ function ProfileModal({ participant: p, onClose }: { participant: Participant; o
             </div>
           )}
 
-          {/* Alcools — FULL LIST with names */}
+          {/* Alcools — grouped by type */}
           {alcos.length > 0 && (
             <div className="space-y-2.5">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <Wine className="w-3.5 h-3.5 inline mr-1" />
                 Alcools favoris
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {alcos.map((val: string) => {
-                  const item = ALCOHOL_MAP[val];
-                  const isFav = p.favorite_alcohol === val;
+              <div className="space-y-2">
+                {ALCOHOL_GROUPS.map((group) => {
+                  const groupItems = ALCOHOL_LIST.filter(
+                    (a) => a.group === group && alcos.includes(a.value)
+                  );
+                  if (groupItems.length === 0) return null;
                   return (
-                    <span
-                      key={val}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${
-                        isFav
-                          ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
-                          : "bg-muted/50 border-border text-foreground"
-                      }`}
-                    >
-                      <span>{item?.emoji || "🍺"}</span>
-                      <span>{item?.label || val}</span>
-                      {isFav && <span>⭐</span>}
-                    </span>
+                    <div key={group}>
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                        {group}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {groupItems.map((item) => {
+                          const isFav = p.favorite_alcohol === item.value;
+                          return (
+                            <span
+                              key={item.value}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
+                                isFav
+                                  ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                                  : "bg-muted/50 border-border text-foreground"
+                              }`}
+                            >
+                              <span>{item.emoji}</span>
+                              <span>{item.label}</span>
+                              {isFav && <span>⭐</span>}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
