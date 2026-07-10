@@ -6,10 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, ZoomIn, ZoomOut } from "lucide-react";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, ZoomIn, ZoomOut, Eye, EyeOff } from "lucide-react";
 import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
+import { SMOKING_LIST } from "@/lib/smoking-data";
 import { compressImage, readFileAsDataURL, getCroppedImage, CropArea } from "@/lib/image-utils";
 import Cropper from "react-easy-crop";
 
@@ -53,7 +54,9 @@ export default function ProfilPage() {
   const [alcoholPreferences, setAlcoholPreferences] = useState<string[]>([]);
   const [favoriteAlcohol, setFavoriteAlcohol] = useState("");
   const [showAlcoholPicker, setShowAlcoholPicker] = useState(false);
+  const [smokingPreferences, setSmokingPreferences] = useState<string[]>([]);
   const [personalCode, setPersonalCode] = useState("");
+  const [showPersonalCode, setShowPersonalCode] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
@@ -85,6 +88,7 @@ export default function ProfilPage() {
       setBio(currentParticipant.bio || "");
       setAlcoholPreferences(currentParticipant.alcohol_preferences || []);
       setFavoriteAlcohol(currentParticipant.favorite_alcohol || "");
+      setSmokingPreferences(currentParticipant.smoking_preferences || []);
       setPersonalCode(currentParticipant.password || "");
       setAvatarUrl(currentParticipant.avatar_url || null);
     }
@@ -183,6 +187,7 @@ export default function ProfilPage() {
       bio: bio || null,
       alcohol_preferences: alcoholPreferences.length > 0 ? alcoholPreferences : null,
       favorite_alcohol: favoriteAlcohol || null,
+      smoking_preferences: smokingPreferences.length > 0 ? smokingPreferences : null,
       password: personalCode || null,
     });
     if (success) {
@@ -588,6 +593,43 @@ export default function ProfilPage() {
             </div>
           )}
 
+          {/* Smoking Preferences */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+              🚬 Tu fumes quoi ? <span className="normal-case text-muted-foreground/60">(choisis tout ce qui s&apos;applique)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {SMOKING_LIST.map((item) => {
+                const selected = smokingPreferences.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      setSmokingPreferences((prev) =>
+                        selected
+                          ? prev.filter((v) => v !== item.value)
+                          : [...prev, item.value]
+                      );
+                    }}
+                    className={`px-3 py-2 rounded-xl text-sm border transition-all ${
+                      selected
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border hover:border-primary/30 text-muted-foreground"
+                    }`}
+                  >
+                    {item.emoji} {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            {smokingPreferences.length === 0 && (
+              <p className="text-[10px] text-muted-foreground/60 mt-1.5">
+                Non-fumeur ? Laisse vide, on respecte 🙌
+              </p>
+            )}
+          </div>
+
           {/* Catchphrase */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
@@ -634,13 +676,24 @@ export default function ProfilPage() {
             <label className="text-sm font-medium flex items-center gap-2">
               🔑 Mon code secret
             </label>
-            <Input
-              placeholder="Ex: CROS-1234 ou ton propre code"
-              value={personalCode}
-              onChange={(e) => setPersonalCode(e.target.value)}
-              className="bg-card border-border font-mono"
-              maxLength={20}
-            />
+            <div className="relative">
+              <Input
+                placeholder="Ex: CROS-1234 ou ton propre code"
+                value={personalCode}
+                onChange={(e) => setPersonalCode(e.target.value)}
+                className="bg-card border-border font-mono pr-10"
+                maxLength={20}
+                type={showPersonalCode ? "text" : "password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPersonalCode(!showPersonalCode)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPersonalCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
             <p className="text-[10px] text-muted-foreground">
               Ton code secret personnel. Garde-le pour toi, c&apos;est sacré. 🔒
             </p>

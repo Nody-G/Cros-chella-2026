@@ -4,11 +4,12 @@ import { useEffect, useState, useMemo } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wine, Loader2, Users, Star, Heart, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Wine, Loader2, Users, Star, Heart, Sparkles, ChevronDown, ChevronUp, Cigarette } from "lucide-react";
 import { getParticipants } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { ALCOHOL_MAP } from "@/lib/alcohol-data";
+import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
 import { useAuth } from "@/hooks/use-auth";
 
 interface Compatibility {
@@ -156,6 +157,25 @@ export default function AlcoolPage() {
   const hasData = participants.some(
     (p) => p.alcohol_preferences && p.alcohol_preferences.length > 0
   );
+
+  // Smoking stats
+  const smokingStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let smokerCount = 0;
+    let nonSmokerCount = 0;
+    participants.forEach((p) => {
+      if (p.smoking_preferences && p.smoking_preferences.length > 0) {
+        smokerCount++;
+        p.smoking_preferences.forEach((s) => {
+          counts[s] = (counts[s] || 0) + 1;
+        });
+      } else {
+        nonSmokerCount++;
+      }
+    });
+    const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return { ranked, smokerCount, nonSmokerCount };
+  }, [participants]);
 
   if (loading) {
     return (
@@ -524,6 +544,64 @@ export default function AlcoolPage() {
                 })}
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Smoking section */}
+        {smokingStats.ranked.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-2">
+              <Cigarette className="w-5 h-5 text-primary" />
+              Section Fumeur 🚬
+            </h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              {smokingStats.smokerCount} fumeur{smokingStats.smokerCount > 1 ? "s" : ""} • {smokingStats.nonSmokerCount} non-fumeur{smokingStats.nonSmokerCount > 1 ? "s" : ""}
+            </p>
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                {smokingStats.ranked.map(([value, count], idx) => {
+                  const maxCount = smokingStats.ranked[0][1];
+                  return (
+                    <div key={value} className="flex items-center gap-3">
+                      <div className="text-sm font-bold text-muted-foreground w-5 text-right">
+                        {idx + 1}
+                      </div>
+                      <div className="text-lg">{getSmokingEmoji(value)}</div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground">
+                          {getSmokingLabel(value)}
+                        </span>
+                        <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all"
+                            style={{ width: `${(count / maxCount) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground flex-shrink-0">
+                        {count} {count > 1 ? "potes" : "pote"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Who smokes what */}
+            <div className="mt-4 space-y-2">
+              {participants
+                .filter((p) => p.smoking_preferences && p.smoking_preferences.length > 0)
+                .map((p) => (
+                  <div key={p.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="text-sm">{getEmoji(p.name)}</span>
+                    <span className="font-medium text-foreground">{p.name}</span>
+                    <span>→</span>
+                    <span>
+                      {p.smoking_preferences!.map((s) => `${getSmokingEmoji(s)} ${getSmokingLabel(s)}`).join(", ")}
+                    </span>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
 

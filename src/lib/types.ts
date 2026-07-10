@@ -30,6 +30,7 @@ export interface Participant {
   weakness: string | null;
   alcohol_preferences: string[] | null;
   favorite_alcohol: string | null;
+  smoking_preferences: string[] | null;
 }
 
 export interface Game {

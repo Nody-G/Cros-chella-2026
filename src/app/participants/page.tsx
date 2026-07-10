@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles } from "lucide-react";
+import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette } from "lucide-react";
 import { getParticipants, updateAdminCode } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
 import { ALCOHOL_MAP } from "@/lib/alcohol-data";
+import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
 
 const STATUS_CONFIG = {
   confirmed: { label: "Confirmé ✅", color: "bg-green-500/10 text-green-400 border-green-500/20" },
@@ -485,6 +486,27 @@ function ProfileModal({ participant: p, onClose }: { participant: Participant; o
                   ❤️ Alcool de cœur : {ALCOHOL_MAP[p.favorite_alcohol].emoji} {ALCOHOL_MAP[p.favorite_alcohol].label}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Smoking */}
+          {Array.isArray(p.smoking_preferences) && p.smoking_preferences.length > 0 && (
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <Cigarette className="w-3.5 h-3.5 inline mr-1" />
+                Fumeur
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {p.smoking_preferences.map((val: string) => (
+                  <span
+                    key={val}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-muted/50 border-border text-foreground"
+                  >
+                    <span>{getSmokingEmoji(val)}</span>
+                    <span>{getSmokingLabel(val)}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
