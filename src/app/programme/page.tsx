@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Loader2, MapPin, Clock, Plus, Pencil, Trash2, X, Check, HandHeart, CheckCircle2, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import {
   getProgramWithResponsible,
   createProgram,
@@ -97,7 +98,74 @@ export default function ProgrammePage() {
   };
 
   useEffect(() => {
-    fetchData();
+    let mounted = true;
+
+    async function fetchInitial() {
+      const [progData, propData] = await Promise.all([
+        getProgramWithResponsible(),
+        getProgramProposals(),
+      ]);
+      if (mounted) {
+        setPrograms(progData);
+        setProposals(propData);
+        setLoading(false);
+      }
+    }
+    fetchInitial();
+
+    // Realtime subscription for program + proposals
+    const existingCh1 = supabase.getChannels().find(
+      (ch) => ch.topic === "realtime:program-realtime"
+    );
+    if (existingCh1) supabase.removeChannel(existingCh1);
+    const existingCh2 = supabase.getChannels().find(
+      (ch) => ch.topic === "realtime:proposals-realtime"
+    );
+    if (existingCh2) supabase.removeChannel(existingCh2);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const programChannel = (supabase as any)
+      .channel("program-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "program" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        (_payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+          if (!mounted) return;
+          // Re-fetch to get responsible names (JOIN data)
+          fetchInitial();
+        }
+      )
+      .subscribe();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const proposalsChannel = (supabase as any)
+      .channel("proposals-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "program_proposals" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        (_payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+          if (!mounted) return;
+          fetchInitial();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "program_proposal_votes" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        (_payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+          if (!mounted) return;
+          fetchInitial();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(programChannel);
+      supabase.removeChannel(proposalsChannel);
+    };
   }, []);
 
   // === ADMIN CRUD ===

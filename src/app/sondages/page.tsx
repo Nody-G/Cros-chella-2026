@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Loader2 } from "lucide-react";
 import { getPolls, getPollVotes, votePoll } from "@/lib/supabase-queries";
+import { supabase } from "@/lib/supabase";
 import type { Poll, PollVote } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -16,18 +17,52 @@ export default function SondagesPage() {
   const selectedParticipant = currentParticipant?.id || "";
 
   useEffect(() => {
-    async function fetch() {
+    let mounted = true;
+
+    async function fetchInitial() {
       const pollsData = await getPolls();
+      if (!mounted) return;
       setPolls(pollsData);
 
       const votes: Record<string, PollVote[]> = {};
       for (const poll of pollsData) {
         votes[poll.id] = await getPollVotes(poll.id);
       }
+      if (!mounted) return;
       setVotesMap(votes);
       setLoading(false);
     }
-    fetch();
+    fetchInitial();
+
+    // Realtime subscription for poll votes
+    const existingChannel = supabase.getChannels().find(
+      (ch) => ch.topic === "realtime:polls-realtime"
+    );
+    if (existingChannel) supabase.removeChannel(existingChannel);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const channel = (supabase as any)
+      .channel("polls-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "poll_votes" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        (_payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+          if (!mounted) return;
+          // Re-fetch all votes to update bars in real-time
+          fetchInitial();
+        }
+      )
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          console.log("✅ Realtime polls connecté");
+        }
+      });
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleVote = async (pollId: string, optionIndex: number) => {

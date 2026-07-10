@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wine, Loader2, Users, Star, Heart, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { getParticipants } from "@/lib/supabase-queries";
+import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { ALCOHOL_MAP } from "@/lib/alcohol-data";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,12 +36,54 @@ export default function AlcoolPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetch() {
+    let mounted = true;
+
+    async function fetchData() {
       const data = await getParticipants();
-      setParticipants(data);
-      setLoading(false);
+      if (mounted) {
+        setParticipants(data);
+        setLoading(false);
+      }
     }
-    fetch();
+    fetchData();
+
+    // Realtime subscription for live alcohol preference updates
+    const existingChannel = supabase.getChannels().find(
+      (ch) => ch.topic === "realtime:alcool-realtime"
+    );
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const channel = (supabase as any)
+      .channel("alcool-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "participants" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+          if (!mounted) return;
+          if (payload.eventType === "UPDATE" && payload.new) {
+            const updated = payload.new as unknown as Participant;
+            setParticipants((prev) =>
+              prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+            );
+          } else if (payload.eventType === "INSERT" && payload.new) {
+            setParticipants((prev) => [...prev, payload.new as unknown as Participant]);
+          }
+        }
+      )
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          console.log("✅ Realtime alcool connecté");
+        }
+      });
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Current user's data
