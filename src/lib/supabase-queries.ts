@@ -354,12 +354,13 @@ export async function deleteMessage(messageId: string): Promise<boolean> {
 }
 
 export async function uploadChatImage(authorId: string, file: File): Promise<string | null> {
-  const fileName = `${authorId}_${Date.now()}.jpg`;
+  const ext = file.type === "image/png" ? "png" : "jpg";
+  const fileName = `${authorId}_${Date.now()}.${ext}`;
   const filePath = `chat/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file, { upsert: false, contentType: "image/jpeg" });
+    .upload(filePath, file, { upsert: false, contentType: file.type || "image/jpeg" });
 
   if (uploadError) {
     console.error("Error uploading chat image:", uploadError);

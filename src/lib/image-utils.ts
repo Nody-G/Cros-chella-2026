@@ -18,16 +18,16 @@ const PROFILE_OPTIONS: CompressOptions = {
 };
 
 const CHAT_OPTIONS: CompressOptions = {
-  maxWidth: 1200,
-  maxHeight: 1200,
-  quality: 0.7,
+  maxWidth: 800,
+  maxHeight: 800,
+  quality: 0.6,
   format: "image/jpeg",
 };
 
 const GALLERY_OPTIONS: CompressOptions = {
-  maxWidth: 1600,
-  maxHeight: 1600,
-  quality: 0.75,
+  maxWidth: 1200,
+  maxHeight: 1200,
+  quality: 0.7,
   format: "image/jpeg",
 };
 
