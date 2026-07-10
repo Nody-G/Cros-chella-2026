@@ -31,7 +31,14 @@ const GALLERY_OPTIONS: CompressOptions = {
   format: "image/jpeg",
 };
 
-export type ImagePurpose = "profile" | "chat" | "gallery";
+const PROPOSAL_OPTIONS: CompressOptions = {
+  maxWidth: 1600,
+  maxHeight: 1600,
+  quality: 0.75,
+  format: "image/jpeg",
+};
+
+export type ImagePurpose = "profile" | "chat" | "gallery" | "proposal";
 
 function getOptions(purpose: ImagePurpose): CompressOptions {
   switch (purpose) {
@@ -41,6 +48,8 @@ function getOptions(purpose: ImagePurpose): CompressOptions {
       return CHAT_OPTIONS;
     case "gallery":
       return GALLERY_OPTIONS;
+    case "proposal":
+      return PROPOSAL_OPTIONS;
   }
 }
 
@@ -143,44 +152,37 @@ export interface CropArea {
  */
 export async function getCroppedImage(
   imageSrc: string,
-  crop: CropArea,
-  outputSize: number = 400
+  pixelCrop: CropArea,
+  size?: number
 ): Promise<File> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+
   if (!ctx) throw new Error("Canvas context not available");
 
-  canvas.width = outputSize;
-  canvas.height = outputSize;
+  const targetW = size || pixelCrop.width;
+  const targetH = size || pixelCrop.height;
+  canvas.width = targetW;
+  canvas.height = targetH;
 
-  // Draw the cropped portion
   ctx.drawImage(
     image,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
     0,
     0,
-    outputSize,
-    outputSize
+    pixelCrop.width,
+    pixelCrop.height
   );
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return reject(new Error("Crop failed"));
-        resolve(
-          new File([blob], "avatar.jpg", {
-            type: "image/jpeg",
-            lastModified: Date.now(),
-          })
-        );
-      },
-      "image/jpeg",
-      0.85
-    );
+    canvas.toBlob((blob) => {
+      if (blob) resolve(new File([blob], "cropped.jpg", { type: "image/jpeg" }));
+      else reject(new Error("Crop failed"));
+    }, "image/jpeg");
   });
 }
 
@@ -188,7 +190,7 @@ function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.addEventListener("load", () => resolve(img));
-    img.addEventListener("error", (err) => reject(err));
+    img.addEventListener("error", (error) => reject(error));
     img.setAttribute("crossOrigin", "anonymous");
     img.src = url;
   });

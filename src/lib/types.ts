@@ -82,6 +82,7 @@ export interface ProgramProposal {
   location: string | null;
   image_url: string | null;
   vote_count: number;
+  voter_ids?: string[];
   status: "pending" | "approved" | "rejected";
   created_at: string;
   // Joined
@@ -151,6 +152,7 @@ export interface Photo {
   author_id: string;
   url: string;
   caption: string | null;
+  comment_count?: number;
   created_at: string;
   // Joined
   author?: Participant;

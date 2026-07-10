@@ -620,7 +620,7 @@ export async function unassignTask(programId: string): Promise<boolean> {
 export async function getProgramProposals(): Promise<ProgramProposal[]> {
   const { data, error } = await supabase
     .from("program_proposals")
-    .select("*, proposer:participants(*)")
+    .select("*, proposer:participants(*), votes:program_proposal_votes(participant_id)")
     .order("vote_count", { ascending: false });
 
   if (error) {
@@ -759,6 +759,28 @@ export async function getProposalVotes(proposalId: string): Promise<ProgramPropo
   return data as ProgramProposalVote[];
 }
 
+export async function getProposalVoters(proposalId: string): Promise<{ id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[]> {
+  const { data, error } = await supabase
+    .from("program_proposal_votes")
+    .select("participant_id")
+    .eq("proposal_id", proposalId);
+
+  if (error) {
+    console.error("Error fetching proposal voters:", error);
+    return [];
+  }
+
+  if (!data || data.length === 0) return [];
+
+  const participantIds = data.map((v) => v.participant_id);
+  const { data: participants } = await supabase
+    .from("participants")
+    .select("id, pseudo, name, emoji_avatar")
+    .in("id", participantIds);
+
+  return (participants || []) as { id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[];
+}
+
 export async function approveProposal(proposalId: string): Promise<boolean> {
   const { error } = await supabase
     .from("program_proposals")
@@ -822,6 +844,19 @@ export async function deleteProposalComment(commentId: string): Promise<boolean>
 
   if (error) {
     console.error("Error deleting proposal comment:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateProposalComment(commentId: string, newContent: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("proposal_comments")
+    .update({ content: newContent })
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error updating proposal comment:", error);
     return false;
   }
   return true;

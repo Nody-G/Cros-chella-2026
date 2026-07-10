@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Trash2, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { getProposalComments, addProposalComment, deleteProposalComment } from "@/lib/supabase-queries";
+import { Loader2, Trash2, Pencil, Check, X } from "lucide-react";
+import { getProposalComments, addProposalComment, deleteProposalComment, updateProposalComment } from "@/lib/supabase-queries";
 import type { ProposalComment, Participant } from "@/lib/types";
 
 interface ProposalCommentsProps {
@@ -18,6 +17,9 @@ export function ProposalComments({ proposalId, currentParticipant, isAdmin }: Pr
   const [input, setInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadComments = async () => {
     const data = await getProposalComments(proposalId);
@@ -25,7 +27,6 @@ export function ProposalComments({ proposalId, currentParticipant, isAdmin }: Pr
     setLoaded(true);
   };
 
-  // Load on first render
   if (!loaded) {
     loadComments();
   }
@@ -44,50 +45,91 @@ export function ProposalComments({ proposalId, currentParticipant, isAdmin }: Pr
   const handleDelete = async (commentId: string) => {
     setDeletingId(commentId);
     const success = await deleteProposalComment(commentId);
+    if (success) await loadComments();
+    setDeletingId(null);
+  };
+
+  const handleStartEdit = (comment: ProposalComment) => {
+    setEditingId(comment.id);
+    setEditContent(comment.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editContent.trim()) return;
+    setSavingEdit(true);
+    const success = await updateProposalComment(commentId, editContent.trim());
     if (success) {
+      setEditingId(null);
+      setEditContent("");
       await loadComments();
     }
-    setDeletingId(null);
+    setSavingEdit(false);
   };
 
   return (
     <div className="mt-3 pt-3 border-t border-border space-y-2">
-      {/* Existing comments */}
       {comments.length === 0 ? (
         <p className="text-[10px] text-muted-foreground italic">Aucun commentaire. Sois le premier ! 💬</p>
       ) : (
-        comments.map((comment) => (
-          <div key={comment.id} className="flex items-start gap-2">
-            <span className="text-sm flex-shrink-0">{comment.author?.emoji_avatar || "👤"}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold">
-                  {comment.author?.pseudo || comment.author?.name || "Anonyme"}
-                </span>
-                <span className="text-[9px] text-muted-foreground">
-                  {new Date(comment.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-                {(comment.author_id === currentParticipant?.id || isAdmin) && (
-                  <button
-                    onClick={() => handleDelete(comment.id)}
-                    disabled={deletingId === comment.id}
-                    className="ml-auto text-muted-foreground hover:text-destructive"
-                  >
-                    {deletingId === comment.id ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-3 h-3" />
-                    )}
-                  </button>
+        comments.map((comment) => {
+          const isMyComment = comment.author_id === currentParticipant?.id;
+          const isEditing = editingId === comment.id;
+
+          return (
+            <div key={comment.id} className="flex items-start gap-2">
+              <span className="text-sm flex-shrink-0">{comment.author?.emoji_avatar || "👤"}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-semibold">
+                    {comment.author?.pseudo || comment.author?.name || "Anonyme"}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground">
+                    {new Date(comment.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  {!isEditing && (isMyComment || isAdmin) && (
+                    <div className="ml-auto flex items-center gap-1">
+                      {isMyComment && (
+                        <button onClick={() => handleStartEdit(comment)} className="text-muted-foreground hover:text-primary">
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(comment.id)} disabled={deletingId === comment.id} className="text-muted-foreground hover:text-destructive">
+                        {deletingId === comment.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditing ? (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <input
+                      type="text"
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(comment.id); if (e.key === "Escape") handleCancelEdit(); }}
+                      className="flex-1 text-xs bg-muted border border-border rounded px-2 py-1"
+                      autoFocus
+                    />
+                    <button onClick={() => handleSaveEdit(comment.id)} disabled={savingEdit} className="text-green-400 hover:text-green-300">
+                      {savingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                    </button>
+                    <button onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-foreground/80 mt-0.5 break-words">{comment.content}</p>
                 )}
               </div>
-              <p className="text-xs text-foreground/80 mt-0.5 break-words">{comment.content}</p>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
 
-      {/* Comment input */}
       <div className="flex items-center gap-2 mt-2">
         <input
           type="text"
@@ -95,21 +137,15 @@ export function ProposalComments({ proposalId, currentParticipant, isAdmin }: Pr
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
-          className="flex-1 h-8 rounded-md bg-card border border-border text-xs px-3 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="flex-1 text-xs bg-muted border border-border rounded-lg px-3 py-2"
         />
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 px-2"
-          disabled={submitting || !input.trim()}
+        <button
           onClick={handleSubmit}
+          disabled={submitting || !input.trim()}
+          className="h-8 px-2 text-muted-foreground hover:text-primary disabled:opacity-50"
         >
-          {submitting ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Check className="w-3.5 h-3.5" />
-          )}
-        </Button>
+          {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "💬"}
+        </button>
       </div>
     </div>
   );
