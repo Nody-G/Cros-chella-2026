@@ -121,19 +121,6 @@ INSERT INTO participants (name, pseudo, status, is_admin, bio) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
--- Données initiales — Programme type
--- ============================================
-INSERT INTO program (title, description, emoji, day, start_time, end_time, location, sort_order) VALUES
-  ('Arrivée & Installation', 'Check-in, choix des chambres, premier apéro', '🏠', 'friday', '18:00', '20:00', 'La maison', 1),
-  ('Soirée d''accueil', 'Apéro, musique, premier jeu mystère révélé', '🎉', 'friday', '20:00', '02:00', 'Salon / Terrasse', 2),
-  ('Réveil & Petit-déj', 'Café, tartines, mal de tête', '☕', 'saturday', '09:00', '11:00', 'Cuisine', 3),
-  ('Baignade', 'Direction les spots de baignade !', '🏊', 'saturday', '11:30', '15:00', 'Spots de baignade', 4),
-  ('Jeux de l''après-midi', 'Les jeux mystères se succèdent', '🎮', 'saturday', '15:30', '19:00', 'Jardin / Salon', 5),
-  ('Gros Soirée', 'BBQ, musique, fête, débauche', '🔥', 'saturday', '20:00', '03:00', 'Partout', 6),
-  ('Dimanche Chill', 'Baignade tranquille, rangement, au revoir', '☀️', 'sunday', '10:00', '16:00', 'Maison / Spots', 7)
-ON CONFLICT DO NOTHING;
-
--- ============================================
 -- Données initiales — Spots de baignade
 -- ============================================
 INSERT INTO spots (name, description, maps_url, danger_level, sort_order) VALUES
