@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, Eye, EyeOff } from "lucide-react";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, Eye, EyeOff, ZoomIn, RotateCw } from "lucide-react";
 import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
 import { SMOKING_LIST } from "@/lib/smoking-data";
-import { compressImage } from "@/lib/image-utils";
+import { compressImage, getCroppedImage } from "@/lib/image-utils";
+import Cropper from "react-easy-crop";
+import type { Point, Area } from "react-easy-crop";
 
 const EMOJI_CHOICES = [
   "😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸",
@@ -52,7 +54,6 @@ export default function ProfilPage() {
   const [bio, setBio] = useState("");
   const [alcoholPreferences, setAlcoholPreferences] = useState<string[]>([]);
   const [favoriteAlcohol, setFavoriteAlcohol] = useState("");
-  const [showAlcoholPicker, setShowAlcoholPicker] = useState(false);
   const [smokingPreferences, setSmokingPreferences] = useState<string[]>([]);
   const [personalCode, setPersonalCode] = useState("");
   const [showPersonalCode, setShowPersonalCode] = useState(false);
@@ -62,6 +63,13 @@ export default function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Crop modal state
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [cropping, setCropping] = useState(false);
 
   useEffect(() => {
     if (currentParticipant) {
@@ -84,13 +92,41 @@ export default function ProfilPage() {
     }
   }, [currentParticipant]);
 
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentParticipant) return;
+    if (!file) return;
     setShowPhotoMenu(false);
-    setUploading(true);
+
+    // Read file as data URL for the cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setRotation(0);
+      setCroppedAreaPixels(null);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleCropConfirm = async () => {
+    if (!cropSrc || !croppedAreaPixels || !currentParticipant) return;
+    setCropping(true);
     try {
-      const compressed = await compressImage(file, "profile");
+      // Generate cropped image blob
+      const croppedBlob = await getCroppedImage(cropSrc, croppedAreaPixels, rotation);
+      const croppedFile = new File([croppedBlob], "profile.jpg", { type: "image/jpeg" });
+
+      // Compress the cropped result
+      const compressed = await compressImage(croppedFile, "profile");
+
+      // Upload
+      setUploading(true);
       const url = await uploadProfilePhoto(currentParticipant.id, compressed);
       if (url) {
         setAvatarUrl(url);
@@ -98,14 +134,20 @@ export default function ProfilPage() {
         await refreshAuth();
       }
     } catch (err) {
-      console.error("Photo upload error:", err);
+      console.error("Crop/upload error:", err);
     }
     setUploading(false);
-    e.target.value = "";
+    setCropping(false);
+    setCropSrc(null);
   };
 
-
-
+  const handleCropCancel = () => {
+    setCropSrc(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+    setCroppedAreaPixels(null);
+  };
 
   const handleDeletePhoto = async () => {
     if (!currentParticipant) return;
@@ -385,8 +427,8 @@ export default function ProfilPage() {
                       : "border-border bg-card hover:border-primary/30"
                   }`}
                 >
-                  <span className="text-sm font-medium block">{role.label}</span>
-                  <span className="text-[10px] text-muted-foreground block mt-0.5">{role.desc}</span>
+                  <span className="text-sm font-medium">{role.label}</span>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{role.desc}</p>
                 </button>
               ))}
             </div>
@@ -395,10 +437,10 @@ export default function ProfilPage() {
           {/* Special skill */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              Ta spécialité <span className="normal-case text-muted-foreground/60">(ex: &quot;Ouverture de bière avec les dents&quot;)</span>
+              Ta spécialité 🎯
             </label>
             <Input
-              placeholder="Quelque chose d'unique"
+              placeholder="Ex: Ouvrir les bières avec les dents"
               value={specialSkill}
               onChange={(e) => setSpecialSkill(e.target.value)}
               className="bg-card border-border"
@@ -408,10 +450,10 @@ export default function ProfilPage() {
           {/* Superpower */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              ⚡ Ton super-pouvoir
+              Ton super-pouvoir ⚡
             </label>
             <Input
-              placeholder="Ex: &quot;Ne jamais être saoul&quot;"
+              placeholder="Ex: Ne jamais être saoul"
               value={superpower}
               onChange={(e) => setSuperpower(e.target.value)}
               className="bg-card border-border"
@@ -421,172 +463,23 @@ export default function ProfilPage() {
           {/* Weakness */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              💀 Ta faiblesse
+              Ta faiblesse 💀
             </label>
             <Input
-              placeholder="Ex: &quot;Le fromage. Tout le fromage.&quot;"
+              placeholder="Ex: Le shots de tequila"
               value={weakness}
               onChange={(e) => setWeakness(e.target.value)}
               className="bg-card border-border"
             />
           </div>
 
-          {/* Alcohol Preferences */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              🍻 Tes alcools préférés <span className="normal-case text-muted-foreground/60">(choisis-en plusieurs)</span>
-            </label>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-between mb-2"
-              onClick={() => setShowAlcoholPicker(!showAlcoholPicker)}
-            >
-              <span className="text-sm truncate">
-                {alcoholPreferences.length === 0
-                  ? "Sélectionne tes alcools..."
-                  : `${alcoholPreferences.length} sélectionné${alcoholPreferences.length > 1 ? "s" : ""}`}
-              </span>
-              <span>{showAlcoholPicker ? "▲" : "▼"}</span>
-            </Button>
-
-            {showAlcoholPicker && (
-              <Card className="border-border max-h-[350px] overflow-y-auto">
-                <CardContent className="p-3 space-y-3">
-                  {Object.entries(
-                    ALCOHOL_LIST.reduce((acc, item) => {
-                      if (!acc[item.group]) acc[item.group] = [];
-                      acc[item.group].push(item);
-                      return acc;
-                    }, {} as Record<string, typeof ALCOHOL_LIST>)
-                  ).map(([group, items]) => (
-                    <div key={group}>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                        {group}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {items.map((item) => {
-                          const selected = alcoholPreferences.includes(item.value);
-                          return (
-                            <button
-                              key={item.value}
-                              type="button"
-                              onClick={() => {
-                                setAlcoholPreferences((prev) =>
-                                  selected
-                                    ? prev.filter((v) => v !== item.value)
-                                    : [...prev, item.value]
-                                );
-                              }}
-                              className={`px-2 py-1 rounded-full text-xs border transition-all ${
-                                selected
-                                  ? "border-primary bg-primary/15 text-primary"
-                                  : "border-border hover:border-primary/30 text-muted-foreground"
-                              }`}
-                            >
-                              {item.emoji} {item.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Selected tags */}
-            {alcoholPreferences.length > 0 && !showAlcoholPicker && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {alcoholPreferences.map((val) => {
-                  const item = ALCOHOL_LIST.find((a) => a.value === val);
-                  return (
-                    <span
-                      key={val}
-                      className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary border border-primary/20"
-                    >
-                      {item?.emoji} {item?.label || val}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Favorite alcohol (single) */}
-          {alcoholPreferences.length > 0 && (
-            <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                ⭐ Ton alcool N°1 <span className="normal-case text-muted-foreground/60">(parmi tes sélections)</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {alcoholPreferences.map((val) => {
-                  const item = ALCOHOL_LIST.find((a) => a.value === val);
-                  const isFav = favoriteAlcohol === val;
-                  return (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setFavoriteAlcohol(isFav ? "" : val)}
-                      className={`px-2.5 py-1.5 rounded-full text-xs border transition-all ${
-                        isFav
-                          ? "border-amber-400 bg-amber-400/15 text-amber-300 font-bold shadow-sm shadow-amber-400/20"
-                          : "border-border hover:border-amber-400/30 text-muted-foreground"
-                      }`}
-                    >
-                      {item?.emoji} {item?.label || val}
-                      {isFav ? " ⭐" : ""}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Smoking Preferences */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              🚬 Tu fumes quoi ? <span className="normal-case text-muted-foreground/60">(choisis tout ce qui s&apos;applique)</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {SMOKING_LIST.map((item) => {
-                const selected = smokingPreferences.includes(item.value);
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => {
-                      setSmokingPreferences((prev) =>
-                        selected
-                          ? prev.filter((v) => v !== item.value)
-                          : [...prev, item.value]
-                      );
-                    }}
-                    className={`px-3 py-2 rounded-xl text-sm border transition-all ${
-                      selected
-                        ? "border-primary bg-primary/15 text-primary"
-                        : "border-border hover:border-primary/30 text-muted-foreground"
-                    }`}
-                  >
-                    {item.emoji} {item.label}
-                  </button>
-                );
-              })}
-            </div>
-            {smokingPreferences.length === 0 && (
-              <p className="text-[10px] text-muted-foreground/60 mt-1.5">
-                Non-fumeur ? Laisse vide, on respecte 🙌
-              </p>
-            )}
-          </div>
-
           {/* Catchphrase */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              🗣️ Ta phrase fétiche
+              Ta phrase fétiche 🗣️
             </label>
             <Input
-              placeholder="Ex: &quot;C'est pas moi c'est le vent&quot;"
+              placeholder="Ex: &quot;C&apos;est pas moi c&apos;est le vent&quot;"
               value={catchphrase}
               onChange={(e) => setCatchphrase(e.target.value)}
               className="bg-card border-border"
@@ -596,47 +489,135 @@ export default function ProfilPage() {
           {/* Theme song */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              🎵 Ton hymne
+              Ton hymne 🎵
             </label>
             <Input
-              placeholder="Ex: &quot;Darude - Sandstorm&quot;"
+              placeholder="Ex: Darude - Sandstorm"
               value={themeSong}
               onChange={(e) => setThemeSong(e.target.value)}
               className="bg-card border-border"
             />
           </div>
 
+          {/* Alcohol preferences */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+              Tes préférences alcool 🍻
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {ALCOHOL_LIST.map((item) => {
+                const selected = alcoholPreferences.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      setAlcoholPreferences((prev) =>
+                        selected ? prev.filter((v) => v !== item.value) : [...prev, item.value]
+                      );
+                    }}
+                    className={`p-2 rounded-xl border text-center transition-all text-xs ${
+                      selected
+                        ? "border-amber-400 bg-amber-400/10"
+                        : "border-border bg-card hover:border-amber-400/30"
+                    }`}
+                  >
+                    <span className="text-lg">{item.emoji}</span>
+                    <p className="mt-0.5 truncate">{item.label}</p>
+                  </button>
+                );
+              })}
+            </div>
+            {alcoholPreferences.length > 0 && (
+              <div className="mt-3">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1 block">
+                  ⭐ Ton alcool préféré
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {alcoholPreferences.map((val) => {
+                    const item = ALCOHOL_LIST.find((a) => a.value === val);
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setFavoriteAlcohol(favoriteAlcohol === val ? "" : val)}
+                        className={`px-2.5 py-1 rounded-full text-xs border transition-all ${
+                          favoriteAlcohol === val
+                            ? "border-amber-400 bg-amber-400/20 text-amber-300"
+                            : "border-border bg-card hover:border-amber-400/30"
+                        }`}
+                      >
+                        {item?.emoji} {item?.label}
+                        {favoriteAlcohol === val && " ⭐"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Smoking preferences */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+              Tabac / Vape 🚬
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {SMOKING_LIST.map((item) => {
+                const selected = smokingPreferences.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      setSmokingPreferences((prev) =>
+                        selected ? prev.filter((v) => v !== item.value) : [...prev, item.value]
+                      );
+                    }}
+                    className={`p-2 rounded-xl border text-center transition-all text-xs ${
+                      selected
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="text-lg">{item.emoji}</span>
+                    <p className="mt-0.5">{item.label}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Bio */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-              Bio <span className="normal-case text-muted-foreground/60">(décris-toi en quelques mots)</span>
+              Ta bio 📝
             </label>
-            <textarea
-              placeholder="Qui es-tu vraiment ?"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              maxLength={300}
-              rows={3}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            <p className="text-[10px] text-muted-foreground mt-1 text-right">{bio.length}/300</p>
+            <div className="relative">
+              <textarea
+                placeholder="Raconte ta vie (ou pas)"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={300}
+                className="w-full min-h-[100px] rounded-md border border-border bg-card px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
+                {bio.length}/300
+              </span>
+            </div>
           </div>
 
           {/* Personal code */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              🔑 Mon code secret
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+              Code secret 🔒
             </label>
             <div className="relative">
               <Input
-                placeholder="Ex: CROS-1234 ou ton propre code"
+                placeholder="Ton code personnel"
                 value={personalCode}
                 onChange={(e) => setPersonalCode(e.target.value)}
-                className="bg-card border-border font-mono pr-10"
-                maxLength={20}
+                className="bg-card border-border pr-10"
                 type={showPersonalCode ? "text" : "password"}
               />
               <button
@@ -686,6 +667,93 @@ export default function ProfilPage() {
           </Button>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 shrink-0">
+            <button
+              onClick={handleCropCancel}
+              className="text-white/80 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              Annuler
+            </button>
+            <span className="text-white font-semibold text-sm">Recadre ta photo 📸</span>
+            <button
+              onClick={handleCropConfirm}
+              disabled={cropping}
+              className="text-primary font-semibold text-sm px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors disabled:opacity-50"
+            >
+              {cropping ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "OK ✓"
+              )}
+            </button>
+          </div>
+
+          {/* Cropper area */}
+          <div className="relative flex-1 min-h-0">
+            <Cropper
+              image={cropSrc}
+              crop={crop}
+              zoom={zoom}
+              rotation={rotation}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              style={{
+                containerStyle: { borderRadius: 0 },
+                cropAreaStyle: {
+                  border: "3px solid rgba(255, 255, 255, 0.8)",
+                  borderRadius: "50%",
+                },
+              }}
+            />
+          </div>
+
+          {/* Controls */}
+          <div className="px-6 py-4 space-y-4 shrink-0 bg-black/60 backdrop-blur-sm">
+            {/* Zoom slider */}
+            <div className="flex items-center gap-3">
+              <ZoomIn className="w-4 h-4 text-white/60 shrink-0" />
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 accent-primary h-1.5"
+              />
+              <span className="text-white/60 text-xs w-8 text-right">{zoom.toFixed(1)}×</span>
+            </div>
+
+            {/* Rotation slider */}
+            <div className="flex items-center gap-3">
+              <RotateCw className="w-4 h-4 text-white/60 shrink-0" />
+              <input
+                type="range"
+                min={0}
+                max={360}
+                step={1}
+                value={rotation}
+                onChange={(e) => setRotation(Number(e.target.value))}
+                className="flex-1 accent-primary h-1.5"
+              />
+              <span className="text-white/60 text-xs w-8 text-right">{rotation}°</span>
+            </div>
+
+            <p className="text-white/40 text-[10px] text-center">
+              Pince-zoom pour agrandir · Glisse pour positionner
+            </p>
+          </div>
+        </div>
+      )}
 
       <MobileNav />
     </main>
