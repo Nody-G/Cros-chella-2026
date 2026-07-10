@@ -249,6 +249,15 @@ export default function ParticipantsPage() {
                               </span>
                             </div>
                           )}
+
+                          {p.attendance && (
+                            <div className="mt-1 text-xs">
+                              <span className="text-muted-foreground">Présence : </span>
+                              <span>
+                                {p.attendance === "yes" ? "✅ Viens" : p.attendance === "maybe" ? "🤔 Peut-être" : "❌ Pas dispo"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -525,6 +534,18 @@ function ProfileModal({ participant: p, onClose }: { participant: Participant; o
               <span className="text-2xl">{"🔥".repeat(p.hype_level ?? 0)}</span>
               <p className="text-xs text-muted-foreground mt-1">
                 Niveau de hype : {p.hype_level}/5
+              </p>
+            </div>
+          )}
+
+          {/* Attendance */}
+          {p.attendance && (
+            <div className="text-center py-2">
+              <span className="text-2xl">
+                {p.attendance === "yes" ? "✅" : p.attendance === "maybe" ? "🤔" : "❌"}
+              </span>
+              <p className="text-xs text-muted-foreground mt-1">
+                {p.attendance === "yes" ? "Viens !" : p.attendance === "maybe" ? "Peut-être" : "Pas dispo"}
               </p>
             </div>
           )}

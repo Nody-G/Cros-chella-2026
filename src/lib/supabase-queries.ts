@@ -115,6 +115,19 @@ export async function updateHype(name: string, hypeLevel: number): Promise<boole
   return true;
 }
 
+export async function updateAttendance(participantId: string, attendance: "yes" | "maybe" | "no"): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ attendance, updated_at: new Date().toISOString() })
+    .eq("id", participantId);
+
+  if (error) {
+    console.error("Error updating attendance:", error);
+    return false;
+  }
+  return true;
+}
+
 // ============================================
 // GAMES
 // ============================================

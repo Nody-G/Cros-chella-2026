@@ -1,17 +1,7 @@
 -- ============================================
 -- CROS-HELLA — Supabase Schema
+-- ⚠️  SAFE: CREATE IF NOT EXISTS only — NEVER drops data
 -- ============================================
-
--- Drop existing tables if they exist to reset clean
-DROP TABLE IF EXISTS photo_likes CASCADE;
-DROP TABLE IF EXISTS photos CASCADE;
-DROP TABLE IF EXISTS messages CASCADE;
-DROP TABLE IF EXISTS poll_votes CASCADE;
-DROP TABLE IF EXISTS polls CASCADE;
-DROP TABLE IF EXISTS spots CASCADE;
-DROP TABLE IF EXISTS program CASCADE;
-DROP TABLE IF EXISTS games CASCADE;
-DROP TABLE IF EXISTS participants CASCADE;
 
 -- Participants
 CREATE TABLE IF NOT EXISTS participants (
@@ -152,6 +142,7 @@ ON CONFLICT DO NOTHING;
 
 -- ============================================
 -- RLS (Row Level Security) — Permissive pour l'instant
+-- Idempotent: DO blocks check if policy exists
 -- ============================================
 ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE games ENABLE ROW LEVEL SECURITY;
@@ -163,16 +154,15 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photo_likes ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for anon (on protègera plus tard)
-CREATE POLICY "Allow all on participants" ON participants FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on games" ON games FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on program" ON program FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on spots" ON spots FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on polls" ON polls FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on poll_votes" ON poll_votes FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on messages" ON messages FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on photos" ON photos FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on photo_likes" ON photo_likes FOR ALL USING (true) WITH CHECK (true);
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on participants') THEN CREATE POLICY "Allow all on participants" ON participants FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on games') THEN CREATE POLICY "Allow all on games" ON games FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on program') THEN CREATE POLICY "Allow all on program" ON program FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on spots') THEN CREATE POLICY "Allow all on spots" ON spots FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on polls') THEN CREATE POLICY "Allow all on polls" ON polls FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on poll_votes') THEN CREATE POLICY "Allow all on poll_votes" ON poll_votes FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on messages') THEN CREATE POLICY "Allow all on messages" ON messages FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on photos') THEN CREATE POLICY "Allow all on photos" ON photos FOR ALL USING (true) WITH CHECK (true); END IF; END $;
+DO $ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on photo_likes') THEN CREATE POLICY "Allow all on photo_likes" ON photo_likes FOR ALL USING (true) WITH CHECK (true); END IF; END $;
 
 -- Enable Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;

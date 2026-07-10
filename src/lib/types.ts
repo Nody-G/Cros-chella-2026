@@ -1,4 +1,5 @@
 export type ParticipantStatus = "confirmed" | "pending" | "declined";
+export type AttendanceStatus = "yes" | "maybe" | "no";
 export type GameCategory = "quiz" | "physical" | "alcohol" | "disgusting" | "culture" | "creative" | "strategy" | "speed" | "luck" | "social" | "mystery" | "other";
 export type ProgramDay = "friday" | "saturday" | "sunday";
 export type DangerLevel = "easy" | "normal" | "hard" | "extreme";
@@ -16,6 +17,7 @@ export interface Participant {
   admin_code?: string | null;
   is_admin: boolean;
   hype_level: number;
+  attendance: AttendanceStatus | null;
   created_at: string;
   updated_at: string;
   // Profil personnalisé

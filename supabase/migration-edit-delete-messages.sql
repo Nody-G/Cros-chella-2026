@@ -6,4 +6,8 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted_at timestamptz DEFAULT NUL
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at timestamptz DEFAULT NULL;
 
 -- Enable realtime for UPDATE and DELETE on messages
-ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+EXCEPTION WHEN duplicate_object THEN
+  -- already a member, ignore
+END $$;

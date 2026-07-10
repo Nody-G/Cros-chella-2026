@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS program_proposal_votes (
 ALTER TABLE program_proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE program_proposal_votes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow all on program_proposals" ON program_proposals FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on program_proposal_votes" ON program_proposal_votes FOR ALL USING (true) WITH CHECK (true);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on program_proposals') THEN CREATE POLICY "Allow all on program_proposals" ON program_proposals FOR ALL USING (true) WITH CHECK (true); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all on program_proposal_votes') THEN CREATE POLICY "Allow all on program_proposal_votes" ON program_proposal_votes FOR ALL USING (true) WITH CHECK (true); END IF; END $$;
 
 -- 6) RPC functions for vote counting
 CREATE OR REPLACE FUNCTION increment_vote_count(p_id UUID)
