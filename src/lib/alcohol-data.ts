@@ -80,6 +80,8 @@ export const ALCOHOL_LIST: AlcoholItem[] = [
   { value: "jus_fruit", label: "Jus de fruits", emoji: "🧃", group: "Soft" },
   { value: "soda", label: "Soda / Soft drink", emoji: "🥤", group: "Soft" },
   { value: "eau", label: "Eau (on est responsable)", emoji: "💧", group: "Soft" },
+  // Divers / Spécial
+  { value: "wd40", label: "WD-40", emoji: "🛢️", group: "Divers / Spécial" },
 ];
 
 // Quick lookup map

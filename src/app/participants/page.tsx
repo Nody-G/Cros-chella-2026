@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Crown, Bed, Loader2 } from "lucide-react";
 import { getParticipants, updateAdminCode } from "@/lib/supabase-queries";
+import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,21 @@ export default function ParticipantsPage() {
       setLoading(false);
     }
     fetch();
+
+    // Realtime subscription for live status/hype updates
+    const channel = supabase
+      .channel("participants-realtime")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "participants" }, (payload) => {
+        const updated = payload.new as Participant;
+        setParticipants((prev) =>
+          prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+        );
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const [generatingId, setGeneratingId] = useState<string | null>(null);

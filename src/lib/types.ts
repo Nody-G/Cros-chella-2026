@@ -126,6 +126,8 @@ export interface Message {
   image_url: string | null;
   reactions: Record<string, string[]>;
   created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
   // Joined
   author?: Participant;
 }

@@ -38,6 +38,7 @@ export function HypeSection() {
   };
 
   if (submitted) {
+    const isConfirmed = hype >= 4;
     return (
       <section className="px-4 py-16 max-w-lg mx-auto text-center" id="hype">
         <div className="p-8 rounded-2xl bg-card border border-primary/20 card-glow-gold">
@@ -49,7 +50,9 @@ export function HypeSection() {
             Niveau de hype : {HYPE_LABELS[hype - 1]?.emoji} {HYPE_LABELS[hype - 1]?.label}
           </p>
           <p className="text-muted-foreground text-xs mt-3">
-            On te tient au courant pour la suite...
+            {isConfirmed
+              ? "✅ Tu es confirmé(e) ! On te compte parmi les frérots."
+              : "🤔 Pas encore sûr(e) ? On te tient au courant pour la suite..."}
           </p>
         </div>
       </section>

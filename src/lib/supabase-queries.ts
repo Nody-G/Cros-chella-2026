@@ -96,9 +96,11 @@ export async function deleteProfilePhoto(participantId: string): Promise<boolean
 }
 
 export async function updateHype(name: string, hypeLevel: number): Promise<boolean> {
+  // Map hype level to status: 1-3 = pending, 4-6 = confirmed
+  const status = hypeLevel >= 4 ? "confirmed" : "pending";
   const { error } = await supabase
     .from("participants")
-    .update({ hype_level: hypeLevel, updated_at: new Date().toISOString() })
+    .update({ hype_level: hypeLevel, status, updated_at: new Date().toISOString() })
     .ilike("name", name);
 
   if (error) {
@@ -320,6 +322,32 @@ export async function sendMessage(authorId: string, content: string, imageUrl?: 
 
   if (error) {
     console.error("Error sending message:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function editMessage(messageId: string, newContent: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("messages")
+    .update({ content: newContent, edited_at: new Date().toISOString() })
+    .eq("id", messageId);
+
+  if (error) {
+    console.error("Error editing message:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteMessage(messageId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("messages")
+    .update({ deleted_at: new Date().toISOString(), content: "", image_url: null })
+    .eq("id", messageId);
+
+  if (error) {
+    console.error("Error deleting message:", error);
     return false;
   }
   return true;

@@ -105,6 +105,28 @@ export default function ProfilPage() {
     e.target.value = "";
   };
 
+  const handleRecropPhoto = async () => {
+    if (!avatarUrl) return;
+    setShowPhotoMenu(false);
+    try {
+      // Fetch the remote image as blob to avoid CORS issues with canvas
+      const response = await fetch(avatarUrl);
+      const blob = await response.blob();
+      const dataUrl = await readFileAsDataURL(new File([blob], "photo.jpg", { type: blob.type }));
+      setCropSrc(dataUrl);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
+    } catch (err) {
+      console.error("Failed to load photo for recrop:", err);
+      // Fallback: try direct URL
+      setCropSrc(avatarUrl);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
+    }
+  };
+
   const handleCropConfirm = async () => {
     if (!cropSrc || !croppedAreaPixels || !currentParticipant) return;
 
@@ -192,7 +214,7 @@ export default function ProfilPage() {
         </p>
 
         {/* Preview card */}
-        <Card className="mb-6 card-glow-gold overflow-hidden">
+        <Card className="mb-6 card-glow-gold">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="relative group shrink-0">
@@ -210,7 +232,7 @@ export default function ProfilPage() {
                 <button
                   type="button"
                   onClick={() => setShowPhotoMenu(!showPhotoMenu)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer z-10"
                 >
                   {uploading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -239,6 +261,14 @@ export default function ProfilPage() {
                     {avatarUrl && (
                       <>
                         <div className="border-t border-border my-1" />
+                        <button
+                          type="button"
+                          onClick={handleRecropPhoto}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                        >
+                          <ZoomIn className="w-4 h-4 text-primary" />
+                          ✂️ Recadrer / Ajuster
+                        </button>
                         <button
                           type="button"
                           onClick={handleDeletePhoto}

@@ -4,9 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus } from "lucide-react";
+import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getMessages, sendMessage, uploadChatImage } from "@/lib/supabase-queries";
+import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -20,6 +20,9 @@ export default function ChatPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
   const { currentParticipant } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -35,12 +38,11 @@ export default function ChatPage() {
     }
     fetch();
 
-    // Subscribe to new messages
+    // Subscribe to new messages + edits + deletes
     const channel = supabase
       .channel("messages")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async (payload) => {
         const newMsg = payload.new as Message;
-        // Fetch author info
         const { data: author } = await supabase
           .from("participants")
           .select("*")
@@ -48,6 +50,16 @@ export default function ChatPage() {
           .single();
         setMessages((prev) => [...prev, { ...newMsg, author: author || undefined }]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (payload) => {
+        const updated = payload.new as Message;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === updated.id
+              ? { ...m, content: updated.content, image_url: updated.image_url, edited_at: updated.edited_at, deleted_at: updated.deleted_at }
+              : m
+          )
+        );
       })
       .subscribe();
 
@@ -113,6 +125,49 @@ export default function ChatPage() {
     }
   };
 
+  const handleEditKeyDown = (e: React.KeyboardEvent, msgId: string) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleEditSave(msgId);
+    }
+    if (e.key === "Escape") {
+      setEditingId(null);
+      setEditContent("");
+    }
+  };
+
+  const handleEditSave = async (msgId: string) => {
+    if (!editContent.trim()) return;
+    const ok = await editMessage(msgId, editContent.trim());
+    if (ok) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, content: editContent.trim(), edited_at: new Date().toISOString() } : m
+        )
+      );
+    }
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const handleDelete = async (msgId: string) => {
+    const ok = await deleteMessage(msgId);
+    if (ok) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, content: "", image_url: null, deleted_at: new Date().toISOString() } : m
+        )
+      );
+    }
+    setActiveMenu(null);
+  };
+
+  const startEdit = (msg: Message) => {
+    setEditingId(msg.id);
+    setEditContent(msg.content);
+    setActiveMenu(null);
+  };
+
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -146,6 +201,10 @@ export default function ChatPage() {
           ) : (
             messages.map((msg) => {
               const isMe = msg.author_id === currentUserId;
+              const isDeleted = !!msg.deleted_at;
+              const isEdited = !!msg.edited_at && !isDeleted;
+              const isEditing = editingId === msg.id;
+
               return (
                 <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs overflow-hidden ${isMe ? "bg-primary/20" : ""}`}>
@@ -162,21 +221,77 @@ export default function ChatPage() {
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         {formatTime(msg.created_at)}
+                        {isEdited && <span className="ml-1 italic">(modifié)</span>}
                       </span>
                     </div>
-                    <div className={`inline-block rounded-2xl overflow-hidden ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
-                      {msg.image_url && (
-                        <img
-                          src={msg.image_url}
-                          alt="Image partagée"
-                          className="max-w-full max-h-64 object-cover cursor-pointer"
-                          onClick={() => window.open(msg.image_url!, "_blank")}
-                        />
+                    <div className={`relative inline-block rounded-2xl overflow-hidden ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
+                      {/* Long-press / click menu trigger */}
+                      {isMe && !isDeleted && !isEditing && (
+                        <button
+                          onClick={() => setActiveMenu(activeMenu === msg.id ? null : msg.id)}
+                          className="absolute top-0 right-0 w-6 h-6 flex items-center justify-center text-xs opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity z-10"
+                          aria-label="Options du message"
+                        >
+                          ⋮
+                        </button>
                       )}
-                      {msg.content && (
-                        <div className={`px-3 py-2 text-sm ${msg.image_url ? "pt-1" : ""}`}>
-                          {msg.content}
+                      {/* Context menu */}
+                      {activeMenu === msg.id && (
+                        <div className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[140px]`}>
+                          <button
+                            onClick={() => startEdit(msg)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            ✏️ Modifier
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-destructive/10 text-destructive transition-colors text-left"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            🗑️ Supprimer
+                          </button>
                         </div>
+                      )}
+                      {isDeleted ? (
+                        <div className="px-3 py-2 text-sm italic opacity-50">
+                          🚫 Message supprimé
+                        </div>
+                      ) : isEditing ? (
+                        <div className="px-2 py-1.5 flex items-center gap-1">
+                          <input
+                            autoFocus
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            onKeyDown={(e) => handleEditKeyDown(e, msg.id)}
+                            className="flex-1 bg-transparent text-sm outline-none min-w-0"
+                          />
+                          <button onClick={() => handleEditSave(msg.id)} className="text-green-400 hover:text-green-300 flex-shrink-0">
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => { setEditingId(null); setEditContent(""); }} className="text-red-400 hover:text-red-300 flex-shrink-0">
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {msg.image_url && (
+                            <img
+                              src={msg.image_url}
+                              alt="Image partagée"
+                              className="max-w-full max-h-64 object-cover cursor-pointer"
+                              onClick={() => window.open(msg.image_url!, "_blank")}
+                            />
+                          )}
+                          {msg.content && (
+                            <div className={`px-3 py-2 text-sm ${msg.image_url ? "pt-1" : ""}`}>
+                              {msg.content}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
