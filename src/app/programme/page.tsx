@@ -17,7 +17,6 @@ import {
   markTaskDone,
   unassignTask,
   getProgramProposals,
-  submitProposal,
   updateProposal,
   deleteProposal,
   uploadProposalImage,
@@ -75,7 +74,7 @@ export default function ProgrammePage() {
   const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
   const [deletingProposalId, setDeletingProposalId] = useState<string | null>(null);
   const proposalFileInputRef = useRef<HTMLInputElement>(null);
-  const proposalListRef = useRef<HTMLDivElement>(null);
+  const programListRef = useRef<HTMLDivElement>(null);
 
   // Proposal crop state
   const [proposalCropSrc, setProposalCropSrc] = useState<string | null>(null);
@@ -262,7 +261,7 @@ export default function ProgrammePage() {
     setSubmittingProposal(true);
 
     if (editingProposalId) {
-      // Update existing
+      // Update existing proposal
       const success = await updateProposal(editingProposalId, {
         title: proposalForm.title.trim(),
         description: proposalForm.description.trim() || undefined,
@@ -275,11 +274,9 @@ export default function ProgrammePage() {
       if (success) {
         // Handle image changes
         if (proposalImageFile) {
-          // Upload new image
           const url = await uploadProposalImage(editingProposalId, proposalImageFile);
           if (url) await updateProposal(editingProposalId, { image_url: url });
         } else if (!proposalExistingImageUrl && !proposalImagePreview) {
-          // Image was removed
           await deleteProposalImage(editingProposalId);
           await updateProposal(editingProposalId, { image_url: null });
         }
@@ -288,14 +285,13 @@ export default function ProgrammePage() {
         setProposalSuccess(proposalForm.title.trim());
         resetProposalForm();
         setTimeout(() => {
-          proposalListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          programListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
         setTimeout(() => setProposalSuccess(null), 4000);
       }
     } else {
-      // Create new
-      const success = await submitProposal({
-        proposer_id: currentParticipant.id,
+      // Create new — insert DIRECTLY into program table (no approval needed)
+      const programSuccess = await createProgram({
         title: proposalForm.title.trim(),
         description: proposalForm.description.trim() || undefined,
         emoji: proposalForm.emoji,
@@ -304,27 +300,13 @@ export default function ProgrammePage() {
         end_time: proposalForm.end_time || undefined,
         location: proposalForm.location || undefined,
       });
-      if (success) {
-        // Upload image if provided — need to get the new proposal ID
-        if (proposalImageFile) {
-          const { data: latest } = await supabase
-            .from("program_proposals")
-            .select("id")
-            .eq("proposer_id", currentParticipant.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single();
-          if (latest) {
-            const url = await uploadProposalImage(latest.id, proposalImageFile);
-            if (url) await updateProposal(latest.id, { image_url: url });
-          }
-        }
+      if (programSuccess) {
         await fetchData();
         setShowProposalForm(false);
         setProposalSuccess(proposalForm.title.trim());
         resetProposalForm();
         setTimeout(() => {
-          proposalListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          programListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
         setTimeout(() => setProposalSuccess(null), 4000);
       }
@@ -402,7 +384,7 @@ export default function ProgrammePage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div ref={programListRef} className="space-y-8">
             {grouped.map((dayGroup) => (
               <div key={dayGroup.day}>
                 <div className="flex items-center gap-2 mb-3">
@@ -700,15 +682,14 @@ export default function ProgrammePage() {
             </div>
           )}
 
-          {/* Proposals list */}
+          {/* Success message */}
           {proposalSuccess && (
             <div className="mb-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in slide-in-from-top-2 duration-300">
               <p className="text-green-400 text-sm font-medium">
-                ✅ &quot;{proposalSuccess}&quot; proposé(e) avec succès !
+                ✅ &quot;{proposalSuccess}&quot; ajouté au programme !
               </p>
             </div>
           )}
-          <div ref={proposalListRef}>
           {pendingProposals.length === 0 ? (
             <div className="p-6 rounded-xl bg-card border border-border text-center">
               <p className="text-muted-foreground text-xs">
@@ -838,7 +819,6 @@ export default function ProgrammePage() {
               })}
             </div>
           )}
-          </div>
         </div>
       </div>
       <MobileNav />
