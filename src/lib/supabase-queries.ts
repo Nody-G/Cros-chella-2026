@@ -33,15 +33,20 @@ export async function getParticipant(id: string): Promise<Participant | null> {
 }
 
 export async function updateParticipant(id: string, updates: Partial<Participant>): Promise<boolean> {
-  const { error } = await supabase
+  const payload = { ...updates, updated_at: new Date().toISOString() };
+  console.log("[updateParticipant] id:", id, "payload keys:", Object.keys(payload));
+  const { data, error, status, statusText } = await supabase
     .from("participants")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .update(payload)
+    .eq("id", id)
+    .select();
 
   if (error) {
-    console.error("Error updating participant:", error);
+    console.error("[updateParticipant] Error:", JSON.stringify(error, null, 2));
+    console.error("[updateParticipant] Status:", status, statusText);
     return false;
   }
+  console.log("[updateParticipant] Success, updated rows:", data?.length);
   return true;
 }
 

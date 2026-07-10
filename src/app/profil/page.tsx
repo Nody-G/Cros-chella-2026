@@ -37,6 +37,7 @@ export default function ProfilPage() {
   const { currentParticipant, refreshAuth } = useAuth();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Profile fields
   const [pseudo, setPseudo] = useState("");
@@ -170,9 +171,13 @@ export default function ProfilPage() {
   };
 
   const handleSave = async () => {
-    if (!currentParticipant) return;
+    if (!currentParticipant) {
+      console.error("[Profil] No currentParticipant");
+      return;
+    }
     setSaving(true);
-    const success = await updateParticipant(currentParticipant.id, {
+    setSaveError(null);
+    const updates = {
       pseudo: pseudo || null,
       emoji_avatar: emojiAvatar,
       tagline: tagline || null,
@@ -188,11 +193,17 @@ export default function ProfilPage() {
       favorite_alcohol: favoriteAlcohol || null,
       smoking_preferences: smokingPreferences.length > 0 ? smokingPreferences : null,
       password: personalCode || null,
-    });
+    };
+    console.log("[Profil] Saving with id:", currentParticipant.id, "updates:", updates);
+    const success = await updateParticipant(currentParticipant.id, updates);
+    console.log("[Profil] Save result:", success);
     if (success) {
       await refreshAuth();
       setSaved(true);
+      setSaveError(null);
       setTimeout(() => setSaved(false), 3000);
+    } else {
+      setSaveError("❌ La sauvegarde a échoué. Vérifie la console (F12) pour les détails.");
     }
     setSaving(false);
   };
@@ -701,6 +712,13 @@ export default function ProfilPage() {
               Ton code secret personnel. Garde-le pour toi, c&apos;est sacré. 🔒
             </p>
           </div>
+
+          {/* Save error */}
+          {saveError && (
+            <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
+              {saveError}
+            </div>
+          )}
 
           {/* Save button */}
           <Button
