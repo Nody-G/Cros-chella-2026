@@ -36,25 +36,45 @@ export default function ParticipantsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetch() {
+    let mounted = true;
+    
+    async function fetchData() {
       const data = await getParticipants();
-      setParticipants(data);
-      setLoading(false);
+      if (mounted) {
+        setParticipants(data);
+        setLoading(false);
+      }
     }
-    fetch();
+    fetchData();
 
     // Realtime subscription for live status/hype updates
-    const channel = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const channel = (supabase as any)
       .channel("participants-realtime")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "participants" }, (payload) => {
-        const updated = payload.new as Participant;
-        setParticipants((prev) =>
-          prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-        );
-      })
-      .subscribe();
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "participants" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: { eventType: string; new: Record<string, unknown> }) => {
+          if (!mounted) return;
+          if (payload.eventType === "UPDATE" && payload.new) {
+            const updated = payload.new as unknown as Participant;
+            setParticipants((prev) =>
+              prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+            );
+          } else if (payload.eventType === "INSERT" && payload.new) {
+            setParticipants((prev) => [...prev, payload.new as unknown as Participant]);
+          }
+        }
+      )
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          console.log("✅ Realtime participants connecté");
+        }
+      });
 
     return () => {
+      mounted = false;
       supabase.removeChannel(channel);
     };
   }, []);
