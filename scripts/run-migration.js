@@ -1,57 +1,42 @@
 const { Client } = require('pg');
-const fs = require('fs');
-const path = require('path');
-
-// Load connectionString from .env.local dynamically to avoid pushing secrets to git
-const envPath = path.join(__dirname, '..', '.env.local');
-let connectionString = process.env.SUPABASE_DB_URL;
-
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const match = envContent.match(/^SUPABASE_DB_URL=(.+)$/m);
-  if (match) {
-    connectionString = match[1].trim();
-  }
-}
-
-if (!connectionString) {
-  console.error("❌ Erreur : SUPABASE_DB_URL non trouvé dans .env.local");
-  process.exit(1);
-}
 
 const client = new Client({
-  connectionString,
+  connectionString: 'postgresql://postgres.nmapbqtfqbqdivwuawfz:gFjeS7qDnzEQ59LA@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
   ssl: { rejectUnauthorized: false }
 });
 
-async function runMigration() {
-  try {
-    await client.connect();
-    console.log('✅ Connecté à Supabase PostgreSQL');
+async function run() {
+  await client.connect();
+  console.log('✅ Connecté à Supabase PostgreSQL');
 
-    const sql = fs.readFileSync(path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
-    console.log('📄 Fichier SQL chargé, exécution en cours...');
+  const sql = `
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted_at timestamptz DEFAULT NULL;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at timestamptz DEFAULT NULL;
+  `;
 
-    await client.query(sql);
-    console.log('✅ Migration exécutée avec succès !');
+  console.log('🔄 Ajout des colonnes deleted_at et edited_at...');
+  await client.query(sql);
+  console.log('✅ Colonnes ajoutées !');
 
-    // Vérifier les tables créées
-    const res = await client.query(`
-      SELECT table_name FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      ORDER BY table_name;
-    `);
-    console.log('\n📋 Tables dans la base :');
-    res.rows.forEach(row => console.log(`  - ${row.table_name}`));
-
-  } catch (err) {
-    console.error('❌ Erreur:', err.message);
-    if (err.position) {
-      console.error('Position dans le SQL:', err.position);
-    }
-  } finally {
-    await client.end();
+  // Vérifier que realtime est bien activé
+  console.log('🔄 Vérification de la publication realtime...');
+  const { rows } = await client.query(`
+    SELECT tablename FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'messages';
+  `);
+  
+  if (rows.length === 0) {
+    console.log('🔄 Ajout de messages à la publication realtime...');
+    await client.query(`ALTER PUBLICATION supabase_realtime ADD TABLE messages;`);
+    console.log('✅ Realtime activé pour messages !');
+  } else {
+    console.log('✅ Realtime déjà activé pour messages');
   }
+
+  await client.end();
+  console.log('🎉 Migration terminée !');
 }
 
-runMigration();
+run().catch(err => {
+  console.error('❌ Erreur:', err.message);
+  process.exit(1);
+});
