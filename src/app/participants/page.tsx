@@ -334,36 +334,34 @@ function ProfileModal({ participant: p, onClose }: { participant: Participant; o
       {/* Modal content */}
       <div className="relative w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-card border border-border shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:fade-in duration-300">
         {/* Header with gradient */}
-        <div className="sticky top-0 z-10 bg-gradient-to-b from-primary/20 to-card px-5 pt-5 pb-3 border-b border-border">
+        <div className="sticky top-0 z-10 bg-gradient-to-b from-primary/20 to-card border-b border-border">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors z-10"
           >
             <X className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center gap-4">
-            {/* Big avatar */}
-            <div className="h-16 w-16 flex-shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center ring-2 ring-primary/30">
-              {p.avatar_url ? (
-                <img src={p.avatar_url} alt={p.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl">{p.emoji_avatar || getEmoji(p.name)}</span>
-              )}
-            </div>
+          {/* Big photo */}
+          <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+            {p.avatar_url ? (
+              <img src={p.avatar_url} alt={p.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-7xl">{p.emoji_avatar || getEmoji(p.name)}</span>
+            )}
+          </div>
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="font-bold text-xl">{p.name}</h2>
-                {p.is_admin && <Crown className="w-4 h-4 text-yellow-500" />}
-              </div>
-              {p.pseudo && (
-                <p className="text-primary font-medium text-sm">aka &ldquo;{p.pseudo}&rdquo;</p>
-              )}
-              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 mt-1 ${status.color}`}>
-                {status.label}
-              </Badge>
+          <div className="px-5 pb-4 pt-3">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-xl">{p.name}</h2>
+              {p.is_admin && <Crown className="w-4 h-4 text-yellow-500" />}
             </div>
+            {p.pseudo && (
+              <p className="text-primary font-medium text-sm">aka &ldquo;{p.pseudo}&rdquo;</p>
+            )}
+            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 mt-1 ${status.color}`}>
+              {status.label}
+            </Badge>
           </div>
         </div>
 

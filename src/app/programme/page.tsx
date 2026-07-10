@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Loader2, MapPin, Clock, Plus, Pencil, Trash2, X, Check, HandHeart, CheckCircle2, Sparkles } from "lucide-react";
+import { CalendarDays, Loader2, MapPin, Clock, Plus, Pencil, Trash2, X, Check, HandHeart, CheckCircle2, Sparkles, Camera, ZoomIn, ZoomOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   getProgramWithResponsible,
@@ -19,12 +19,18 @@ import {
   unassignTask,
   getProgramProposals,
   submitProposal,
+  updateProposal,
+  deleteProposal,
+  uploadProposalImage,
+  deleteProposalImage,
   voteProposal,
   approveProposal,
   rejectProposal,
 } from "@/lib/supabase-queries";
 import type { Program, ProgramDay, ProgramProposal } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { compressImage, readFileAsDataURL, getCroppedImage, CropArea } from "@/lib/image-utils";
+import Cropper from "react-easy-crop";
 
 const DAY_CONFIG: Record<ProgramDay, { label: string; emoji: string; date: string }> = {
   friday: { label: "Vendredi", emoji: "🎉", date: "31 juillet" },
@@ -76,6 +82,7 @@ export default function ProgrammePage() {
 
   // Proposal state
   const [showProposalForm, setShowProposalForm] = useState(false);
+  const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
   const [proposalForm, setProposalForm] = useState({
     title: "",
     description: "",
@@ -85,7 +92,22 @@ export default function ProgrammePage() {
     end_time: "",
     location: "",
   });
+  const [proposalImagePreview, setProposalImagePreview] = useState<string | null>(null);
+  const [proposalImageFile, setProposalImageFile] = useState<File | null>(null);
+  const [proposalExistingImageUrl, setProposalExistingImageUrl] = useState<string | null>(null);
   const [submittingProposal, setSubmittingProposal] = useState(false);
+  const [deletingProposalId, setDeletingProposalId] = useState<string | null>(null);
+  const proposalFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Proposal crop state
+  const [proposalCropSrc, setProposalCropSrc] = useState<string | null>(null);
+  const [proposalCrop, setProposalCrop] = useState({ x: 0, y: 0 });
+  const [proposalZoom, setProposalZoom] = useState(1);
+  const [proposalCroppedAreaPixels, setProposalCroppedAreaPixels] = useState<CropArea | null>(null);
+
+  const onProposalCropComplete = useCallback((_croppedArea: CropArea, croppedAreaPixels: CropArea) => {
+    setProposalCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   const fetchData = async () => {
     const [progData, propData] = await Promise.all([
@@ -251,25 +273,138 @@ export default function ProgrammePage() {
   };
 
   // === PROPOSALS ===
+  const resetProposalForm = () => {
+    setProposalForm({ title: "", description: "", emoji: "💡", day: "friday", start_time: "", end_time: "", location: "" });
+    setProposalImagePreview(null);
+    setProposalImageFile(null);
+    setProposalExistingImageUrl(null);
+    setEditingProposalId(null);
+    setProposalCropSrc(null);
+    setProposalZoom(1);
+  };
+
+  const handleProposalFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataURL(file);
+      setProposalCropSrc(dataUrl);
+    } catch (err) {
+      console.error("Error reading file:", err);
+    }
+    e.target.value = "";
+  };
+
+  const handleProposalCropConfirm = async () => {
+    if (!proposalCropSrc || !proposalCroppedAreaPixels) return;
+    try {
+      const croppedBlob = await getCroppedImage(proposalCropSrc, proposalCroppedAreaPixels);
+      const croppedFile = new File([croppedBlob], "proposal.jpg", { type: "image/jpeg" });
+      const compressed = await compressImage(croppedFile, "gallery");
+      const preview = await readFileAsDataURL(compressed);
+      setProposalImagePreview(preview);
+      setProposalImageFile(compressed);
+      setProposalCropSrc(null);
+    } catch (err) {
+      console.error("Error cropping:", err);
+    }
+  };
+
+  const handleRemoveProposalImage = () => {
+    setProposalImagePreview(null);
+    setProposalImageFile(null);
+    setProposalExistingImageUrl(null);
+  };
+
+  const handleEditProposal = (prop: ProgramProposal) => {
+    setEditingProposalId(prop.id);
+    setProposalForm({
+      title: prop.title,
+      description: prop.description || "",
+      emoji: prop.emoji,
+      day: prop.day,
+      start_time: prop.start_time || "",
+      end_time: prop.end_time || "",
+      location: prop.location || "",
+    });
+    if (prop.image_url) {
+      setProposalExistingImageUrl(prop.image_url);
+      setProposalImagePreview(prop.image_url);
+    }
+    setShowProposalForm(true);
+  };
+
   const handleSubmitProposal = async () => {
     if (!currentParticipant || !proposalForm.title.trim()) return;
     setSubmittingProposal(true);
-    const success = await submitProposal({
-      proposer_id: currentParticipant.id,
-      title: proposalForm.title.trim(),
-      description: proposalForm.description.trim() || undefined,
-      emoji: proposalForm.emoji,
-      day: proposalForm.day,
-      start_time: proposalForm.start_time || undefined,
-      end_time: proposalForm.end_time || undefined,
-      location: proposalForm.location || undefined,
-    });
-    if (success) {
-      await fetchData();
-      setShowProposalForm(false);
-      setProposalForm({ title: "", description: "", emoji: "💡", day: "friday", start_time: "", end_time: "", location: "" });
+
+    if (editingProposalId) {
+      // Update existing
+      const success = await updateProposal(editingProposalId, {
+        title: proposalForm.title.trim(),
+        description: proposalForm.description.trim() || undefined,
+        emoji: proposalForm.emoji,
+        day: proposalForm.day,
+        start_time: proposalForm.start_time || undefined,
+        end_time: proposalForm.end_time || undefined,
+        location: proposalForm.location || undefined,
+      });
+      if (success) {
+        // Handle image changes
+        if (proposalImageFile) {
+          // Upload new image
+          const url = await uploadProposalImage(editingProposalId, proposalImageFile);
+          if (url) await updateProposal(editingProposalId, { image_url: url });
+        } else if (!proposalExistingImageUrl && !proposalImagePreview) {
+          // Image was removed
+          await deleteProposalImage(editingProposalId);
+          await updateProposal(editingProposalId, { image_url: null });
+        }
+        await fetchData();
+        setShowProposalForm(false);
+        resetProposalForm();
+      }
+    } else {
+      // Create new
+      const success = await submitProposal({
+        proposer_id: currentParticipant.id,
+        title: proposalForm.title.trim(),
+        description: proposalForm.description.trim() || undefined,
+        emoji: proposalForm.emoji,
+        day: proposalForm.day,
+        start_time: proposalForm.start_time || undefined,
+        end_time: proposalForm.end_time || undefined,
+        location: proposalForm.location || undefined,
+      });
+      if (success) {
+        // Upload image if provided — need to get the new proposal ID
+        if (proposalImageFile) {
+          const { data: latest } = await supabase
+            .from("program_proposals")
+            .select("id")
+            .eq("proposer_id", currentParticipant.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          if (latest) {
+            const url = await uploadProposalImage(latest.id, proposalImageFile);
+            if (url) await updateProposal(latest.id, { image_url: url });
+          }
+        }
+        await fetchData();
+        setShowProposalForm(false);
+        resetProposalForm();
+      }
     }
     setSubmittingProposal(false);
+  };
+
+  const handleDeleteProposal = async (proposalId: string) => {
+    setDeletingProposalId(proposalId);
+    await deleteProposalImage(proposalId);
+    await deleteProposal(proposalId);
+    await fetchData();
+    setDeletingProposalId(null);
   };
 
   const handleVoteProposal = async (proposalId: string) => {
@@ -612,9 +747,9 @@ export default function ProgrammePage() {
             <Card className="mb-4 card-glow-violet overflow-hidden">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm">Nouvelle proposition</h3>
+                  <h3 className="font-bold text-sm">{editingProposalId ? "Modifier la proposition" : "Nouvelle proposition"}</h3>
                   <button
-                    onClick={() => setShowProposalForm(false)}
+                    onClick={() => { setShowProposalForm(false); resetProposalForm(); }}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-4 h-4" />
@@ -659,6 +794,41 @@ export default function ProgrammePage() {
                   className="bg-card border-border min-h-[50px]"
                 />
 
+                {/* Photo picker */}
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase mb-1.5 block">Photo (optionnel)</label>
+                  <input
+                    ref={proposalFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProposalFileSelect}
+                  />
+                  {proposalImagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={proposalImagePreview}
+                        alt="Preview"
+                        className="w-full h-40 object-cover rounded-lg border border-border"
+                      />
+                      <button
+                        onClick={handleRemoveProposalImage}
+                        className="absolute top-2 right-2 bg-black/70 rounded-full p-1.5 hover:bg-black/90"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => proposalFileInputRef.current?.click()}
+                      className="w-full h-24 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span className="text-[10px]">Ajouter une photo</span>
+                    </button>
+                  )}
+                </div>
+
                 <Button
                   onClick={handleSubmitProposal}
                   disabled={submittingProposal || !proposalForm.title.trim()}
@@ -670,10 +840,52 @@ export default function ProgrammePage() {
                   ) : (
                     <Sparkles className="w-4 h-4 mr-2" />
                   )}
-                  Soumettre la proposition
+                  {editingProposalId ? "Modifier" : "Soumettre la proposition"}
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Crop modal for proposals */}
+          {proposalCropSrc && (
+            <div className="fixed inset-0 z-50 bg-black/90 flex flex-col">
+              <div className="p-4 flex items-center justify-between">
+                <h3 className="text-white font-bold text-sm">Ajuster la photo</h3>
+                <button onClick={() => setProposalCropSrc(null)} className="text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 relative">
+                <Cropper
+                  image={proposalCropSrc}
+                  crop={proposalCrop}
+                  zoom={proposalZoom}
+                  aspect={16 / 9}
+                  onCropChange={setProposalCrop}
+                  onZoomChange={setProposalZoom}
+                  onCropComplete={onProposalCropComplete}
+                />
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <ZoomOut className="w-4 h-4 text-white" />
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={proposalZoom}
+                    onChange={(e) => setProposalZoom(Number(e.target.value))}
+                    className="flex-1"
+                  />
+                  <ZoomIn className="w-4 h-4 text-white" />
+                </div>
+                <Button onClick={handleProposalCropConfirm} className="w-full">
+                  <Check className="w-4 h-4 mr-2" />
+                  Valider
+                </Button>
+              </div>
+            </div>
           )}
 
           {/* Proposals list */}
@@ -686,9 +898,19 @@ export default function ProgrammePage() {
           ) : (
             <div className="space-y-3">
               {pendingProposals.map((prop) => {
+                const isMyProposal = currentParticipant?.id === prop.proposer_id;
                 return (
                   <Card key={prop.id} className="overflow-hidden">
                     <CardContent className="p-4">
+                      {prop.image_url && (
+                        <div className="mb-3 -mx-4 -mt-4">
+                          <img
+                            src={prop.image_url}
+                            alt={prop.title}
+                            className="w-full h-40 object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{prop.emoji}</span>
                         <div className="flex-1 min-w-0">
@@ -713,7 +935,7 @@ export default function ProgrammePage() {
                             Proposé par {prop.proposer?.pseudo || prop.proposer?.name || "Quelqu'un"}
                           </p>
 
-                          <div className="flex items-center gap-2 mt-3">
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
                             <Button
                               size="sm"
                               variant="outline"
@@ -722,6 +944,33 @@ export default function ProgrammePage() {
                             >
                               👍 {prop.vote_count} vote{prop.vote_count > 1 ? "s" : ""}
                             </Button>
+                            {isMyProposal && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-[10px] px-2"
+                                  onClick={() => handleEditProposal(prop)}
+                                >
+                                  <Pencil className="w-3 h-3 mr-1" />
+                                  Modifier
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="h-7 text-[10px] px-2"
+                                  disabled={deletingProposalId === prop.id}
+                                  onClick={() => handleDeleteProposal(prop.id)}
+                                >
+                                  {deletingProposalId === prop.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                  )}
+                                  Supprimer
+                                </Button>
+                              </>
+                            )}
                             {isAdmin && (
                               <>
                                 <Button

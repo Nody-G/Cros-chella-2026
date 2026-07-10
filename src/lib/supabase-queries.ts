@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, Spot, Poll, PollVote, Message, Photo } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, Spot, Poll, PollVote, Message, Photo, PhotoComment } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -391,6 +391,71 @@ export async function getPhotos(): Promise<Photo[]> {
   return data as Photo[];
 }
 
+export async function updatePhotoCaption(photoId: string, caption: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("photos")
+    .update({ caption: caption.trim() || null })
+    .eq("id", photoId);
+
+  if (error) {
+    console.error("Error updating photo caption:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deletePhoto(photoId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("photos")
+    .delete()
+    .eq("id", photoId);
+
+  if (error) {
+    console.error("Error deleting photo:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function getPhotoComments(photoId: string): Promise<PhotoComment[]> {
+  const { data, error } = await supabase
+    .from("photo_comments")
+    .select("*, author:participants(*)")
+    .eq("photo_id", photoId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching photo comments:", error);
+    return [];
+  }
+  return data as PhotoComment[];
+}
+
+export async function addPhotoComment(photoId: string, authorId: string, content: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("photo_comments")
+    .insert({ photo_id: photoId, author_id: authorId, content: content.trim() });
+
+  if (error) {
+    console.error("Error adding photo comment:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deletePhotoComment(commentId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("photo_comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error deleting photo comment:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function updatePassword(id: string, password: string): Promise<boolean> {
   const { error } = await supabase
     .from("participants")
@@ -556,6 +621,7 @@ export async function submitProposal(proposal: {
   start_time?: string;
   end_time?: string;
   location?: string;
+  image_url?: string;
 }): Promise<boolean> {
   const { error } = await supabase
     .from("program_proposals")
@@ -563,6 +629,75 @@ export async function submitProposal(proposal: {
 
   if (error) {
     console.error("Error submitting proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateProposal(proposalId: string, updates: {
+  title?: string;
+  description?: string;
+  emoji?: string;
+  day?: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  image_url?: string | null;
+}): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_proposals")
+    .update(updates)
+    .eq("id", proposalId);
+
+  if (error) {
+    console.error("Error updating proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteProposal(proposalId: string): Promise<boolean> {
+  // Delete votes first
+  await supabase.from("program_proposal_votes").delete().eq("proposal_id", proposalId);
+  const { error } = await supabase
+    .from("program_proposals")
+    .delete()
+    .eq("id", proposalId);
+
+  if (error) {
+    console.error("Error deleting proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function uploadProposalImage(proposalId: string, file: File): Promise<string | null> {
+  const filePath = `proposals/${proposalId}.jpg`;
+
+  // Remove old file first
+  await supabase.storage.from('avatars').remove([filePath]);
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true, contentType: "image/jpeg" });
+
+  if (uploadError) {
+    console.error("Error uploading proposal image:", uploadError);
+    return null;
+  }
+
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+export async function deleteProposalImage(proposalId: string): Promise<boolean> {
+  const filePath = `proposals/${proposalId}.jpg`;
+  const { error } = await supabase.storage.from('avatars').remove([filePath]);
+  if (error) {
+    console.error("Error deleting proposal image:", error);
     return false;
   }
   return true;
