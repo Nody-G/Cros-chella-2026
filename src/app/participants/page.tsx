@@ -48,6 +48,14 @@ export default function ParticipantsPage() {
     fetchData();
 
     // Realtime subscription for live status/hype updates
+    // Remove any existing channel with the same name first (React Strict Mode / HMR)
+    const existingChannel = supabase.getChannels().find(
+      (ch) => ch.topic === "realtime:participants-realtime"
+    );
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const channel = (supabase as any)
       .channel("participants-realtime")
