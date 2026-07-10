@@ -5,13 +5,12 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, ZoomIn, ZoomOut, Eye, EyeOff } from "lucide-react";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, Eye, EyeOff } from "lucide-react";
 import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
 import { SMOKING_LIST } from "@/lib/smoking-data";
-import { compressImage, readFileAsDataURL, getCroppedImage, CropArea } from "@/lib/image-utils";
-import Cropper from "react-easy-crop";
+import { compressImage } from "@/lib/image-utils";
 
 const EMOJI_CHOICES = [
   "😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸",
@@ -63,15 +62,6 @@ export default function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Crop state
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
-
-  const onCropComplete = (_croppedArea: CropArea, croppedPixels: CropArea) => {
-    setCroppedAreaPixels(croppedPixels);
-  };
 
   useEffect(() => {
     if (currentParticipant) {
@@ -96,48 +86,11 @@ export default function ProfilPage() {
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
+    if (!file || !currentParticipant) return;
     setShowPhotoMenu(false);
-    const dataUrl = await readFileAsDataURL(file);
-    setCropSrc(dataUrl);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCroppedAreaPixels(null);
-
-    // Reset input so same file can be re-selected
-    e.target.value = "";
-  };
-
-  const handleRecropPhoto = async () => {
-    if (!avatarUrl) return;
-    setShowPhotoMenu(false);
-    try {
-      // Fetch the remote image as blob to avoid CORS issues with canvas
-      const response = await fetch(avatarUrl);
-      const blob = await response.blob();
-      const dataUrl = await readFileAsDataURL(new File([blob], "photo.jpg", { type: blob.type }));
-      setCropSrc(dataUrl);
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setCroppedAreaPixels(null);
-    } catch (err) {
-      console.error("Failed to load photo for recrop:", err);
-      // Fallback: try direct URL
-      setCropSrc(avatarUrl);
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setCroppedAreaPixels(null);
-    }
-  };
-
-  const handleCropConfirm = async () => {
-    if (!cropSrc || !croppedAreaPixels || !currentParticipant) return;
-
     setUploading(true);
     try {
-      const croppedFile = await getCroppedImage(cropSrc, croppedAreaPixels, 400);
-      const compressed = await compressImage(croppedFile, "profile");
+      const compressed = await compressImage(file, "profile");
       const url = await uploadProfilePhoto(currentParticipant.id, compressed);
       if (url) {
         setAvatarUrl(url);
@@ -148,15 +101,11 @@ export default function ProfilPage() {
       console.error("Photo upload error:", err);
     }
     setUploading(false);
-    setCropSrc(null);
+    e.target.value = "";
   };
 
-  const handleCropCancel = () => {
-    setCropSrc(null);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCroppedAreaPixels(null);
-  };
+
+
 
   const handleDeletePhoto = async () => {
     if (!currentParticipant) return;
@@ -275,15 +224,6 @@ export default function ProfilPage() {
                     </button>
                     {avatarUrl && (
                       <>
-                        <div className="border-t border-border my-1" />
-                        <button
-                          type="button"
-                          onClick={handleRecropPhoto}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
-                        >
-                          <ZoomIn className="w-4 h-4 text-primary" />
-                          ✂️ Recadrer / Ajuster
-                        </button>
                         <button
                           type="button"
                           onClick={handleDeletePhoto}
@@ -746,79 +686,6 @@ export default function ProfilPage() {
           </Button>
         </div>
       </div>
-
-      {/* Crop Modal */}
-      {cropSrc && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
-          <div className="w-full max-w-lg px-4">
-            <h2 className="text-lg font-bold text-white text-center mb-3">
-              📸 Ajuste ta photo de profil
-            </h2>
-            <p className="text-xs text-white/60 text-center mb-4">
-              Pince pour zoomer, glisse pour déplacer
-            </p>
-
-            {/* Cropper container */}
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden border-2 border-primary/40 mb-4">
-              <Cropper
-                image={cropSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                cropShape="round"
-                showGrid={false}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-              />
-            </div>
-
-            {/* Zoom slider */}
-            <div className="flex items-center gap-3 mb-6 px-2">
-              <ZoomOut className="w-4 h-4 text-white/60 shrink-0" />
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.01}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full accent-primary"
-              />
-              <ZoomIn className="w-4 h-4 text-white/60 shrink-0" />
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleCropCancel}
-                className="flex-1 h-12 text-base border-white/20 text-white hover:bg-white/10"
-                disabled={uploading}
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleCropConfirm}
-                className="flex-1 h-12 text-base font-semibold"
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Upload...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Valider ✨
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <MobileNav />
     </main>

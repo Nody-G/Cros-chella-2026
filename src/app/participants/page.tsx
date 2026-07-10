@@ -332,6 +332,12 @@ function ProfileModal({ participant: p, onClose }: { participant: Participant; o
   const status = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
   const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
