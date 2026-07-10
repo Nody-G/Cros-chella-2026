@@ -124,7 +124,7 @@ export default function ParticipantsPage() {
         ) : (
           <div className="space-y-3">
             {participants.map((p) => {
-              const status = STATUS_CONFIG[p.status];
+              const status = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
               return (
                 <Card key={p.id} className="overflow-hidden">
                   <CardContent className="p-4">
@@ -200,17 +200,20 @@ export default function ParticipantsPage() {
                               {p.theme_song && (
                                 <p className="text-[10px] text-muted-foreground">🎵 Hymne : <span className="text-foreground">{p.theme_song}</span></p>
                               )}
-                              {p.alcohol_preferences && p.alcohol_preferences.length > 0 && (
-                                <p className="text-[10px] text-muted-foreground">
-                                  🍻 Alcools :{" "}
-                                  {p.alcohol_preferences.map((val) => ALCOHOL_MAP[val]?.emoji || "🍺").join(" ")}
-                                  {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
-                                    <span className="text-amber-300 ml-1">
-                                      ⭐ {ALCOHOL_MAP[p.favorite_alcohol].label}
-                                    </span>
-                                  )}
-                                </p>
-                              )}
+                              {(() => {
+                                const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
+                                return alcos.length > 0 && (
+                                  <p className="text-[10px] text-muted-foreground">
+                                    🍻 Alcools :{" "}
+                                    {alcos.map((val: string) => ALCOHOL_MAP[val]?.emoji || "🍺").join(" ")}
+                                    {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
+                                      <span className="text-amber-300 ml-1">
+                                        ⭐ {ALCOHOL_MAP[p.favorite_alcohol].label}
+                                      </span>
+                                    )}
+                                  </p>
+                                );
+                              })()}
                             </div>
                           )}
 
@@ -221,11 +224,11 @@ export default function ParticipantsPage() {
                             </div>
                           )}
 
-                          {p.hype_level > 0 && (
+                          {(p.hype_level ?? 0) > 0 && (
                             <div className="mt-2 text-xs">
                               <span className="text-muted-foreground">Hype : </span>
                               <span>
-                                {"🔥".repeat(p.hype_level)}
+                                {"🔥".repeat(p.hype_level ?? 0)}
                               </span>
                             </div>
                           )}
