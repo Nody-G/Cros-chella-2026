@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -968,4 +968,417 @@ export async function getPhotoLikers(photoId: string): Promise<{ id: string; pse
   return (participants || []) as { id: string; pseudo: string | null; name: string; emoji_avatar: string | null }[];
 }
 
+// ============================================
+// CUSTOM BADGES
+// ============================================
+
+export async function getBadgesByParticipant(participantId: string): Promise<CustomBadge[]> {
+  const { data, error } = await supabase
+    .from("custom_badges")
+    .select("*, awarder:participants!awarded_by(*)")
+    .eq("participant_id", participantId)
+    .order("awarded_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching badges:", error);
+    return [];
+  }
+  return data as CustomBadge[];
+}
+
+export async function getAllBadges(): Promise<CustomBadge[]> {
+  const { data, error } = await supabase
+    .from("custom_badges")
+    .select("*, participant:participants!participant_id(*), awarder:participants!awarded_by(*)")
+    .order("awarded_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching all badges:", error);
+    return [];
+  }
+  return data as CustomBadge[];
+}
+
+export async function awardBadge(badge: {
+  participant_id: string;
+  awarded_by: string;
+  emoji: string;
+  title: string;
+  description?: string;
+}): Promise<boolean> {
+  const { error } = await supabase
+    .from("custom_badges")
+    .insert(badge);
+
+  if (error) {
+    console.error("Error awarding badge:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteBadge(badgeId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("custom_badges")
+    .delete()
+    .eq("id", badgeId);
+
+  if (error) {
+    console.error("Error deleting badge:", error);
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// BILLARD TOURNAMENTS
+// ============================================
+
+export async function getBillardTournaments(): Promise<BillardTournament[]> {
+  const { data, error } = await supabase
+    .from("billard_tournaments")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching tournaments:", error);
+    return [];
+  }
+  return data as BillardTournament[];
+}
+
+export async function getBillardTournament(tournamentId: string): Promise<BillardTournament | null> {
+  const { data, error } = await supabase
+    .from("billard_tournaments")
+    .select("*")
+    .eq("id", tournamentId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching tournament:", error);
+    return null;
+  }
+  return data as BillardTournament;
+}
+
+export async function createBillardTournament(name: string, gameType: "8ball" | "9ball"): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("billard_tournaments")
+    .insert({ name, game_type: gameType })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Error creating tournament:", error);
+    return null;
+  }
+  return data.id;
+}
+
+export async function updateBillardTournament(tournamentId: string, updates: { name?: string; status?: string; winner_team_id?: string | null }): Promise<boolean> {
+  const { error } = await supabase
+    .from("billard_tournaments")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", tournamentId);
+
+  if (error) {
+    console.error("Error updating tournament:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteBillardTournament(tournamentId: string): Promise<boolean> {
+  // Delete matches first, then teams, then tournament
+  await supabase.from("billard_matches").delete().eq("tournament_id", tournamentId);
+  await supabase.from("billard_teams").delete().eq("tournament_id", tournamentId);
+  const { error } = await supabase.from("billard_tournaments").delete().eq("id", tournamentId);
+
+  if (error) {
+    console.error("Error deleting tournament:", error);
+    return false;
+  }
+  return true;
+}
+
+// Billard Teams
+export async function getBillardTeams(tournamentId: string): Promise<BillardTeam[]> {
+  const { data, error } = await supabase
+    .from("billard_teams")
+    .select("*, player1:participants!player1_id(*), player2:participants!player2_id(*)")
+    .eq("tournament_id", tournamentId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching teams:", error);
+    return [];
+  }
+  return data as BillardTeam[];
+}
+
+export async function createBillardTeam(tournamentId: string, player1Id: string, player2Id: string, teamName?: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("billard_teams")
+    .insert({
+      tournament_id: tournamentId,
+      player1_id: player1Id,
+      player2_id: player2Id,
+      team_name: teamName || null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Error creating team:", error);
+    return null;
+  }
+  return data.id;
+}
+
+export async function deleteBillardTeam(teamId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("billard_teams")
+    .delete()
+    .eq("id", teamId);
+
+  if (error) {
+    console.error("Error deleting team:", error);
+    return false;
+  }
+  return true;
+}
+
+// Billard Matches
+export async function getBillardMatches(tournamentId: string): Promise<BillardMatch[]> {
+  const { data, error } = await supabase
+    .from("billard_matches")
+    .select("*, team1:billard_teams!team1_id(*, player1:participants!player1_id(*), player2:participants!player2_id(*)), team2:billard_teams!team2_id(*, player1:participants!player1_id(*), player2:participants!player2_id(*)), winner_team:billard_teams!winner_team_id(*)")
+    .eq("tournament_id", tournamentId)
+    .order("round", { ascending: true })
+    .order("match_order", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching matches:", error);
+    return [];
+  }
+  return data as BillardMatch[];
+}
+
+export async function createBillardMatch(match: {
+  tournament_id: string;
+  round: number;
+  match_order: number;
+  team1_id: string;
+  team2_id?: string | null;
+  status?: string;
+}): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("billard_matches")
+    .insert(match)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Error creating match:", error);
+    return null;
+  }
+  return data.id;
+}
+
+export async function updateBillardMatchScore(
+  matchId: string,
+  team1Score: number,
+  team2Score: number,
+  winnerTeamId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("billard_matches")
+    .update({
+      team1_score: team1Score,
+      team2_score: team2Score,
+      winner_team_id: winnerTeamId,
+      status: "done",
+    })
+    .eq("id", matchId);
+
+  if (error) {
+    console.error("Error updating match score:", error);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Generate bracket matches for a tournament.
+ * ALL rounds are created upfront so the full bracket is visible from the start.
+ * Teams are shuffled randomly. Byes are auto-advanced.
+ */
+export async function generateBillardBracket(tournamentId: string): Promise<boolean> {
+  const teams = await getBillardTeams(tournamentId);
+  if (teams.length < 2) return false;
+
+  // Shuffle teams randomly
+  const shuffled = [...teams].sort(() => Math.random() - 0.5);
+
+  // Calculate bracket size (next power of 2)
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(shuffled.length)));
+  const firstRoundCount = bracketSize / 2;
+
+  // Delete any existing matches for this tournament
+  await supabase.from("billard_matches").delete().eq("tournament_id", tournamentId);
+
+  // First round number = bracketSize (e.g. 4 teams → round 4, then 2, 1)
+  const firstRound = bracketSize;
+  let matchOrder = 0;
+
+  // Create first round matches
+  let teamIdx = 0;
+  for (let i = 0; i < firstRoundCount; i++) {
+    const team1 = shuffled[teamIdx];
+    teamIdx++;
+
+    if (teamIdx < shuffled.length) {
+      // Normal match
+      const team2 = shuffled[teamIdx];
+      teamIdx++;
+      await createBillardMatch({
+        tournament_id: tournamentId,
+        round: firstRound,
+        match_order: matchOrder,
+        team1_id: team1.id,
+        team2_id: team2.id,
+      });
+    } else {
+      // Bye: team1 advances automatically
+      const matchId = await createBillardMatch({
+        tournament_id: tournamentId,
+        round: firstRound,
+        match_order: matchOrder,
+        team1_id: team1.id,
+        team2_id: null,
+        status: "bye",
+      });
+      if (matchId) {
+        await supabase
+          .from("billard_matches")
+          .update({ winner_team_id: team1.id, status: "bye" })
+          .eq("id", matchId);
+      }
+    }
+    matchOrder++;
+  }
+
+  // Create placeholder matches for ALL subsequent rounds (empty, waiting for winners)
+  let currentRound = firstRound;
+  let currentMatchCount = firstRoundCount;
+  while (currentRound > 1) {
+    const nextRound = currentRound / 2;
+    const nextRoundMatchCount = currentMatchCount / 2;
+
+    for (let i = 0; i < nextRoundMatchCount; i++) {
+      // Use first team as placeholder — will be replaced when winners advance
+      await createBillardMatch({
+        tournament_id: tournamentId,
+        round: nextRound,
+        match_order: i,
+        team1_id: shuffled[0].id,
+        team2_id: null,
+      });
+    }
+
+    currentRound = nextRound;
+    currentMatchCount = nextRoundMatchCount;
+  }
+
+  // Auto-advance bye winners into the next round
+  const allMatches = await getBillardMatches(tournamentId);
+  const byeMatches = allMatches.filter((m) => m.status === "bye" && m.winner_team_id);
+  for (const byeMatch of byeMatches) {
+    await propagateWinner(allMatches, byeMatch);
+  }
+
+  // Mark tournament as active
+  await updateBillardTournament(tournamentId, { status: "active" });
+
+  return true;
+}
+
+/**
+ * Helper: propagate a winner into the next round match.
+ * Even match_order → team1 slot, odd → team2 slot.
+ */
+async function propagateWinner(allMatches: BillardMatch[], match: BillardMatch): Promise<void> {
+  if (!match.winner_team_id) return;
+
+  const nextRound = match.round / 2;
+  if (nextRound < 1) return; // was the finale
+
+  const nextMatchOrder = Math.floor(match.match_order / 2);
+  const isEvenMatch = match.match_order % 2 === 0;
+
+  // Find the next round match
+  const nextMatch = allMatches.find(
+    (m) => m.round === nextRound && m.match_order === nextMatchOrder
+  );
+
+  if (!nextMatch) return;
+
+  const updates: Record<string, string> = {};
+  if (isEvenMatch) {
+    updates.team1_id = match.winner_team_id;
+  } else {
+    updates.team2_id = match.winner_team_id;
+  }
+
+  await supabase
+    .from("billard_matches")
+    .update(updates)
+    .eq("id", nextMatch.id);
+}
+
+/**
+ * Record a match result: update score, set winner, propagate to next round.
+ */
+export async function recordBillardResult(
+  matchId: string,
+  team1Score: number,
+  team2Score: number
+): Promise<boolean> {
+  // Get the match
+  const { data: match, error: fetchError } = await supabase
+    .from("billard_matches")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+
+  if (fetchError || !match) {
+    console.error("Error fetching match:", fetchError);
+    return false;
+  }
+
+  // Determine winner
+  const winnerTeamId = team1Score > team2Score ? match.team1_id : match.team2_id;
+
+  // Update this match
+  const success = await updateBillardMatchScore(matchId, team1Score, team2Score, winnerTeamId);
+  if (!success) return false;
+
+  // Check if this is the finale
+  const nextRound = match.round / 2;
+  if (nextRound < 1) {
+    // Finale — set tournament winner
+    await updateBillardTournament(match.tournament_id, {
+      status: "done",
+      winner_team_id: winnerTeamId,
+    });
+    return true;
+  }
+
+  // Propagate winner to next round
+  const allMatches = await getBillardMatches(match.tournament_id);
+  const updatedMatch = { ...match, winner_team_id: winnerTeamId, status: "done" as const };
+  await propagateWinner(allMatches, updatedMatch);
+
+  return true;
+}
 

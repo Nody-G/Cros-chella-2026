@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle } from "lucide-react";
+import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -26,6 +26,8 @@ const moreNavItems = [
   { href: "/chat", icon: MessageCircle, label: "Chat", emoji: "💬" },
   { href: "/galerie", icon: ImageIcon, label: "Galerie", emoji: "📸" },
   { href: "/spotify", icon: Music, label: "Playlist", emoji: "🎵" },
+  { href: "/billard", icon: Gamepad2, label: "Billard", emoji: "🎱" },
+  { href: "/badges", icon: Award, label: "Badges", emoji: "🏅" },
 ];
 
 export function MobileNav() {

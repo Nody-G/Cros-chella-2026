@@ -20,6 +20,7 @@ const MIGRATION_FILES = [
   'supabase/migration-chat-images.sql',
   'supabase/migration-photo-likes.sql',
   'supabase/migration-reactions.sql',
+  'supabase/migrations/20260710-badges-billard.sql',
 ];
 
 async function run() {

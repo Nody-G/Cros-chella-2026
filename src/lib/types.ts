@@ -167,3 +167,73 @@ export interface PhotoComment {
   // Joined
   author?: Participant;
 }
+
+// ============================================
+// CUSTOM BADGES
+// ============================================
+
+export interface CustomBadge {
+  id: string;
+  participant_id: string;
+  awarded_by: string;
+  emoji: string;
+  title: string;
+  description: string | null;
+  awarded_at: string;
+  // Joined
+  participant?: Participant;
+  awarder?: Participant;
+}
+
+// ============================================
+// BILLARD TOURNAMENTS (doubles)
+// ============================================
+
+export type BillardGameType = "8ball" | "9ball";
+export type BillardTournamentStatus = "setup" | "active" | "done";
+export type BillardMatchStatus = "pending" | "done" | "bye";
+
+export interface BillardTournament {
+  id: string;
+  name: string;
+  game_type: BillardGameType;
+  status: BillardTournamentStatus;
+  winner_team_id: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  teams?: BillardTeam[];
+  matches?: BillardMatch[];
+  winner_team?: BillardTeam;
+}
+
+export interface BillardTeam {
+  id: string;
+  tournament_id: string;
+  player1_id: string;
+  player2_id: string;
+  team_name: string | null;
+  created_at: string;
+  // Joined
+  player1?: Participant;
+  player2?: Participant;
+}
+
+export interface BillardMatch {
+  id: string;
+  tournament_id: string;
+  round: number;
+  match_order: number;
+  team1_id: string;
+  team2_id: string | null;
+  team1_score: number | null;
+  team2_score: number | null;
+  winner_team_id: string | null;
+  status: BillardMatchStatus;
+  notes: string | null;
+  created_at: string;
+  // Joined
+  team1?: BillardTeam;
+  team2?: BillardTeam;
+  winner_team?: BillardTeam;
+}
