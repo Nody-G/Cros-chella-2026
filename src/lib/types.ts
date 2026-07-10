@@ -95,6 +95,16 @@ export interface ProgramProposalVote {
   created_at: string;
 }
 
+export interface ProposalComment {
+  id: string;
+  proposal_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  // Joined
+  author?: Participant;
+}
+
 export interface Spot {
   id: string;
   name: string;

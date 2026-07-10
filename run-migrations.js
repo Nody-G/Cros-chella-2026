@@ -16,6 +16,7 @@ const MIGRATION_FILES = [
   'supabase/migration-proposal-images-comments.sql',
   'supabase/migration-alcohol-columns.sql',
   'supabase/migration-attendance.sql',
+  'supabase/migration-proposal-comments.sql',
 ];
 
 async function run() {

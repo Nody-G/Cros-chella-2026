@@ -31,6 +31,7 @@ import type { Program, ProgramDay, ProgramProposal } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL, getCroppedImage, CropArea } from "@/lib/image-utils";
 import Cropper from "react-easy-crop";
+import { ProposalComments } from "@/components/programme/proposal-comments";
 
 const DAY_CONFIG: Record<ProgramDay, { label: string; emoji: string; date: string }> = {
   friday: { label: "Vendredi", emoji: "🎉", date: "31 juillet" },
@@ -81,6 +82,8 @@ export default function ProgrammePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Proposal state
+
+  const [expandedComments, setExpandedComments] = useState<string[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
   const [proposalForm, setProposalForm] = useState({
@@ -428,6 +431,14 @@ export default function ProgrammePage() {
     await fetchData();
   };
 
+
+  const toggleComments = (proposalId: string) => {
+    setExpandedComments((prev) =>
+      prev.includes(proposalId)
+        ? prev.filter((id) => id !== proposalId)
+        : [...prev, proposalId]
+    );
+  };
   const grouped = (["friday", "saturday", "sunday"] as ProgramDay[]).map((day) => ({
     ...DAY_CONFIG[day],
     day,
@@ -992,7 +1003,24 @@ export default function ProgrammePage() {
                                 </Button>
                               </>
                             )}
+
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-[10px] px-2 text-muted-foreground"
+                              onClick={() => toggleComments(prop.id)}
+                            >
+                              💬 Commenter
+                            </Button>
                           </div>
+
+                          {expandedComments.includes(prop.id) && (
+                            <ProposalComments
+                              proposalId={prop.id}
+                              currentParticipant={currentParticipant}
+                              isAdmin={isAdmin}
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>

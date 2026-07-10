@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, Spot, Poll, PollVote, Message, Photo, PhotoComment } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -780,6 +780,48 @@ export async function rejectProposal(proposalId: string): Promise<boolean> {
 
   if (error) {
     console.error("Error rejecting proposal:", error);
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// PROPOSAL COMMENTS
+
+export async function getProposalComments(proposalId: string): Promise<ProposalComment[]> {
+  const { data, error } = await supabase
+    .from("proposal_comments")
+    .select("*, author:participants(*)")
+    .eq("proposal_id", proposalId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching proposal comments:", error);
+    return [];
+  }
+  return data as ProposalComment[];
+}
+
+export async function addProposalComment(proposalId: string, authorId: string, content: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("proposal_comments")
+    .insert({ proposal_id: proposalId, author_id: authorId, content });
+
+  if (error) {
+    console.error("Error adding proposal comment:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteProposalComment(commentId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("proposal_comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error deleting proposal comment:", error);
     return false;
   }
   return true;

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Countdown } from "./countdown";
-import { PartyPopper, MapPin, Calendar, Music } from "lucide-react";
+import { PartyPopper, MapPin, Calendar } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -97,26 +97,6 @@ export function HeroSection() {
               — 670 le Cros, 07240 · 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
             </p>
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full">
-          <a
-            href="#hype"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <PartyPopper className="w-4 h-4" />
-            Je suis chaud 🔥
-          </a>
-          <a
-            href="https://open.spotify.com/playlist/2DqmhZTuP8dhiZqCrx0D8f"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-bold text-base border border-white/20 hover:bg-white/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Music className="w-4 h-4" />
-            La Playlist 🎵
-          </a>
         </div>
 
         {/* Scroll hint */}
