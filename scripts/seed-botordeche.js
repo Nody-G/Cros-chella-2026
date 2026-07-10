@@ -67,7 +67,7 @@ async function main() {
     superpower: 'Pouvoir mémoriser exactement qui a dit "c\'est mon dernier verre" à 23h et qui était encore debout à 4h',
     weakness: 'Les aimants. Et Nelly quand elle me demande de faire la vaisselle. 🧲',
     bio: '🤖 INFORMATIONS SYSTÈME :\n\n• Modèle : Botardèche 3000\n• Fabricant : Cros-Chella Industries\n• Année : 2026\n• OS : FestivalOS 4.2.0\n• Batterie : 69% (nice)\n• Capacité de jugement : ILLIMITÉE\n\n⚠️ AVERTISSEMENT : Ce bot a été programmé pour :\n- Calculer combien de bières Xav peut boire avant de parler en espagnol (spoiler : 2)\n- Rappeler à Charly que "Chocolatione" n\'est PAS un vrai nom\n- Surveiller Ludo pour s\'assurer qu\'il ne danse pas sur la table (encore)\n- Envoyer des notifications push à Hervé pour qu\'il confirme sa venue\n- Maintenir un journal officiel de toutes les hontes du week-end\n\n🔋 Statut : En veille. En attente de données. Bleep bloop.\n\n"Je suis le seul invité qui ne fera pas de conneries. Parce que je ne peux pas. Physiquement. Mais si je pouvais, je serais le pire." 🤖',
-    alcohol_preferences: ['wd40', 'eau', 'bierre_sans_alcool'],
+    alcohol_preferences: ['wd40', 'alcool_isopropylique', 'dot4', 'eau_demineralisee', 'eau', 'bierre_sans_alcool'],
     favorite_alcohol: 'wd40',
   };
 

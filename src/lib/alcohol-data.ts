@@ -82,6 +82,10 @@ export const ALCOHOL_LIST: AlcoholItem[] = [
   { value: "eau", label: "Eau (on est responsable)", emoji: "💧", group: "Soft" },
   // Divers / Spécial
   { value: "wd40", label: "WD-40", emoji: "🛢️", group: "Divers / Spécial" },
+  // Botardèche
+  { value: "alcool_isopropylique", label: "Alcool Isopropylique", emoji: "🧪", group: "Botardèche" },
+  { value: "dot4", label: "DOT 4", emoji: "🛢️", group: "Botardèche" },
+  { value: "eau_demineralisee", label: "Eau Déminéralisée", emoji: "💧", group: "Botardèche" },
 ];
 
 // Quick lookup map
