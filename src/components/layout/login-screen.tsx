@@ -4,6 +4,7 @@ import { Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getParticipant } from "@/lib/supabase-queries";
+import { Countdown } from "@/components/landing/countdown";
 import type { Participant } from "@/lib/types";
 
 const EMOJIS = ["😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸", "👑", "🍕"];
@@ -82,7 +83,8 @@ export function LoginScreen() {
         <div>
           <span className="text-5xl block mb-4">🎪</span>
           <h1 className="text-2xl font-bold text-white mb-2">CROS-CHELLA</h1>
-          <p className="text-white/70 text-sm">Le festival de ton été</p>
+          <p className="text-white/70 text-sm mb-4">Le festival de ton été</p>
+          <Countdown />
         </div>
 
         {!selectedParticipant ? (
