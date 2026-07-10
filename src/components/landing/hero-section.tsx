@@ -42,10 +42,15 @@ export function HeroSection() {
             <Calendar className="w-3.5 h-3.5" />
             31 juil. — 2 août 2026
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm border border-white/10">
+          <a
+            href="https://maps.app.goo.gl/Mzno5hxobVQbWubr8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm border border-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+          >
             <MapPin className="w-3.5 h-3.5" />
-            Ardèche 🏊
-          </span>
+            670 le Cros, 07240 🏊
+          </a>
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm border border-white/10">
             <PartyPopper className="w-3.5 h-3.5" />
             8+ potes
@@ -81,7 +86,15 @@ export function HeroSection() {
           <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-left">
             <p className="text-white/90 text-sm leading-relaxed">
               <span className="text-lg mr-1">🏠</span>{" "}
-              <strong>Le Moulin du Cros</strong> — 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
+              <a
+                href="https://maps.app.goo.gl/Mzno5hxobVQbWubr8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
+              >
+                <strong>Le Moulin du Cros</strong>
+              </a>{" "}
+              — 670 le Cros, 07240 · 4 chambres, canapé-lit, matelas au sol, hamac pour les plus courageux.
             </p>
           </div>
         </div>

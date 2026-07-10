@@ -6,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserCircle, Loader2, Save, CheckCircle2, Camera, Upload, Trash2 } from "lucide-react";
+import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, ZoomIn, ZoomOut } from "lucide-react";
 import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { ALCOHOL_LIST } from "@/lib/alcohol-data";
-import { compressImage } from "@/lib/image-utils";
+import { compressImage, readFileAsDataURL, getCroppedImage, CropArea } from "@/lib/image-utils";
+import Cropper from "react-easy-crop";
 
 const EMOJI_CHOICES = [
   "😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸",
@@ -59,6 +60,16 @@ export default function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Crop state
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+
+  const onCropComplete = (_croppedArea: CropArea, croppedPixels: CropArea) => {
+    setCroppedAreaPixels(croppedPixels);
+  };
+
   useEffect(() => {
     if (currentParticipant) {
       setPseudo(currentParticipant.pseudo || "");
@@ -79,14 +90,28 @@ export default function ProfilPage() {
     }
   }, [currentParticipant]);
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentParticipant) return;
+    if (!file) return;
+
+    setShowPhotoMenu(false);
+    const dataUrl = await readFileAsDataURL(file);
+    setCropSrc(dataUrl);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleCropConfirm = async () => {
+    if (!cropSrc || !croppedAreaPixels || !currentParticipant) return;
 
     setUploading(true);
-    setShowPhotoMenu(false);
     try {
-      const compressed = await compressImage(file, "profile");
+      const croppedFile = await getCroppedImage(cropSrc, croppedAreaPixels, 400);
+      const compressed = await compressImage(croppedFile, "profile");
       const url = await uploadProfilePhoto(currentParticipant.id, compressed);
       if (url) {
         setAvatarUrl(url);
@@ -97,8 +122,14 @@ export default function ProfilPage() {
       console.error("Photo upload error:", err);
     }
     setUploading(false);
-    // Reset input so same file can be re-selected
-    e.target.value = "";
+    setCropSrc(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropSrc(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
   };
 
   const handleDeletePhoto = async () => {
@@ -164,15 +195,15 @@ export default function ProfilPage() {
         <Card className="mb-6 card-glow-gold overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="relative group">
+              <div className="relative group shrink-0">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={currentParticipant.name}
-                    className="w-16 h-16 rounded-xl object-cover border-2 border-primary/30"
+                    className="w-20 h-20 rounded-xl object-cover border-2 border-primary/30"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center text-3xl">
+                  <div className="w-20 h-20 rounded-xl bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center text-4xl">
                     {emojiAvatar}
                   </div>
                 )}
@@ -194,7 +225,7 @@ export default function ProfilPage() {
                       onClick={() => { fileInputRef.current?.click(); }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
                     >
-                      <Upload className="w-4 h-4 text-primary" />
+                      <ImageIcon className="w-4 h-4 text-primary" />
                       📁 Importer une photo
                     </button>
                     <button
@@ -202,7 +233,7 @@ export default function ProfilPage() {
                       onClick={() => { cameraInputRef.current?.click(); }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
                     >
-                      <Camera className="w-4 h-4 text-primary" />
+                      <Camera className="w-4 h-4 text-accent" />
                       📸 Prendre une photo
                     </button>
                     {avatarUrl && (
@@ -225,7 +256,7 @@ export default function ProfilPage() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handlePhotoUpload}
+                  onChange={handlePhotoSelect}
                 />
                 <input
                   ref={cameraInputRef}
@@ -233,7 +264,7 @@ export default function ProfilPage() {
                   accept="image/*"
                   capture="user"
                   className="hidden"
-                  onChange={handlePhotoUpload}
+                  onChange={handlePhotoSelect}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -309,52 +340,9 @@ export default function ProfilPage() {
             </div>
           </div>
 
-          {/* Photo upload */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-              📸 Ta photo de profil
-            </label>
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-xl object-cover border-2 border-primary/30"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-xl bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-primary/50" />
-                </div>
-              )}
-              <div className="flex-1">
-                <label className="cursor-pointer">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Upload...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {avatarUrl ? "Changer la photo" : "Ajouter une photo"}
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
-                </label>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  JPG, PNG ou GIF. Max 5MB.
-                </p>
-              </div>
-            </div>
+          {/* Photo hint */}
+          <div className="text-xs text-muted-foreground text-center py-2">
+            👆 Tape sur ton avatar ci-dessus pour ajouter ou changer ta photo
           </div>
 
           {/* Pseudo */}
@@ -624,7 +612,7 @@ export default function ProfilPage() {
               maxLength={20}
             />
             <p className="text-[10px] text-muted-foreground">
-              Code perso que tu partages avec tes potes. L&apos;admin ne voit PAS ce code. 😏
+              Ton code secret personnel. Garde-le pour toi, c&apos;est sacré. 🔒
             </p>
           </div>
 
@@ -654,6 +642,80 @@ export default function ProfilPage() {
           </Button>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
+          <div className="w-full max-w-lg px-4">
+            <h2 className="text-lg font-bold text-white text-center mb-3">
+              📸 Ajuste ta photo de profil
+            </h2>
+            <p className="text-xs text-white/60 text-center mb-4">
+              Pince pour zoomer, glisse pour déplacer
+            </p>
+
+            {/* Cropper container */}
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden border-2 border-primary/40 mb-4">
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            {/* Zoom slider */}
+            <div className="flex items-center gap-3 mb-6 px-2">
+              <ZoomOut className="w-4 h-4 text-white/60 shrink-0" />
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+              <ZoomIn className="w-4 h-4 text-white/60 shrink-0" />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCropCancel}
+                className="flex-1 h-12 text-base border-white/20 text-white hover:bg-white/10"
+                disabled={uploading}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleCropConfirm}
+                className="flex-1 h-12 text-base font-semibold"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Upload...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Valider ✨
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MobileNav />
     </main>
   );

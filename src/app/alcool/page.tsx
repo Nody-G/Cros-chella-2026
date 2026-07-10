@@ -185,11 +185,10 @@ export default function AlcoolPage() {
                     <Badge
                       key={val}
                       variant="outline"
-                      className={`text-xs px-2 py-0.5 ${
-                        isFav
-                          ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                          : "bg-card"
-                      }`}
+                      className={`text-xs px-2 py-0.5 ${isFav
+                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                        : "bg-card"
+                        }`}
                     >
                       {item.emoji} {item.label}
                       {isFav && " ⭐"}
@@ -242,13 +241,12 @@ export default function AlcoolPage() {
               return (
                 <Card
                   key={p.id}
-                  className={`overflow-hidden transition-all duration-300 ${
-                    c.sharedFavorites
-                      ? "border-amber-500/40 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]"
-                      : c.score >= 50
+                  className={`overflow-hidden transition-all duration-300 ${c.sharedFavorites
+                    ? "border-amber-500/40 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]"
+                    : c.score >= 50
                       ? "border-green-500/20 bg-green-500/5"
                       : ""
-                  }`}
+                    }`}
                 >
                   <CardContent className="p-4">
                     {/* Header row */}
@@ -283,15 +281,14 @@ export default function AlcoolPage() {
                       {/* Score */}
                       <div className="flex flex-col items-center flex-shrink-0">
                         <div
-                          className={`text-lg font-bold ${
-                            c.sharedFavorites
-                              ? "text-amber-400"
-                              : c.score >= 50
+                          className={`text-lg font-bold ${c.sharedFavorites
+                            ? "text-amber-400"
+                            : c.score >= 50
                               ? "text-green-400"
                               : c.score >= 20
-                              ? "text-blue-400"
-                              : "text-muted-foreground"
-                          }`}
+                                ? "text-blue-400"
+                                : "text-muted-foreground"
+                            }`}
                         >
                           {c.score}%
                         </div>
@@ -309,15 +306,14 @@ export default function AlcoolPage() {
                     {/* Compatibility bar */}
                     <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          c.sharedFavorites
-                            ? "bg-gradient-to-r from-amber-500 to-yellow-400"
-                            : c.score >= 50
+                        className={`h-full rounded-full transition-all duration-500 ${c.sharedFavorites
+                          ? "bg-gradient-to-r from-amber-500 to-yellow-400"
+                          : c.score >= 50
                             ? "bg-gradient-to-r from-green-500 to-emerald-400"
                             : c.score >= 20
-                            ? "bg-gradient-to-r from-blue-500 to-cyan-400"
-                            : "bg-muted-foreground/30"
-                        }`}
+                              ? "bg-gradient-to-r from-blue-500 to-cyan-400"
+                              : "bg-muted-foreground/30"
+                          }`}
                         style={{ width: `${Math.max(c.score, 3)}%` }}
                       />
                     </div>
@@ -357,11 +353,10 @@ export default function AlcoolPage() {
                                   <Badge
                                     key={val}
                                     variant="outline"
-                                    className={`text-[11px] px-2 py-0.5 ${
-                                      isBothFav
-                                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                                        : "bg-green-500/10 border-green-500/20 text-green-300"
-                                    }`}
+                                    className={`text-[11px] px-2 py-0.5 ${isBothFav
+                                      ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                                      : "bg-green-500/10 border-green-500/20 text-green-300"
+                                      }`}
                                   >
                                     {item.emoji} {item.label}
                                     {isBothFav && " ⭐"}
@@ -390,11 +385,10 @@ export default function AlcoolPage() {
                                     <Badge
                                       key={val}
                                       variant="outline"
-                                      className={`text-[11px] px-2 py-0.5 ${
-                                        isTheirFav
-                                          ? "bg-purple-500/15 border-purple-500/30 text-purple-300"
-                                          : "bg-card"
-                                      }`}
+                                      className={`text-[11px] px-2 py-0.5 ${isTheirFav
+                                        ? "bg-purple-500/15 border-purple-500/30 text-purple-300"
+                                        : "bg-card"
+                                        }`}
                                     >
                                       {item.emoji} {item.label}
                                       {isTheirFav && " ⭐"}
@@ -494,10 +488,10 @@ export default function AlcoolPage() {
         {compatibilities.length > 0 && (
           <div className="mt-8 text-center">
             <p className="text-xs text-muted-foreground italic">
-              &ldquo;L&apos;alcool c&apos;est mal... mais la compatibilité c&apos;est beau&rdquo; 🍻
+              &ldquo;L&apos;alcool c&apos;est mal m&apos;voyez... mais la compatibilité c&apos;est beau&rdquo; 🍻
             </p>
             <p className="text-[10px] text-muted-foreground/50 mt-1">
-              Buvez responsable. Ou pas. C&apos;est Ardèche.
+              Buvez responsable les ruyas. Ou pas. C&apos;est l&apos;Ardèche.
             </p>
           </div>
         )}

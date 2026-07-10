@@ -126,3 +126,70 @@ export function readFileAsDataURL(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Crop area from react-easy-crop
+ */
+export interface CropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Create a cropped image from a source image URL and crop area.
+ * Returns a circular-cropped File (PNG with transparency).
+ */
+export async function getCroppedImage(
+  imageSrc: string,
+  crop: CropArea,
+  outputSize: number = 400
+): Promise<File> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas context not available");
+
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+
+  // Draw the cropped portion
+  ctx.drawImage(
+    image,
+    crop.x,
+    crop.y,
+    crop.width,
+    crop.height,
+    0,
+    0,
+    outputSize,
+    outputSize
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return reject(new Error("Crop failed"));
+        resolve(
+          new File([blob], "avatar.jpg", {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          })
+        );
+      },
+      "image/jpeg",
+      0.85
+    );
+  });
+}
+
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.addEventListener("load", () => resolve(img));
+    img.addEventListener("error", (err) => reject(err));
+    img.setAttribute("crossOrigin", "anonymous");
+    img.src = url;
+  });
+}
