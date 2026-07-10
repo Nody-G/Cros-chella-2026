@@ -233,7 +233,15 @@ export default function ParticipantsPage() {
                                 return alcos.length > 0 && (
                                   <p className="text-[10px] text-muted-foreground">
                                     🍻 Alcools :{" "}
-                                    {alcos.map((val: string) => ALCOHOL_MAP[val]?.emoji || "🍺").join(" ")}
+                                    {alcos.map((val: string) => (
+                                      <span
+                                        key={val}
+                                        title={ALCOHOL_MAP[val]?.label || val}
+                                        className="cursor-help"
+                                      >
+                                        {ALCOHOL_MAP[val]?.emoji || "🍺"}{" "}
+                                      </span>
+                                    ))}
                                     {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
                                       <span className="text-amber-300 ml-1">
                                         ⭐ {ALCOHOL_MAP[p.favorite_alcohol].label}
