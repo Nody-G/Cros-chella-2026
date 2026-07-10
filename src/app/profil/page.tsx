@@ -5,7 +5,6 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { UserCircle, Loader2, Save, CheckCircle2, Camera, Trash2, ImageIcon, ZoomIn, ZoomOut, Eye, EyeOff } from "lucide-react";
 import { updateParticipant, uploadProfilePhoto, deleteProfilePhoto } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
@@ -661,12 +660,16 @@ export default function ProfilPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Bio <span className="normal-case text-muted-foreground/60">(décris-toi en quelques mots)</span>
             </label>
-            <Textarea
+            <textarea
               placeholder="Qui es-tu vraiment ?"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="bg-card border-border min-h-[80px]"
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               maxLength={300}
+              rows={3}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <p className="text-[10px] text-muted-foreground mt-1 text-right">{bio.length}/300</p>
           </div>
