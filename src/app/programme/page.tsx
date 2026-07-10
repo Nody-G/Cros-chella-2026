@@ -12,7 +12,6 @@ import { supabase } from "@/lib/supabase";
 import {
   getProgramWithResponsible,
   createProgram,
-  updateProgram,
   deleteProgram,
   volunteerForTask,
   markTaskDone,
@@ -39,32 +38,10 @@ const DAY_CONFIG: Record<ProgramDay, { label: string; emoji: string; date: strin
   sunday: { label: "Dimanche", emoji: "🌊", date: "2 août" },
 };
 
-const EMOJI_OPTIONS = ["🏠", "🎉", "☕", "🏊", "🎮", "🔥", "☀️", "🍕", "🍺", "🎵", "💤", "🏖️", "🎯", "📸", "🧘", "🎪", "🎶", "🌅", "🧹", "🚗"];
-
 const TASK_STATUS_CONFIG = {
   pending: { label: "À prendre", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", emoji: "🙋" },
   accepted: { label: "Pris en charge", color: "bg-blue-500/10 text-blue-400 border-blue-500/20", emoji: "🤝" },
   done: { label: "Fait !", color: "bg-green-500/10 text-green-400 border-green-500/20", emoji: "✅" },
-};
-
-interface ProgramFormData {
-  title: string;
-  description: string;
-  emoji: string;
-  day: ProgramDay;
-  start_time: string;
-  end_time: string;
-  location: string;
-}
-
-const EMPTY_FORM: ProgramFormData = {
-  title: "",
-  description: "",
-  emoji: "📌",
-  day: "friday",
-  start_time: "",
-  end_time: "",
-  location: "",
 };
 
 export default function ProgrammePage() {
@@ -74,11 +51,7 @@ export default function ProgrammePage() {
   const { currentParticipant } = useAuth();
   const isAdmin = currentParticipant?.is_admin || false;
 
-  // Admin CRUD state
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<ProgramFormData>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  // Admin state (delete only)
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Proposal state
@@ -99,8 +72,10 @@ export default function ProgrammePage() {
   const [proposalImageFile, setProposalImageFile] = useState<File | null>(null);
   const [proposalExistingImageUrl, setProposalExistingImageUrl] = useState<string | null>(null);
   const [submittingProposal, setSubmittingProposal] = useState(false);
+  const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
   const [deletingProposalId, setDeletingProposalId] = useState<string | null>(null);
   const proposalFileInputRef = useRef<HTMLInputElement>(null);
+  const proposalListRef = useRef<HTMLDivElement>(null);
 
   // Proposal crop state
   const [proposalCropSrc, setProposalCropSrc] = useState<string | null>(null);
@@ -194,61 +169,6 @@ export default function ProgrammePage() {
   }, []);
 
   // === ADMIN CRUD ===
-  const handleCreate = async () => {
-    if (!form.title.trim()) return;
-    setSaving(true);
-    const success = await createProgram({
-      title: form.title.trim(),
-      description: form.description.trim() || undefined,
-      emoji: form.emoji,
-      day: form.day,
-      start_time: form.start_time || undefined,
-      end_time: form.end_time || undefined,
-      location: form.location || undefined,
-    });
-    if (success) {
-      await fetchData();
-      setShowForm(false);
-      setForm(EMPTY_FORM);
-    }
-    setSaving(false);
-  };
-
-  const handleEdit = (prog: Program) => {
-    setEditingId(prog.id);
-    setForm({
-      title: prog.title,
-      description: prog.description || "",
-      emoji: prog.emoji,
-      day: prog.day,
-      start_time: prog.start_time || "",
-      end_time: prog.end_time || "",
-      location: prog.location || "",
-    });
-    setShowForm(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!editingId || !form.title.trim()) return;
-    setSaving(true);
-    const success = await updateProgram(editingId, {
-      title: form.title.trim(),
-      description: form.description.trim() || null,
-      emoji: form.emoji,
-      day: form.day,
-      start_time: form.start_time || null,
-      end_time: form.end_time || null,
-      location: form.location || null,
-    });
-    if (success) {
-      await fetchData();
-      setShowForm(false);
-      setEditingId(null);
-      setForm(EMPTY_FORM);
-    }
-    setSaving(false);
-  };
-
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     const success = await deleteProgram(id);
@@ -365,7 +285,12 @@ export default function ProgrammePage() {
         }
         await fetchData();
         setShowProposalForm(false);
+        setProposalSuccess(proposalForm.title.trim());
         resetProposalForm();
+        setTimeout(() => {
+          proposalListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+        setTimeout(() => setProposalSuccess(null), 4000);
       }
     } else {
       // Create new
@@ -396,7 +321,12 @@ export default function ProgrammePage() {
         }
         await fetchData();
         setShowProposalForm(false);
+        setProposalSuccess(proposalForm.title.trim());
         resetProposalForm();
+        setTimeout(() => {
+          proposalListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+        setTimeout(() => setProposalSuccess(null), 4000);
       }
     }
     setSubmittingProposal(false);
@@ -451,136 +381,13 @@ export default function ProgrammePage() {
     <main className="pb-20 min-h-screen">
       <div className="max-w-lg mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <CalendarDays className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">Programme 📅</h1>
-          </div>
-          {isAdmin && (
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditingId(null);
-                setForm(EMPTY_FORM);
-                setShowForm(!showForm);
-              }}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Ajouter
-            </Button>
-          )}
+        <div className="flex items-center gap-3 mb-2">
+          <CalendarDays className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold">Programme 📅</h1>
         </div>
         <p className="text-muted-foreground text-sm mb-6">
           Vendredi soir → Dimanche : le planning du carnage
         </p>
-
-        {/* Admin form */}
-        {isAdmin && showForm && (
-          <Card className="mb-6 card-glow-gold overflow-hidden">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm">
-                  {editingId ? "Modifier l&apos;activité" : "Nouvelle activité"}
-                </h3>
-                <button
-                  onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Jour</label>
-                  <select
-                    value={form.day}
-                    onChange={(e) => setForm({ ...form, day: e.target.value as ProgramDay })}
-                    className="w-full h-9 rounded-md bg-card border border-border text-sm px-2"
-                  >
-                    <option value="friday">Vendredi</option>
-                    <option value="saturday">Samedi</option>
-                    <option value="sunday">Dimanche</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Emoji</label>
-                  <div className="flex flex-wrap gap-1">
-                    {EMOJI_OPTIONS.slice(0, 10).map((e) => (
-                      <button
-                        key={e}
-                        type="button"
-                        onClick={() => setForm({ ...form, emoji: e })}
-                        className={`w-7 h-7 rounded flex items-center justify-center text-sm ${
-                          form.emoji === e ? "bg-primary/20 border border-primary" : "bg-card border border-border"
-                        }`}
-                      >
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Input
-                placeholder="Titre de l&apos;activité"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="bg-card border-border"
-              />
-
-              <Textarea
-                placeholder="Description (optionnel)"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="bg-card border-border min-h-[60px]"
-              />
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Début</label>
-                  <Input
-                    type="time"
-                    value={form.start_time}
-                    onChange={(e) => setForm({ ...form, start_time: e.target.value })}
-                    className="bg-card border-border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Fin</label>
-                  <Input
-                    type="time"
-                    value={form.end_time}
-                    onChange={(e) => setForm({ ...form, end_time: e.target.value })}
-                    className="bg-card border-border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Lieu</label>
-                  <Input
-                    placeholder="Lieu"
-                    value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    className="bg-card border-border text-sm"
-                  />
-                </div>
-              </div>
-
-              <Button
-                onClick={editingId ? handleUpdate : handleCreate}
-                disabled={saving || !form.title.trim()}
-                className="w-full"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4 mr-2" />
-                )}
-                {editingId ? "Mettre à jour" : "Ajouter au programme"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Loading */}
         {loading ? (
@@ -621,12 +428,6 @@ export default function ProgrammePage() {
                                   <h3 className="font-bold text-sm">{event.title}</h3>
                                   {isAdmin && (
                                     <div className="flex items-center gap-1">
-                                      <button
-                                        onClick={() => handleEdit(event)}
-                                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </button>
                                       <button
                                         onClick={() => handleDelete(event.id)}
                                         disabled={deletingId === event.id}
@@ -900,6 +701,14 @@ export default function ProgrammePage() {
           )}
 
           {/* Proposals list */}
+          {proposalSuccess && (
+            <div className="mb-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-green-400 text-sm font-medium">
+                ✅ &quot;{proposalSuccess}&quot; proposé(e) avec succès !
+              </p>
+            </div>
+          )}
+          <div ref={proposalListRef}>
           {pendingProposals.length === 0 ? (
             <div className="p-6 rounded-xl bg-card border border-border text-center">
               <p className="text-muted-foreground text-xs">
@@ -1029,6 +838,7 @@ export default function ProgrammePage() {
               })}
             </div>
           )}
+          </div>
         </div>
       </div>
       <MobileNav />
