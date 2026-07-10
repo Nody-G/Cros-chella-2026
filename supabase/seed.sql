@@ -6,14 +6,14 @@
 -- Participants
 INSERT INTO participants (name, pseudo, status, is_admin, bio) VALUES
   ('Niels', 'Maitre', 'confirmed', true, 'L''hote. Le boss. Celui qui a la maison.'),
-  ('Nelly', 'Nellfest', 'confirmed', false, 'Meuf de Niels. La vraie cheffe.'),
-  ('Alva', 'Alvathor', 'confirmed', false, 'Soeur de Niels. Attention a elle.'),
-  ('Celis', 'l''homme de l''ombre', 'confirmed', false, 'Le frere. L''ombre. Celui qu''on voit pas mais qui est la.'),
-  ('Charly', 'Chocolatione', 'confirmed', false, 'Le pote. Le classique. Le fiable.'),
-  ('Ludo', 'Rosette', 'confirmed', false, 'L''autre pote. Celui qui danse.'),
-  ('Xav', 'El hombre calvo de musculos prominentes', 'confirmed', false, 'L''inventeur du concept. Respect.'),
+  ('Nelly', 'Nellfest', 'pending', false, 'Meuf de Niels. La vraie cheffe.'),
+  ('Alva', 'Alvathor', 'pending', false, 'Soeur de Niels. Attention a elle.'),
+  ('Celis', 'l''homme de l''ombre', 'pending', false, 'Le frere. L''ombre. Celui qu''on voit pas mais qui est la.'),
+  ('Charly', 'Chocolatine', 'pending', false, 'Le pote. Le classique. Le fiable.'),
+  ('Ludo', 'Rosette', 'pending', false, 'L''autre pote. Celui qui danse.'),
+  ('Xav', 'El hombre calvo de musculos prominentes', 'pending', false, 'L''inventeur du concept. Respect.'),
   ('Herve', NULL, 'pending', false, 'Le mystere. Viendra-t-il ?'),
-  ('Bber', 'Punch des iles', 'confirmed', false, 'Le punch des iles. Ca va mal tourner.')
+  ('Bber', 'Punch des iles', 'pending', false, 'Le punch des iles. Ca va mal tourner.')
 ON CONFLICT DO NOTHING;
 
 -- Spots de baignade
