@@ -9,6 +9,7 @@ export async function getParticipants(): Promise<Participant[]> {
   const { data, error } = await supabase
     .from("participants")
     .select("*")
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -66,6 +67,19 @@ export async function addParticipant(name: string, pseudo?: string): Promise<Par
     return null;
   }
   return data as Participant;
+}
+
+export async function deleteParticipant(participantId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", participantId);
+
+  if (error) {
+    console.error("[deleteParticipant] Error:", JSON.stringify(error, null, 2));
+    return false;
+  }
+  return true;
 }
 
 export async function uploadProfilePhoto(participantId: string, file: File): Promise<string | null> {

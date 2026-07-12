@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown, UserPlus } from "lucide-react";
-import { getParticipants, updateAdminCode, updateParticipant, addParticipant } from "@/lib/supabase-queries";
+import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown, UserPlus, Trash2 } from "lucide-react";
+import { getParticipants, updateAdminCode, updateParticipant, addParticipant, deleteParticipant } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,13 +83,20 @@ export default function ParticipantsPage() {
           if (!mounted) return;
           if (payload.eventType === "UPDATE" && payload.new) {
             const updated = payload.new as unknown as Participant;
-            setParticipants((prev) =>
-              prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-            );
-            // Also update the modal if it's showing this participant
-            setSelectedParticipant((prev) =>
-              prev && prev.id === updated.id ? { ...prev, ...updated } : prev
-            );
+            // If soft-deleted, remove from list
+            if (updated.deleted_at) {
+              setParticipants((prev) => prev.filter((p) => p.id !== updated.id));
+              setSelectedParticipant((prev) =>
+                prev && prev.id === updated.id ? null : prev
+              );
+            } else {
+              setParticipants((prev) =>
+                prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+              );
+              setSelectedParticipant((prev) =>
+                prev && prev.id === updated.id ? { ...prev, ...updated } : prev
+              );
+            }
           } else if (payload.eventType === "INSERT" && payload.new) {
             setParticipants((prev) => [...prev, payload.new as unknown as Participant]);
           }
@@ -115,6 +122,18 @@ export default function ParticipantsPage() {
   const [addName, setAddName] = useState("");
   const [addPseudo, setAddPseudo] = useState("");
   const [addingParticipant, setAddingParticipant] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingParticipant, setDeletingParticipant] = useState<string | null>(null);
+
+  const handleDeleteParticipant = async (participantId: string) => {
+    setDeletingParticipant(participantId);
+    const success = await deleteParticipant(participantId);
+    if (success) {
+      setParticipants(prev => prev.filter(p => p.id !== participantId));
+      setDeleteConfirmId(null);
+    }
+    setDeletingParticipant(null);
+  };
 
   const handleBedAssignment = async (participantId: string, bed: string) => {
     setAssigningBed(participantId);
@@ -308,6 +327,33 @@ export default function ParticipantsPage() {
                             </Badge>
                             {hasProfile && (
                               <ChevronDown className={`w-4 h-4 text-muted-foreground ml-auto transition-transform duration-200 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
+                            )}
+                            {isCurrentUserAdmin && p.id !== currentParticipant?.id && (
+                              deleteConfirmId === p.id ? (
+                                <div className="flex items-center gap-1 ml-1 flex-shrink-0">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteParticipant(p.id); }}
+                                    disabled={deletingParticipant === p.id}
+                                    className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                                  >
+                                    {deletingParticipant === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirmer"}
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
+                                    className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border hover:bg-muted/80 transition-colors"
+                                  >
+                                    Non
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(p.id); }}
+                                  className="ml-1 p-1 rounded-md text-muted-foreground/50 hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+                                  title="Retirer ce participant"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )
                             )}
                           </div>
 

@@ -33,6 +33,7 @@ export interface Participant {
   alcohol_preferences: string[] | null;
   favorite_alcohol: string | null;
   smoking_preferences: string[] | null;
+  deleted_at: string | null;
 }
 
 export interface Game {
