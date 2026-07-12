@@ -39,6 +39,17 @@ export default function ChatPage() {
     }
     fetch();
 
+    // Close menus on outside click/tap
+    const closeMenus = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-msg-menu]") && !target.closest("[data-menu-trigger]")) {
+        setActiveMenu(null);
+        setReactionPickerMsgId(null);
+      }
+    };
+    document.addEventListener("click", closeMenus);
+    document.addEventListener("touchstart", closeMenus);
+
     // Subscribe to new messages + edits + deletes
     const channel = supabase
       .channel("messages")
@@ -65,6 +76,8 @@ export default function ChatPage() {
       .subscribe();
 
     return () => {
+      document.removeEventListener("click", closeMenus);
+      document.removeEventListener("touchstart", closeMenus);
       supabase.removeChannel(channel);
     };
   }, []);
@@ -240,21 +253,22 @@ export default function ChatPage() {
                     </div>
                     <div
                       className={`relative inline-block rounded-2xl ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
-                      onContextMenu={isMe && !isDeleted && !isEditing ? (e) => { e.preventDefault(); setActiveMenu(activeMenu === msg.id ? null : msg.id); } : undefined}
                     >
-                      {/* Long-press / click menu trigger */}
+                      {/* Long-press / click menu trigger — visible on all devices */}
                       {isMe && !isDeleted && !isEditing && (
                         <button
-                          onClick={() => setActiveMenu(activeMenu === msg.id ? null : msg.id)}
-                          className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-sm opacity-60 active:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity z-10 rounded-full"
+                          data-menu-trigger
+                          onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === msg.id ? null : msg.id); }}
+                          className="absolute -top-1 -right-1 w-7 h-7 flex items-center justify-center text-xs bg-card/90 backdrop-blur-sm border border-border/50 rounded-full shadow-md active:scale-95 transition-all z-20"
                           aria-label="Options du message"
+                          style={{ touchAction: "manipulation" }}
                         >
                           ⋯
                         </button>
                       )}
                       {/* Context menu */}
                       {activeMenu === msg.id && (
-                        <div className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 min-w-[160px]`}>
+                        <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 min-w-[160px]`}>
                           <button
                             onClick={() => startEdit(msg)}
                             className="flex items-center gap-3 w-full px-4 py-3 text-sm rounded-lg hover:bg-muted active:bg-muted transition-colors text-left"
@@ -341,14 +355,15 @@ export default function ChatPage() {
                     {!isDeleted && !isEditing && (
                       <div className="relative mt-0.5">
                         <button
-                          onClick={() => setReactionPickerMsgId(reactionPickerMsgId === msg.id ? null : msg.id)}
+                          data-menu-trigger
+                          onClick={(e) => { e.stopPropagation(); setReactionPickerMsgId(reactionPickerMsgId === msg.id ? null : msg.id); }}
                           className="text-muted-foreground/40 hover:text-muted-foreground transition-colors p-0.5"
                           aria-label="Réagir"
                         >
                           <SmilePlus className="w-3.5 h-3.5" />
                         </button>
                         {reactionPickerMsgId === msg.id && (
-                          <div className={`absolute ${isMe ? "right-0" : "left-0"} bottom-full mb-1 z-50 bg-card border border-border rounded-xl shadow-xl p-2 flex gap-1 flex-wrap max-w-[260px]`}>
+                          <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} bottom-full mb-1 z-50 bg-card border border-border rounded-xl shadow-xl p-2 flex gap-1 flex-wrap max-w-[260px]`}>
                             {REACTION_EMOJIS.map((emoji) => (
                               <button
                                 key={emoji}

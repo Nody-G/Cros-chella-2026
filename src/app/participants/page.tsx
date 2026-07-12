@@ -147,14 +147,18 @@ export default function ParticipantsPage() {
   const handleAddParticipant = async () => {
     if (!addName.trim()) return;
     setAddingParticipant(true);
-    const newP = await addParticipant(addName, addPseudo);
-    if (newP) {
-      setParticipants(prev => [...prev, newP]);
-      setAddName("");
-      setAddPseudo("");
-      setShowAddForm(false);
-    } else {
-      setError("Erreur lors de l'ajout du participant.");
+    setError(null);
+    try {
+      const newP = await addParticipant(addName, addPseudo);
+      if (newP) {
+        setParticipants(prev => [...prev, newP]);
+        setAddName("");
+        setAddPseudo("");
+        setShowAddForm(false);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'ajout du participant.";
+      setError(msg);
     }
     setAddingParticipant(false);
   };
@@ -182,8 +186,14 @@ export default function ParticipantsPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const confirmed = participants.filter((p) => p.status === "confirmed").length;
-  const pending = participants.filter((p) => p.status === "pending").length;
+  const confirmed = participants.filter((p) => {
+    const effectiveStatus = p.attendance === "yes" ? "confirmed" : p.attendance === "maybe" ? "pending" : p.attendance === "no" ? "declined" : p.status;
+    return effectiveStatus === "confirmed";
+  }).length;
+  const pending = participants.filter((p) => {
+    const effectiveStatus = p.attendance === "yes" ? "confirmed" : p.attendance === "maybe" ? "pending" : p.attendance === "no" ? "declined" : p.status;
+    return effectiveStatus === "pending";
+  }).length;
   const isCurrentUserAdmin = currentParticipant?.is_admin || false;
 
   return (

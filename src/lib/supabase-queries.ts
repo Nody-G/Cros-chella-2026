@@ -52,7 +52,7 @@ export async function updateParticipant(id: string, updates: Partial<Participant
 }
 
 export async function addParticipant(name: string, pseudo?: string): Promise<Participant | null> {
-  const insertData: { name: string; pseudo?: string; status: string } = { name: name.trim(), status: "pending" };
+  const insertData: Record<string, unknown> = { name: name.trim(), status: "pending" };
   if (pseudo && pseudo.trim()) {
     insertData.pseudo = pseudo.trim();
   }
@@ -64,7 +64,7 @@ export async function addParticipant(name: string, pseudo?: string): Promise<Par
 
   if (error) {
     console.error("[addParticipant] Error:", JSON.stringify(error, null, 2));
-    return null;
+    throw new Error(error.message || "Erreur lors de l'ajout");
   }
   return data as Participant;
 }
