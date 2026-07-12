@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine, Megaphone } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -41,6 +42,59 @@ export function MobileNav() {
   const [newPassword, setNewPassword] = useState("");
   const [updating, setUpdating] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
+
+  // Check for new chat messages
+  useEffect(() => {
+    if (!currentParticipant) return;
+
+    const checkNewMessages = async () => {
+      const lastVisit = localStorage.getItem("chatLastVisit");
+      if (!lastVisit) {
+        // Never visited chat → show badge if any messages exist
+        const { count } = await supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .is("deleted_at", null);
+        setHasNewChatMessages((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .gt("created_at", lastVisit);
+      setHasNewChatMessages((count || 0) > 0);
+    };
+
+    checkNewMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel("nav-chat-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+        const newMsg = payload.new as { created_at: string; author_id: string };
+        // Don't show badge for own messages
+        if (newMsg.author_id === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("chatLastVisit");
+        if (!lastVisit || newMsg.created_at > lastVisit) {
+          setHasNewChatMessages(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentParticipant]);
+
+  // Clear badge when visiting /chat
+  useEffect(() => {
+    if (pathname === "/chat") {
+      localStorage.setItem("chatLastVisit", new Date().toISOString());
+      setHasNewChatMessages(false);
+    }
+  }, [pathname]);
 
   const handleChangePassword = async () => {
     if (!currentParticipant || !newPassword.trim()) return;
@@ -66,18 +120,24 @@ export function MobileNav() {
       <div className="flex items-center justify-around max-w-lg mx-auto h-16">
         {mainNavItems.map((item) => {
           const isActive = pathname === item.href;
+          const showBadge = item.href === "/chat" && hasNewChatMessages;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors relative",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <div className="relative">
+                <item.icon className="w-5 h-5" />
+                {showBadge && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background animate-pulse" />
+                )}
+              </div>
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
