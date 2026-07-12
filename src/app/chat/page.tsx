@@ -260,32 +260,26 @@ export default function ChatPage() {
                       </span>
                     </div>
                     <div
-                      className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
+                      className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"} ${isMe && !isDeleted && !isEditing ? "cursor-pointer active:scale-[0.98] transition-transform" : ""}`}
+                      onClick={(e) => {
+                        if (!isMe || isDeleted || isEditing) return;
+                        e.stopPropagation();
+                        setActiveMenu(activeMenu === msg.id ? null : msg.id);
+                      }}
                     >
-                      {/* Long-press / click menu trigger — visible on all devices */}
-                      {isMe && !isDeleted && !isEditing && (
-                        <button
-                          data-menu-trigger
-                          onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === msg.id ? null : msg.id); }}
-                          className="absolute -top-0.5 opacity-0 group-hover:opacity-50 hover:!opacity-100 p-0.5 rounded transition-opacity text-muted-foreground/40 hover:text-muted-foreground z-20"
-                          aria-label="Options du message"
-                          style={{ touchAction: "manipulation", right: isMe ? 0 : undefined, left: isMe ? undefined : 0 }}
-                        >
-                          ⋯
-                        </button>
-                      )}
                       {/* Context menu */}
                       {activeMenu === msg.id && (
                         <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 flex gap-1`}>
                           <button
-                            onClick={() => startEdit(msg)}
+                            onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
                             className="p-2.5 rounded-lg hover:bg-muted active:bg-muted transition-colors"
                             title="Modifier"
                           >
                             <Pencil className="w-4 h-4 text-primary" />
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
                               setActiveMenu(null);
                             }}
