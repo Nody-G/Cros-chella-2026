@@ -2,6 +2,14 @@
   {
     "date": "2026-07-12",
     "tag": "feature",
+    "emoji": "🔴",
+    "title": "Notifications : pastilles rouges",
+    "description": "Des pastilles rouges apparaissent sur Chat, Jeux et Galerie quand il y a du nouveau.",
+    "details": "L'icône 💬 Chat dans la barre de navigation affiche une pastille rouge pulsante quand un autre participant a envoyé un message que tu n'as pas vu. De même, les tuiles 🎮 Jeux et 📸 Galerie dans le menu « Plus » affichent une pastille quand de nouveaux jeux ou photos ont été ajoutés par quelqu'un d'autre. Les pastilles disparaissent quand tu visites la page concernée. Tout fonctionne en temps réel grâce à Supabase Realtime."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
     "emoji": "💰",
     "title": "Tricount — Dépenses partagées",
     "description": "Ajoute tes dépenses, répartis entre les potes, et vois qui doit quoi à qui.",

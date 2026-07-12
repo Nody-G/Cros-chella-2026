@@ -43,6 +43,8 @@ export function MobileNav() {
   const [updating, setUpdating] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
+  const [hasNewPhotos, setHasNewPhotos] = useState(false);
+  const [hasNewGames, setHasNewGames] = useState(false);
 
   // Check for new chat messages
   useEffect(() => {
@@ -93,6 +95,102 @@ export function MobileNav() {
     if (pathname === "/chat") {
       localStorage.setItem("chatLastVisit", new Date().toISOString());
       setHasNewChatMessages(false);
+    }
+  }, [pathname]);
+
+  // Check for new photos (galerie)
+  useEffect(() => {
+    if (!currentParticipant) return;
+
+    const checkNewPhotos = async () => {
+      const lastVisit = localStorage.getItem("galerieLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase
+          .from("photos")
+          .select("*", { count: "exact", head: true })
+          .is("deleted_at", null);
+        setHasNewPhotos((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase
+        .from("photos")
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .gt("created_at", lastVisit);
+      setHasNewPhotos((count || 0) > 0);
+    };
+
+    checkNewPhotos();
+
+    const channel = supabase
+      .channel("nav-gallery-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "photos" }, (payload) => {
+        const newPhoto = payload.new as { created_at: string; author_id: string };
+        if (newPhoto.author_id === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("galerieLastVisit");
+        if (!lastVisit || newPhoto.created_at > lastVisit) {
+          setHasNewPhotos(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentParticipant]);
+
+  // Clear badge when visiting /galerie
+  useEffect(() => {
+    if (pathname === "/galerie") {
+      localStorage.setItem("galerieLastVisit", new Date().toISOString());
+      setHasNewPhotos(false);
+    }
+  }, [pathname]);
+
+  // Check for new games
+  useEffect(() => {
+    if (!currentParticipant) return;
+
+    const checkNewGames = async () => {
+      const lastVisit = localStorage.getItem("jeuxLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase
+          .from("games")
+          .select("*", { count: "exact", head: true });
+        setHasNewGames((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase
+        .from("games")
+        .select("*", { count: "exact", head: true })
+        .gt("created_at", lastVisit);
+      setHasNewGames((count || 0) > 0);
+    };
+
+    checkNewGames();
+
+    const channel = supabase
+      .channel("nav-games-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "games" }, (payload) => {
+        const newGame = payload.new as { created_at: string; author_id: string };
+        if (newGame.author_id === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("jeuxLastVisit");
+        if (!lastVisit || newGame.created_at > lastVisit) {
+          setHasNewGames(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentParticipant]);
+
+  // Clear badge when visiting /jeux
+  useEffect(() => {
+    if (pathname === "/jeux") {
+      localStorage.setItem("jeuxLastVisit", new Date().toISOString());
+      setHasNewGames(false);
     }
   }, [pathname]);
 
@@ -164,19 +262,25 @@ export function MobileNav() {
             <div className="grid grid-cols-3 gap-3 mt-6 pb-4">
               {moreNavItems.map((item) => {
                 const isActive = pathname === item.href;
+                const showBadge =
+                  (item.href === "/galerie" && hasNewPhotos) ||
+                  (item.href === "/jeux" && hasNewGames);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
+                      "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all relative",
                       isActive
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <span className="text-2xl">{item.emoji}</span>
+                    {showBadge && (
+                      <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background animate-pulse" />
+                    )}
                     <span className="text-xs font-medium">{item.label}</span>
                   </Link>
                 );
