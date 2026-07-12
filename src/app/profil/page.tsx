@@ -504,35 +504,9 @@ export default function ProfilPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
               Tes préférences alcool 🍻
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {ALCOHOL_LIST.map((item) => {
-                const selected = alcoholPreferences.includes(item.value);
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => {
-                      setAlcoholPreferences((prev) =>
-                        selected ? prev.filter((v) => v !== item.value) : [...prev, item.value]
-                      );
-                    }}
-                    className={`p-2 rounded-xl border text-center transition-all text-xs ${
-                      selected
-                        ? "border-amber-400 bg-amber-400/10"
-                        : "border-border bg-card hover:border-amber-400/30"
-                    }`}
-                  >
-                    <span className="text-lg">{item.emoji}</span>
-                    <p className="mt-0.5 truncate">{item.label}</p>
-                  </button>
-                );
-              })}
-            </div>
-            {alcoholPreferences.length > 0 && (
-              <div className="mt-3">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1 block">
-                  ⭐ Ton alcool préféré
-                </label>
+            <div className="space-y-3">
+              {/* Selected badges */}
+              {alcoholPreferences.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {alcoholPreferences.map((val) => {
                     const item = ALCOHOL_LIST.find((a) => a.value === val);
@@ -540,21 +514,72 @@ export default function ProfilPage() {
                       <button
                         key={val}
                         type="button"
-                        onClick={() => setFavoriteAlcohol(favoriteAlcohol === val ? "" : val)}
-                        className={`px-2.5 py-1 rounded-full text-xs border transition-all ${
-                          favoriteAlcohol === val
-                            ? "border-amber-400 bg-amber-400/20 text-amber-300"
-                            : "border-border bg-card hover:border-amber-400/30"
-                        }`}
+                        onClick={() => {
+                          setAlcoholPreferences((prev) => prev.filter((v) => v !== val));
+                          if (favoriteAlcohol === val) setFavoriteAlcohol("");
+                        }}
+                        className="px-2 py-1 rounded-full text-xs border border-amber-400 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition-all"
                       >
-                        {item?.emoji} {item?.label}
-                        {favoriteAlcohol === val && " ⭐"}
+                        {item?.emoji} {item?.label} ✕
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Dropdown selector */}
+              <select
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !alcoholPreferences.includes(val)) {
+                    setAlcoholPreferences((prev) => [...prev, val]);
+                  }
+                }}
+                className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+              >
+                <option value="">+ Ajouter un alcool...</option>
+                {Object.entries(
+                  ALCOHOL_LIST.reduce((acc, item) => {
+                    if (!acc[item.group]) acc[item.group] = [];
+                    acc[item.group].push(item);
+                    return acc;
+                  }, {} as Record<string, typeof ALCOHOL_LIST>)
+                ).map(([group, items]) => (
+                  <optgroup key={group} label={group}>
+                    {items.map((item) => (
+                      <option key={item.value} value={item.value} disabled={alcoholPreferences.includes(item.value)}>
+                        {item.emoji} {item.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+
+              {/* Favorite alcohol selector */}
+              {alcoholPreferences.length > 0 && (
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1 block">
+                    ⭐ Ton alcool préféré
+                  </label>
+                  <select
+                    value={favoriteAlcohol}
+                    onChange={(e) => setFavoriteAlcohol(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+                  >
+                    <option value="">Choisir ton favori...</option>
+                    {alcoholPreferences.map((val) => {
+                      const item = ALCOHOL_LIST.find((a) => a.value === val);
+                      return (
+                        <option key={val} value={val}>
+                          {item?.emoji} {item?.label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Smoking preferences */}
@@ -562,29 +587,44 @@ export default function ProfilPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
               Tabac / Vape 🚬
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {SMOKING_LIST.map((item) => {
-                const selected = smokingPreferences.includes(item.value);
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => {
-                      setSmokingPreferences((prev) =>
-                        selected ? prev.filter((v) => v !== item.value) : [...prev, item.value]
-                      );
-                    }}
-                    className={`p-2 rounded-xl border text-center transition-all text-xs ${
-                      selected
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-card hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="text-lg">{item.emoji}</span>
-                    <p className="mt-0.5">{item.label}</p>
-                  </button>
-                );
-              })}
+            <div className="space-y-3">
+              {/* Selected badges */}
+              {smokingPreferences.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {smokingPreferences.map((val) => {
+                    const item = SMOKING_LIST.find((s) => s.value === val);
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setSmokingPreferences((prev) => prev.filter((v) => v !== val))}
+                        className="px-2 py-1 rounded-full text-xs border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                      >
+                        {item?.emoji} {item?.label} ✕
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Dropdown selector */}
+              <select
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !smokingPreferences.includes(val)) {
+                    setSmokingPreferences((prev) => [...prev, val]);
+                  }
+                }}
+                className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">+ Ajouter...</option>
+                {SMOKING_LIST.map((item) => (
+                  <option key={item.value} value={item.value} disabled={smokingPreferences.includes(item.value)}>
+                    {item.emoji} {item.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
