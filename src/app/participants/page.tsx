@@ -313,7 +313,13 @@ export default function ParticipantsPage() {
                         }}
                       >
                         {/* Avatar */}
-                        <div className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+                        <div
+                          className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedParticipant(p);
+                          }}
+                        >
                           {p.avatar_url ? (
                             <img
                               src={p.avatar_url}
@@ -576,18 +582,7 @@ export default function ParticipantsPage() {
                             </div>
                           )}
 
-                          {/* Big photo button */}
-                          {p.avatar_url && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedParticipant(p);
-                              }}
-                              className="w-full py-2 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-                            >
-                              📸 Voir la photo en grand
-                            </button>
-                          )}
+
                         </div>
                       )}
 
