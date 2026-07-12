@@ -2,82 +2,27 @@
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#2d1b69"/>
-      <stop offset="50%" style="stop-color:#1a0a3e"/>
       <stop offset="100%" style="stop-color:#0d0221"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#ffd700"/>
-      <stop offset="50%" style="stop-color:#ffaa00"/>
       <stop offset="100%" style="stop-color:#ff8c00"/>
     </linearGradient>
-    <linearGradient id="tent" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff6b9d"/>
-      <stop offset="100%" style="stop-color:#c44569"/>
-    </linearGradient>
-    <linearGradient id="tent2" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#a855f7"/>
-      <stop offset="100%" style="stop-color:#7c3aed"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
 
   <!-- Background circle -->
   <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
 
-  <!-- Stars -->
-  <circle cx="80" cy="100" r="4" fill="#ffd700" opacity="0.8" filter="url(#glow)"/>
-  <circle cx="430" cy="80" r="3" fill="#ffd700" opacity="0.7" filter="url(#glow)"/>
-  <circle cx="150" cy="60" r="3" fill="#a855f7" opacity="0.6" filter="url(#glow)"/>
-  <circle cx="380" cy="130" r="4" fill="#ff6b9d" opacity="0.7" filter="url(#glow)"/>
-  <circle cx="100" cy="170" r="2.5" fill="#ffd700" opacity="0.5"/>
-  <circle cx="410" cy="190" r="2.5" fill="#a855f7" opacity="0.5"/>
-  <circle cx="320" cy="55" r="3" fill="#ffd700" opacity="0.6" filter="url(#glow)"/>
-  <circle cx="200" cy="90" r="2" fill="#ff6b9d" opacity="0.5"/>
+  <!-- Single bold tent — simple triangle -->
+  <polygon points="256,100 120,380 392,380" fill="url(#gold)"/>
 
-  <!-- Main tent (center) -->
-  <polygon points="256,110 170,310 342,310" fill="url(#tent)" opacity="0.9"/>
-  <polygon points="256,110 170,310 256,310" fill="url(#tent)" opacity="0.7"/>
-  <!-- Tent stripes -->
-  <polygon points="256,110 213,210 299,210" fill="#ffffff" opacity="0.1"/>
-  <polygon points="256,150 192,310 256,310" fill="#ffffff" opacity="0.05"/>
-  <!-- Tent entrance -->
-  <ellipse cx="256" cy="310" rx="35" ry="50" fill="#1a0a3e" opacity="0.8"/>
-  <ellipse cx="256" cy="310" rx="30" ry="45" fill="#2d1b69" opacity="0.9"/>
-  <!-- Tent flag on top -->
-  <line x1="256" y1="110" x2="256" y2="80" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
-  <polygon points="256,80 256,95 275,87.5" fill="url(#gold)" filter="url(#glow)"/>
+  <!-- Tent entrance (dark arch) -->
+  <ellipse cx="256" cy="380" rx="55" ry="70" fill="#1a0a3e"/>
 
-  <!-- Side tent left -->
-  <polygon points="140,200 80,340 200,340" fill="url(#tent2)" opacity="0.6"/>
-  <polygon points="140,200 80,340 140,340" fill="url(#tent2)" opacity="0.4"/>
+  <!-- Small flag on top -->
+  <line x1="256" y1="100" x2="256" y2="60" stroke="#ffd700" stroke-width="6" stroke-linecap="round"/>
+  <polygon points="256,60 256,85 285,72" fill="#ffd700"/>
 
-  <!-- Side tent right -->
-  <polygon points="370,200 310,340 430,340" fill="url(#tent2)" opacity="0.6"/>
-  <polygon points="370,200 370,340 430,340" fill="url(#tent2)" opacity="0.4"/>
-
-  <!-- Ground -->
-  <ellipse cx="256" cy="340" rx="220" ry="20" fill="#1a0a3e" opacity="0.5"/>
-
-  <!-- Musical notes -->
-  <text x="110" y="250" font-size="40" fill="url(#gold)" opacity="0.8" filter="url(#glow)">♪</text>
-  <text x="380" y="220" font-size="35" fill="#ff6b9d" opacity="0.7" filter="url(#glow)">♫</text>
-  <text x="310" y="160" font-size="28" fill="url(#gold)" opacity="0.6">♪</text>
-
-  <!-- "CROS" text -->
-  <text x="256" y="410" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="80" fill="url(#gold)" filter="url(#glow)" letter-spacing="8">CROS</text>
-
-  <!-- "CHELLA" text below -->
-  <text x="256" y="460" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="50" fill="#ff6b9d" filter="url(#glow)" letter-spacing="6">CHELLA</text>
-
-  <!-- Sparkle accents -->
-  <circle cx="160" cy="390" r="3" fill="#ffd700" opacity="0.8" filter="url(#glow)"/>
-  <circle cx="350" cy="390" r="3" fill="#ffd700" opacity="0.8" filter="url(#glow)"/>
-  <circle cx="130" cy="440" r="2" fill="#a855f7" opacity="0.6"/>
-  <circle cx="380" cy="440" r="2" fill="#a855f7" opacity="0.6"/>
+  <!-- Single star top-right -->
+  <circle cx="380" cy="120" r="12" fill="#ffd700" opacity="0.9"/>
 </svg>
