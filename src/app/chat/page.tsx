@@ -243,7 +243,7 @@ export default function ChatPage() {
                       {isMe && !isDeleted && !isEditing && (
                         <button
                           onClick={() => setActiveMenu(activeMenu === msg.id ? null : msg.id)}
-                          className="absolute top-0 right-0 w-6 h-6 flex items-center justify-center text-xs opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity z-10"
+                          className="absolute top-0 right-0 w-7 h-7 flex items-center justify-center text-xs opacity-40 active:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity z-10 rounded-full"
                           aria-label="Options du message"
                         >
                           ⋮

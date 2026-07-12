@@ -359,6 +359,35 @@ export async function editMessage(messageId: string, newContent: string): Promis
 }
 
 export async function deleteMessage(messageId: string): Promise<boolean> {
+  // 1. Récupérer le message pour avoir l'image_url avant suppression
+  const { data: msg, error: fetchError } = await supabase
+    .from("messages")
+    .select("image_url")
+    .eq("id", messageId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching message for delete:", fetchError);
+    return false;
+  }
+
+  // 2. Supprimer l'image du Storage si elle existe
+  if (msg?.image_url) {
+    try {
+      // Extraire le path relatif depuis l'URL publique
+      // URL format: .../storage/v1/object/public/avatars/chat/xxx.jpg
+      const urlParts = msg.image_url.split("/avatars/");
+      if (urlParts.length > 1) {
+        const storagePath = urlParts[1];
+        await supabase.storage.from("avatars").remove([storagePath]);
+      }
+    } catch (e) {
+      console.warn("Could not delete image from storage:", e);
+      // On continue quand même le soft delete
+    }
+  }
+
+  // 3. Soft delete en DB
   const { error } = await supabase
     .from("messages")
     .update({ deleted_at: new Date().toISOString(), content: "", image_url: null })

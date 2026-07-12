@@ -49,6 +49,7 @@ export default function ParticipantsPage() {
   const { currentParticipant } = useAuth();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -179,15 +180,26 @@ export default function ParticipantsPage() {
           <div className="space-y-3">
             {participants.map((p) => {
               const status = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+              const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
+              const smokes = Array.isArray(p.smoking_preferences) ? p.smoking_preferences : [];
+              const hasProfile = p.bio || p.festival_role || p.special_skill || p.superpower || p.weakness || p.catchphrase || p.theme_song || alcos.length > 0 || smokes.length > 0;
+              const isExpanded = expandedId === p.id;
               return (
                 <Card
                   key={p.id}
-                  className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors"
-                  onClick={() => setSelectedParticipant(p)}
+                  className="overflow-hidden hover:border-primary/40 transition-colors"
                 >
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-3">
+                      {/* Clickable header area */}
+                      <div
+                        className="flex items-start gap-3 cursor-pointer"
+                        onClick={() => {
+                          if (hasProfile) {
+                            setExpandedId(isExpanded ? null : p.id);
+                          }
+                        }}
+                      >
                         {/* Avatar */}
                         <div className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
                           {p.avatar_url ? (
@@ -211,6 +223,9 @@ export default function ParticipantsPage() {
                             <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${status.color}`}>
                               {status.label}
                             </Badge>
+                            {hasProfile && (
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground ml-auto transition-transform duration-200 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
+                            )}
                           </div>
 
                           {p.pseudo && (
@@ -232,30 +247,38 @@ export default function ParticipantsPage() {
                           )}
 
                           {/* Alcohol emojis preview */}
-                          {(() => {
-                            const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
-                            return alcos.length > 0 && (
-                              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                                {alcos.slice(0, 6).map((val: string) => (
-                                  <span
-                                    key={val}
-                                    title={ALCOHOL_MAP[val]?.label || val}
-                                    className="cursor-help text-sm"
-                                  >
-                                    {ALCOHOL_MAP[val]?.emoji || "🍺"}
-                                  </span>
-                                ))}
-                                {alcos.length > 6 && (
-                                  <span className="text-[10px] text-muted-foreground">+{alcos.length - 6}</span>
-                                )}
-                                {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
-                                  <span className="text-amber-300 text-sm ml-0.5">
-                                    ⭐
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
+                          {alcos.length > 0 && (
+                            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                              {alcos.slice(0, 6).map((val: string) => (
+                                <span
+                                  key={val}
+                                  title={ALCOHOL_MAP[val]?.label || val}
+                                  className="cursor-help text-sm"
+                                >
+                                  {ALCOHOL_MAP[val]?.emoji || "🍺"}
+                                </span>
+                              ))}
+                              {alcos.length > 6 && (
+                                <span className="text-[10px] text-muted-foreground">+{alcos.length - 6}</span>
+                              )}
+                              {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
+                                <span className="text-amber-300 text-sm ml-0.5">
+                                  ⭐
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Smoking emojis preview */}
+                          {smokes.length > 0 && (
+                            <div className="flex items-center gap-1 mt-1 flex-wrap">
+                              {smokes.map((val: string) => (
+                                <span key={val} className="text-sm" title={getSmokingLabel(val)}>
+                                  {getSmokingEmoji(val)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           {p.bed_assignment && (
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
@@ -283,6 +306,159 @@ export default function ParticipantsPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* ===== EXPANDED PROFILE DETAILS ===== */}
+                      {isExpanded && hasProfile && (
+                        <div className="pt-3 mt-1 border-t border-border space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+
+                          {/* Bio */}
+                          {p.bio && (
+                            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+                              <p className="text-sm text-foreground leading-relaxed">{p.bio}</p>
+                            </div>
+                          )}
+
+                          {/* Festival Profile */}
+                          {(p.festival_role || p.special_skill || p.superpower || p.weakness || p.catchphrase || p.theme_song) && (
+                            <div className="space-y-2">
+                              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">🎪 Profil Festival</h4>
+                              {p.festival_role && (
+                                <div className="flex items-start gap-2">
+                                  <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Rôle</p>
+                                    <p className="text-xs text-foreground">{p.festival_role}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {p.special_skill && (
+                                <div className="flex items-start gap-2">
+                                  <Zap className="w-3.5 h-3.5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Spécialité</p>
+                                    <p className="text-xs text-foreground">{p.special_skill}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {p.superpower && (
+                                <div className="flex items-start gap-2">
+                                  <Target className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Super-pouvoir</p>
+                                    <p className="text-xs text-foreground">{p.superpower}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {p.weakness && (
+                                <div className="flex items-start gap-2">
+                                  <Skull className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Faiblesse</p>
+                                    <p className="text-xs text-foreground">{p.weakness}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {p.catchphrase && (
+                                <div className="flex items-start gap-2">
+                                  <Quote className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Phrase fétiche</p>
+                                    <p className="text-xs text-foreground italic">&ldquo;{p.catchphrase}&rdquo;</p>
+                                  </div>
+                                </div>
+                              )}
+                              {p.theme_song && (
+                                <div className="flex items-start gap-2">
+                                  <Music className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Hymne</p>
+                                    <p className="text-xs text-foreground">{p.theme_song}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Alcohol detail */}
+                          {alcos.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                <Wine className="w-3.5 h-3.5 inline mr-1" />
+                                Alcool
+                              </h4>
+                              <div className="space-y-2">
+                                {ALCOHOL_GROUPS.map((groupName) => {
+                                  const groupItems = ALCOHOL_LIST.filter((item) => item.group === groupName && alcos.includes(item.value));
+                                  if (groupItems.length === 0) return null;
+                                  return (
+                                    <div key={groupName}>
+                                      <p className="text-[10px] text-muted-foreground mb-1">{groupItems[0].emoji} {groupName}</p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {groupItems.map((item) => {
+                                          const isFav = p.favorite_alcohol === item.value;
+                                          return (
+                                            <span
+                                              key={item.value}
+                                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
+                                                isFav
+                                                  ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                                                  : "bg-muted/50 border-border text-foreground"
+                                              }`}
+                                            >
+                                              <span>{item.emoji}</span>
+                                              <span>{item.label}</span>
+                                              {isFav && <span>⭐</span>}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
+                                <p className="text-[11px] text-amber-300">
+                                  ❤️ Alcool de cœur : {ALCOHOL_MAP[p.favorite_alcohol].emoji} {ALCOHOL_MAP[p.favorite_alcohol].label}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Smoking detail */}
+                          {smokes.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                <Cigarette className="w-3.5 h-3.5 inline mr-1" />
+                                Fumeur
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {smokes.map((val: string) => (
+                                  <span
+                                    key={val}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-muted/50 border-border text-foreground"
+                                  >
+                                    <span>{getSmokingEmoji(val)}</span>
+                                    <span>{getSmokingLabel(val)}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Big photo button */}
+                          {p.avatar_url && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedParticipant(p);
+                              }}
+                              className="w-full py-2 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                            >
+                              📸 Voir la photo en grand
+                            </button>
+                          )}
+                        </div>
+                      )}
 
                       {/* Admin section for managing user passwords */}
                       {isCurrentUserAdmin && (
@@ -327,25 +503,27 @@ export default function ParticipantsPage() {
                           className="mt-2 pt-2 border-t border-dashed border-border"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-1.5">
                             <Bed className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-xs font-semibold text-muted-foreground">Lit :</span>
-                            <div className="relative flex-1">
-                              <select
-                                value={p.bed_assignment || ""}
-                                onChange={(e) => handleBedAssignment(p.id, e.target.value)}
-                                disabled={assigningBed === p.id}
-                                className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1 appearance-none cursor-pointer hover:border-primary/30 transition-colors disabled:opacity-50"
-                              >
-                                <option value="">Non assigné</option>
-                                {BED_OPTIONS.map((bed) => (
-                                  <option key={bed} value={bed}>{bed}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
-                            </div>
-                            {assigningBed === p.id && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
                           </div>
+                          <select
+                            value={p.bed_assignment || ""}
+                            onChange={(e) => handleBedAssignment(p.id, e.target.value)}
+                            disabled={assigningBed === p.id}
+                            className="w-full text-xs bg-muted border border-border rounded-lg px-2 py-1.5 text-foreground"
+                          >
+                            <option value="">— Non assigné —</option>
+                            {BED_OPTIONS.map((bed) => (
+                              <option key={bed} value={bed}>{bed}</option>
+                            ))}
+                          </select>
+                          {assigningBed === p.id && (
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                              Assignation...
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -355,20 +533,11 @@ export default function ParticipantsPage() {
             })}
           </div>
         )}
-
-        {/* Capacity info */}
-        {!loading && participants.length > 0 && (
-          <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              🏠 Capacité max : ~14-15 personnes • {participants.length} inscrits
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* Profile Detail Modal */}
+      {/* Photo Modal (for big photo view) */}
       {selectedParticipant && (
-        <ProfileModal
+        <PhotoModal
           participant={selectedParticipant}
           onClose={() => setSelectedParticipant(null)}
         />
@@ -379,247 +548,34 @@ export default function ParticipantsPage() {
   );
 }
 
-function ProfileModal({ participant: p, onClose }: { participant: Participant; onClose: () => void }) {
-  const status = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
-  const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
-
-  // Lock body scroll when modal is open
+function PhotoModal({ participant: p, onClose }: { participant: Participant; onClose: () => void }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal content */}
-      <div className="relative w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-card border border-border shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:fade-in duration-300">
-        {/* Header with gradient */}
-        <div className="sticky top-0 z-10 bg-gradient-to-b from-primary/20 to-card border-b border-border">
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors z-10"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          {/* Big photo */}
-          <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
-            {p.avatar_url ? (
-              <img src={p.avatar_url} alt={p.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-7xl">{p.emoji_avatar || getEmoji(p.name)}</span>
-            )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="relative max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className="rounded-2xl overflow-hidden">
+          {p.avatar_url ? (
+            <img src={p.avatar_url} alt={p.name} className="w-full h-auto" />
+          ) : (
+            <div className="w-full aspect-square bg-muted flex items-center justify-center">
+              <span className="text-8xl">{p.emoji_avatar || getEmoji(p.name)}</span>
+            </div>
+          )}
+          <div className="bg-card p-4 text-center">
+            <p className="font-bold text-lg">{p.name}</p>
+            {p.pseudo && <p className="text-primary text-sm">aka &ldquo;{p.pseudo}&rdquo;</p>}
           </div>
-
-          <div className="px-5 pb-4 pt-3">
-            <div className="flex items-center gap-2">
-              <h2 className="font-bold text-xl">{p.name}</h2>
-              {p.is_admin && <Crown className="w-4 h-4 text-yellow-500" />}
-            </div>
-            {p.pseudo && (
-              <p className="text-primary font-medium text-sm">aka &ldquo;{p.pseudo}&rdquo;</p>
-            )}
-            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 mt-1 ${status.color}`}>
-              {status.label}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="px-5 py-4 space-y-4">
-          {/* Fun title & tagline */}
-          {p.fun_title && (
-            <div className="text-center">
-              <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                {p.fun_title}
-              </span>
-            </div>
-          )}
-
-          {p.tagline && (
-            <p className="text-center text-muted-foreground italic text-sm">
-              &ldquo;{p.tagline}&rdquo;
-            </p>
-          )}
-
-          {/* Bio */}
-          {p.bio && (
-            <div className="p-3 rounded-xl bg-muted/30 border border-border">
-              <p className="text-sm text-foreground leading-relaxed">{p.bio}</p>
-            </div>
-          )}
-
-          {/* Festival Profile */}
-          {(p.festival_role || p.special_skill || p.superpower || p.weakness || p.catchphrase || p.theme_song) && (
-            <div className="space-y-2.5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                🎪 Profil Festival
-              </h3>
-              {p.festival_role && (
-                <div className="flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Rôle</p>
-                    <p className="text-sm text-foreground">{p.festival_role}</p>
-                  </div>
-                </div>
-              )}
-              {p.special_skill && (
-                <div className="flex items-start gap-2.5">
-                  <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Spécialité</p>
-                    <p className="text-sm text-foreground">{p.special_skill}</p>
-                  </div>
-                </div>
-              )}
-              {p.superpower && (
-                <div className="flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Super-pouvoir</p>
-                    <p className="text-sm text-primary font-medium">{p.superpower}</p>
-                  </div>
-                </div>
-              )}
-              {p.weakness && (
-                <div className="flex items-start gap-2.5">
-                  <Skull className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Faiblesse</p>
-                    <p className="text-sm text-red-400">{p.weakness}</p>
-                  </div>
-                </div>
-              )}
-              {p.catchphrase && (
-                <div className="flex items-start gap-2.5">
-                  <Quote className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Phrase fétiche</p>
-                    <p className="text-sm text-foreground italic">&ldquo;{p.catchphrase}&rdquo;</p>
-                  </div>
-                </div>
-              )}
-              {p.theme_song && (
-                <div className="flex items-start gap-2.5">
-                  <Music className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Hymne</p>
-                    <p className="text-sm text-foreground">{p.theme_song}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Alcools — grouped by type */}
-          {alcos.length > 0 && (
-            <div className="space-y-2.5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                <Wine className="w-3.5 h-3.5 inline mr-1" />
-                Alcools favoris
-              </h3>
-              <div className="space-y-2">
-                {ALCOHOL_GROUPS.map((group) => {
-                  const groupItems = ALCOHOL_LIST.filter(
-                    (a) => a.group === group && alcos.includes(a.value)
-                  );
-                  if (groupItems.length === 0) return null;
-                  return (
-                    <div key={group}>
-                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">
-                        {group}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {groupItems.map((item) => {
-                          const isFav = p.favorite_alcohol === item.value;
-                          return (
-                            <span
-                              key={item.value}
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
-                                isFav
-                                  ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
-                                  : "bg-muted/50 border-border text-foreground"
-                              }`}
-                            >
-                              <span>{item.emoji}</span>
-                              <span>{item.label}</span>
-                              {isFav && <span>⭐</span>}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
-                <p className="text-xs text-amber-300">
-                  ❤️ Alcool de cœur : {ALCOHOL_MAP[p.favorite_alcohol].emoji} {ALCOHOL_MAP[p.favorite_alcohol].label}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Smoking */}
-          {Array.isArray(p.smoking_preferences) && p.smoking_preferences.length > 0 && (
-            <div className="space-y-2.5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                <Cigarette className="w-3.5 h-3.5 inline mr-1" />
-                Fumeur
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {p.smoking_preferences.map((val: string) => (
-                  <span
-                    key={val}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-muted/50 border-border text-foreground"
-                  >
-                    <span>{getSmokingEmoji(val)}</span>
-                    <span>{getSmokingLabel(val)}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Bed assignment */}
-          {p.bed_assignment && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border">
-              <Bed className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="text-[10px] text-muted-foreground">Chambre</p>
-                <p className="text-sm text-foreground">{p.bed_assignment}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Hype */}
-          {(p.hype_level ?? 0) > 0 && (
-            <div className="text-center py-2">
-              <span className="text-2xl">{"🔥".repeat(p.hype_level ?? 0)}</span>
-              <p className="text-xs text-muted-foreground mt-1">
-                Niveau de hype : {p.hype_level}/5
-              </p>
-            </div>
-          )}
-
-          {/* Attendance */}
-          {p.attendance && (
-            <div className="text-center py-2">
-              <span className="text-2xl">
-                {p.attendance === "yes" ? "✅" : p.attendance === "maybe" ? "🤔" : "❌"}
-              </span>
-              <p className="text-xs text-muted-foreground mt-1">
-                {p.attendance === "yes" ? "Viens !" : p.attendance === "maybe" ? "Peut-être" : "Pas dispo"}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

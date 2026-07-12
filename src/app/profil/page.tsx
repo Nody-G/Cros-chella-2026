@@ -432,6 +432,16 @@ export default function ProfilPage() {
                 </button>
               ))}
             </div>
+            {/* Custom role input */}
+            <div className="mt-3">
+              <p className="text-[10px] text-muted-foreground mb-1.5">Ou crée ton propre rôle :</p>
+              <Input
+                placeholder="Ex: 🧙‍♂️ Sorcier de la biouze"
+                value={FESTIVAL_ROLES.some(r => r.value === festivalRole) ? "" : festivalRole}
+                onChange={(e) => setFestivalRole(e.target.value)}
+                className="bg-card border-border text-sm"
+              />
+            </div>
           </div>
 
           {/* Special skill */}
@@ -504,79 +514,81 @@ export default function ProfilPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
               Tes préférences alcool 🍻
             </label>
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Clique pour sélectionner, clique sur ⭐ pour ton favori
+            </p>
             <div className="space-y-3">
-              {/* Selected badges */}
-              {alcoholPreferences.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {alcoholPreferences.map((val) => {
-                    const item = ALCOHOL_LIST.find((a) => a.value === val);
-                    return (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => {
-                          setAlcoholPreferences((prev) => prev.filter((v) => v !== val));
-                          if (favoriteAlcohol === val) setFavoriteAlcohol("");
-                        }}
-                        className="px-2 py-1 rounded-full text-xs border border-amber-400 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition-all"
-                      >
-                        {item?.emoji} {item?.label} ✕
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Dropdown selector */}
-              <select
-                value=""
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && !alcoholPreferences.includes(val)) {
-                    setAlcoholPreferences((prev) => [...prev, val]);
-                  }
-                }}
-                className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
-              >
-                <option value="">+ Ajouter un alcool...</option>
-                {Object.entries(
-                  ALCOHOL_LIST.reduce((acc, item) => {
-                    if (!acc[item.group]) acc[item.group] = [];
-                    acc[item.group].push(item);
-                    return acc;
-                  }, {} as Record<string, typeof ALCOHOL_LIST>)
-                ).map(([group, items]) => (
-                  <optgroup key={group} label={group}>
-                    {items.map((item) => (
-                      <option key={item.value} value={item.value} disabled={alcoholPreferences.includes(item.value)}>
-                        {item.emoji} {item.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-
-              {/* Favorite alcohol selector */}
-              {alcoholPreferences.length > 0 && (
-                <div>
-                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1 block">
-                    ⭐ Ton alcool préféré
-                  </label>
-                  <select
-                    value={favoriteAlcohol}
-                    onChange={(e) => setFavoriteAlcohol(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
-                  >
-                    <option value="">Choisir ton favori...</option>
-                    {alcoholPreferences.map((val) => {
-                      const item = ALCOHOL_LIST.find((a) => a.value === val);
+              {/* Badge grid grouped by type */}
+              {Object.entries(
+                ALCOHOL_LIST.reduce((acc, item) => {
+                  if (!acc[item.group]) acc[item.group] = [];
+                  acc[item.group].push(item);
+                  return acc;
+                }, {} as Record<string, typeof ALCOHOL_LIST>)
+              ).map(([group, items]) => (
+                <div key={group}>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1.5">
+                    {group}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((item) => {
+                      const isSelected = alcoholPreferences.includes(item.value);
+                      const isFav = favoriteAlcohol === item.value;
                       return (
-                        <option key={val} value={val}>
-                          {item?.emoji} {item?.label}
-                        </option>
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setAlcoholPreferences((prev) => prev.filter((v) => v !== item.value));
+                              if (favoriteAlcohol === item.value) setFavoriteAlcohol("");
+                            } else {
+                              setAlcoholPreferences((prev) => [...prev, item.value]);
+                            }
+                          }}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-all ${
+                            isFav
+                              ? "bg-amber-500/25 border-amber-500/50 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                              : isSelected
+                              ? "bg-amber-400/10 border-amber-400/40 text-amber-300"
+                              : "bg-card border-border text-muted-foreground hover:border-amber-400/30 hover:text-foreground"
+                          }`}
+                        >
+                          {item.emoji} {item.label}
+                          {isFav && " ⭐"}
+                        </button>
                       );
                     })}
-                  </select>
+                  </div>
+                </div>
+              ))}
+
+              {/* Favorite alcohol selector — only from selected */}
+              {alcoholPreferences.length > 0 && (
+                <div className="pt-2 border-t border-border/50">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                    ⭐ Ton alcool préféré (optionnel)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {alcoholPreferences.map((val) => {
+                      const item = ALCOHOL_LIST.find((a) => a.value === val);
+                      const isFav = favoriteAlcohol === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setFavoriteAlcohol(isFav ? "" : val)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border transition-all ${
+                            isFav
+                              ? "bg-amber-500/30 border-amber-500/60 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+                              : "bg-card border-border text-muted-foreground hover:border-amber-400/40"
+                          }`}
+                        >
+                          {item?.emoji} {item?.label} {isFav ? "⭐" : "☆"}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -587,44 +599,33 @@ export default function ProfilPage() {
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
               Tabac / Vape 🚬
             </label>
-            <div className="space-y-3">
-              {/* Selected badges */}
-              {smokingPreferences.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {smokingPreferences.map((val) => {
-                    const item = SMOKING_LIST.find((s) => s.value === val);
-                    return (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setSmokingPreferences((prev) => prev.filter((v) => v !== val))}
-                        className="px-2 py-1 rounded-full text-xs border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                      >
-                        {item?.emoji} {item?.label} ✕
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Dropdown selector */}
-              <select
-                value=""
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && !smokingPreferences.includes(val)) {
-                    setSmokingPreferences((prev) => [...prev, val]);
-                  }
-                }}
-                className="w-full p-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="">+ Ajouter...</option>
-                {SMOKING_LIST.map((item) => (
-                  <option key={item.value} value={item.value} disabled={smokingPreferences.includes(item.value)}>
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Clique pour sélectionner / désélectionner
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {SMOKING_LIST.map((item) => {
+                const isSelected = smokingPreferences.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSmokingPreferences((prev) => prev.filter((v) => v !== item.value));
+                      } else {
+                        setSmokingPreferences((prev) => [...prev, item.value]);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs border transition-all ${
+                      isSelected
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                    }`}
+                  >
                     {item.emoji} {item.label}
-                  </option>
-                ))}
-              </select>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
