@@ -1,0 +1,93 @@
+[
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "💬",
+    "title": "Commentaires sur les photos",
+    "description": "Tu peux maintenant commenter les photos de la galerie dans le viewer plein écran !"
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "❤️",
+    "title": "Likes sur les photos",
+    "description": "Like tes photos préférées et vois qui a liké."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "🏅",
+    "title": "Système de badges",
+    "description": "Attribue des badges fun à tes potes (ou reçois-en)."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "🎱",
+    "title": "Tournoi de billard",
+    "description": "Organise des matchs de billard avec tes potes directement dans l'app."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "🐛",
+    "title": "Page feedback",
+    "description": "Tu peux remonter des bugs ou proposer des idées directement depuis l'app."
+  },
+  {
+    "date": "2026-07-11",
+    "tag": "feature",
+    "emoji": "📸",
+    "title": "Galerie photos complète",
+    "description": "Upload, légendes, suppression, viewer plein écran avec navigation."
+  },
+  {
+    "date": "2026-07-11",
+    "tag": "feature",
+    "emoji": "🍻",
+    "title": "Préférences alcool & clope",
+    "description": "Ajoute tes préférés dans ton profil — tout le monde peut voir qui boit quoi."
+  },
+  {
+    "date": "2026-07-10",
+    "tag": "feature",
+    "emoji": "💬",
+    "title": "Chat temps réel",
+    "description": "Mur de discussion avec Supabase Realtime — les messages arrivent instantanément."
+  },
+  {
+    "date": "2026-07-10",
+    "tag": "feature",
+    "emoji": "📋",
+    "title": "Programme & propositions",
+    "description": "Propose des activités, vote pour celles des autres, admin valide."
+  },
+  {
+    "date": "2026-07-09",
+    "tag": "feature",
+    "emoji": "🎮",
+    "title": "Système de jeux mystères",
+    "description": "Chaque participant soumet un jeu en secret. Admin les révèle un par un."
+  },
+  {
+    "date": "2026-07-09",
+    "tag": "feature",
+    "emoji": "👤",
+    "title": "Profil personnalisé",
+    "description": "Emoji avatar, pseudo, tagline, rôle de festival, spécialité, et plus encore."
+  },
+  {
+    "date": "2026-07-08",
+    "tag": "feature",
+    "emoji": "🏠",
+    "title": "Assignation des lits",
+    "description": "Chacun peut voir où il dort. 5 chambres, 10 options de lit."
+  },
+  {
+    "date": "2026-07-08",
+    "tag": "launch",
+    "emoji": "🚀",
+    "title": "Lancement de Cros-Chella",
+    "description": "La web app est en ligne ! Landing page, auth, participants, dark theme festival."
+  }
+]

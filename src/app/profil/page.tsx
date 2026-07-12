@@ -639,11 +639,11 @@ export default function ProfilPage() {
                 placeholder="Raconte ta vie (ou pas)"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                maxLength={300}
-                className="w-full min-h-[100px] rounded-md border border-border bg-card px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                maxLength={1000}
+                className="w-full min-h-[120px] rounded-md border border-border bg-card px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
-                {bio.length}/300
+                {bio.length}/1000
               </span>
             </div>
           </div>

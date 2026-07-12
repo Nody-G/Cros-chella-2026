@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown } from "lucide-react";
-import { getParticipants, updateAdminCode, updateParticipant } from "@/lib/supabase-queries";
+import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown, UserPlus } from "lucide-react";
+import { getParticipants, updateAdminCode, updateParticipant, addParticipant } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Participant } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,6 +111,10 @@ export default function ParticipantsPage() {
   const [lastGenerated, setLastGenerated] = useState<{id: string, code: string} | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [assigningBed, setAssigningBed] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addPseudo, setAddPseudo] = useState("");
+  const [addingParticipant, setAddingParticipant] = useState(false);
 
   const handleBedAssignment = async (participantId: string, bed: string) => {
     setAssigningBed(participantId);
@@ -119,6 +123,21 @@ export default function ParticipantsPage() {
       setParticipants(prev => prev.map(p => p.id === participantId ? { ...p, bed_assignment: bed || null } : p));
     }
     setAssigningBed(null);
+  };
+
+  const handleAddParticipant = async () => {
+    if (!addName.trim()) return;
+    setAddingParticipant(true);
+    const newP = await addParticipant(addName, addPseudo);
+    if (newP) {
+      setParticipants(prev => [...prev, newP]);
+      setAddName("");
+      setAddPseudo("");
+      setShowAddForm(false);
+    } else {
+      setError("Erreur lors de l'ajout du participant.");
+    }
+    setAddingParticipant(false);
   };
 
   const handleGenerateTempPassword = async (id: string) => {
@@ -163,6 +182,67 @@ export default function ParticipantsPage() {
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
             ⚠️ {error}
+          </div>
+        )}
+
+        {/* Admin: Add participant */}
+        {isCurrentUserAdmin && (
+          <div className="mb-4">
+            {!showAddForm ? (
+              <Button
+                onClick={() => setShowAddForm(true)}
+                variant="outline"
+                className="w-full border-dashed border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Ajouter un participant
+              </Button>
+            ) : (
+              <div className="p-4 rounded-2xl bg-card border border-primary/30 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <UserPlus className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-primary">Nouveau participant</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Prénom (obligatoire)"
+                  value={addName}
+                  onChange={(e) => setAddName(e.target.value)}
+                  maxLength={50}
+                  className="w-full text-sm bg-muted border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  placeholder="Pseudo (optionnel)"
+                  value={addPseudo}
+                  onChange={(e) => setAddPseudo(e.target.value)}
+                  maxLength={50}
+                  className="w-full text-sm bg-muted border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleAddParticipant}
+                    disabled={!addName.trim() || addingParticipant}
+                    className="flex-1"
+                  >
+                    {addingParticipant ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 mr-2" />
+                    )}
+                    Ajouter
+                  </Button>
+                  <Button
+                    onClick={() => { setShowAddForm(false); setAddName(""); setAddPseudo(""); }}
+                    variant="ghost"
+                    className="flex-1"
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

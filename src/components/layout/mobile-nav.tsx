@@ -6,7 +6,7 @@ import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine } from "lucide-react";
+import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine, Megaphone } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { FeedbackButton } from "@/components/layout/feedback-button";
 import { updatePassword } from "@/lib/supabase-queries";
@@ -29,6 +29,7 @@ const moreNavItems = [
   { href: "/spotify", icon: Music, label: "Playlist", emoji: "🎵" },
   { href: "/billard", icon: Gamepad2, label: "Billard", emoji: "🎱" },
   { href: "/badges", icon: Award, label: "Badges", emoji: "🏅" },
+  { href: "/updates", icon: Megaphone, label: "Mises à jour", emoji: "📢" },
 ];
 
 export function MobileNav() {

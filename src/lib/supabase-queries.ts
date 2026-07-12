@@ -50,6 +50,24 @@ export async function updateParticipant(id: string, updates: Partial<Participant
   return true;
 }
 
+export async function addParticipant(name: string, pseudo?: string): Promise<Participant | null> {
+  const insertData: { name: string; pseudo?: string; status: string } = { name: name.trim(), status: "pending" };
+  if (pseudo && pseudo.trim()) {
+    insertData.pseudo = pseudo.trim();
+  }
+  const { data, error } = await supabase
+    .from("participants")
+    .insert(insertData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[addParticipant] Error:", JSON.stringify(error, null, 2));
+    return null;
+  }
+  return data as Participant;
+}
+
 export async function uploadProfilePhoto(participantId: string, file: File): Promise<string | null> {
   // Always use .jpg since we compress to JPEG
   const filePath = `avatars/${participantId}.jpg`;

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Countdown } from "./countdown";
-import { PartyPopper, MapPin, Calendar } from "lucide-react";
+import Link from "next/link";
+import { PartyPopper, MapPin, Calendar, Megaphone } from "lucide-react";
 import { Confetti } from "@/components/ui/confetti";
 
 export function HeroSection() {
@@ -69,6 +70,16 @@ export function HeroSection() {
             8+ potes
           </span>
         </div>
+
+        {/* Updates button */}
+        <Link
+          href="/updates"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/20 hover:border-white/30 transition-all text-white/80 hover:text-white text-sm group"
+        >
+          <Megaphone className="w-4 h-4 group-hover:animate-bounce" />
+          <span>Quoi de neuf ?</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-primary/30 text-[10px] font-bold text-white">NEW</span>
+        </Link>
 
         {/* Countdown */}
         <div className="w-full max-w-sm">

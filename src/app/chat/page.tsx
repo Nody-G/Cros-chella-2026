@@ -238,34 +238,38 @@ export default function ChatPage() {
                         {isEdited && <span className="ml-1 italic">(modifié)</span>}
                       </span>
                     </div>
-                    <div className={`relative inline-block rounded-2xl overflow-hidden ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
+                    <div
+                      className={`relative inline-block rounded-2xl overflow-hidden ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
+                      onContextMenu={isMe && !isDeleted && !isEditing ? (e) => { e.preventDefault(); setActiveMenu(activeMenu === msg.id ? null : msg.id); } : undefined}
+                    >
                       {/* Long-press / click menu trigger */}
                       {isMe && !isDeleted && !isEditing && (
                         <button
                           onClick={() => setActiveMenu(activeMenu === msg.id ? null : msg.id)}
-                          className="absolute top-0 right-0 w-7 h-7 flex items-center justify-center text-xs opacity-40 active:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity z-10 rounded-full"
+                          className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center text-sm opacity-60 active:opacity-100 hover:opacity-100 focus:opacity-100 transition-opacity z-10 rounded-full"
                           aria-label="Options du message"
                         >
-                          ⋮
+                          ⋯
                         </button>
                       )}
                       {/* Context menu */}
                       {activeMenu === msg.id && (
-                        <div className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[140px]`}>
+                        <div className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 min-w-[160px]`}>
                           <button
                             onClick={() => startEdit(msg)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm rounded-lg hover:bg-muted active:bg-muted transition-colors text-left"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil className="w-4 h-4 text-primary" />
                             ✏️ Modifier
                           </button>
                           <button
                             onClick={() => {
                               if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
+                              setActiveMenu(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-destructive/10 text-destructive transition-colors text-left"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-colors text-left text-destructive"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                             🗑️ Supprimer
                           </button>
                         </div>

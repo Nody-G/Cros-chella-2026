@@ -303,9 +303,9 @@ export default function GaleriePage() {
               </button>
             )}
           </div>
-          <div className="bg-black/80 backdrop-blur-sm max-h-[40vh] flex flex-col">
+          <div className="bg-black/80 backdrop-blur-sm flex flex-col" style={{ maxHeight: "45vh", minHeight: "120px" }}>
             {/* Like bar in viewer */}
-            <div className="flex items-center gap-3 px-4 pt-3">
+            <div className="flex items-center gap-3 px-4 pt-3 pb-1">
               <button
                 onClick={() => handleToggleLike(currentPhoto.id)}
                 className="flex items-center gap-1.5 transition-colors"
@@ -336,8 +336,20 @@ export default function GaleriePage() {
             </div>
             {currentParticipant && (
               <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-white/10">
-                <input value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSendComment(); }} placeholder="Commenter..." className="flex-1 bg-white/10 text-white text-sm rounded-full px-4 py-2 placeholder:text-white/30 border-none outline-none" />
-                <Button size="sm" className="rounded-full h-9 w-9 p-0" disabled={sendingComment || !newComment.trim()} onClick={handleSendComment}>
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSendComment(); }}
+                  placeholder="Écrire un commentaire..."
+                  className="flex-1 bg-white/15 text-white text-sm rounded-full px-4 py-2.5 placeholder:text-white/40 border border-white/20 outline-none focus:border-white/40 focus:bg-white/20 transition-colors"
+                  style={{ fontSize: "16px" }} /* Prevent iOS zoom */
+                />
+                <Button
+                  size="sm"
+                  className="rounded-full h-10 w-10 p-0 shrink-0"
+                  disabled={sendingComment || !newComment.trim()}
+                  onClick={handleSendComment}
+                >
                   {sendingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
