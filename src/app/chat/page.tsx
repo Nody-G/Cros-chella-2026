@@ -239,7 +239,7 @@ export default function ChatPage() {
                       </span>
                     </div>
                     <div
-                      className={`relative inline-block rounded-2xl overflow-hidden ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
+                      className={`relative inline-block rounded-2xl ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
                       onContextMenu={isMe && !isDeleted && !isEditing ? (e) => { e.preventDefault(); setActiveMenu(activeMenu === msg.id ? null : msg.id); } : undefined}
                     >
                       {/* Long-press / click menu trigger */}
@@ -300,7 +300,7 @@ export default function ChatPage() {
                             <img
                               src={msg.image_url}
                               alt="Image partagée"
-                              className="max-w-full max-h-64 object-cover cursor-pointer"
+                              className="max-w-full max-h-64 object-cover cursor-pointer rounded-t-2xl"
                               onClick={() => window.open(msg.image_url!, "_blank")}
                             />
                           )}

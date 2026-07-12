@@ -153,6 +153,19 @@ export default function GaleriePage() {
   const handleDeletePhoto = async (photoId: string) => { await deletePhoto(photoId); await fetchPhotos(); };
 
   const currentPhoto = viewerIndex !== null ? photos[viewerIndex] : null;
+
+  // Sync commentsPhotoId when viewer opens or navigates
+  useEffect(() => {
+    if (currentPhoto) {
+      setCommentsPhotoId(currentPhoto.id);
+      loadComments(currentPhoto.id);
+    } else {
+      setCommentsPhotoId(null);
+      setComments([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewerIndex]);
+
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
