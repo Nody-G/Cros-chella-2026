@@ -265,9 +265,9 @@ export default function GaleriePage() {
                           {/* Like button */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleToggleLike(photo.id); }}
-                            className="flex items-center gap-0.5 text-[10px] transition-colors"
+                            className="flex items-center gap-1 text-xs transition-colors"
                           >
-                            <Heart className={`w-3 h-3 ${likes?.liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                            <Heart className={`w-4 h-4 ${likes?.liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
                             {likes && likes.count > 0 && (
                               <span
                                 onClick={(e) => { e.stopPropagation(); handleShowLikers(photo.id); }}
@@ -277,7 +277,10 @@ export default function GaleriePage() {
                               </span>
                             )}
                           </button>
-                          <button onClick={() => handleOpenComments(photo.id)} className="text-[10px] text-muted-foreground hover:text-primary">💬 {photo.comment_count || 0}</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenComments(photo.id); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                            <span>💬</span>
+                            <span>{photo.comment_count || 0}</span>
+                          </button>
                         </div>
                       </div>
                       {/* Likers popover */}
@@ -317,29 +320,62 @@ export default function GaleriePage() {
             )}
           </div>
           <div className="bg-black/80 backdrop-blur-sm flex flex-col" style={{ maxHeight: "45vh", minHeight: "120px" }}>
-            {/* Like bar in viewer */}
-            <div className="flex items-center gap-3 px-4 pt-3 pb-1">
+            {/* Like + comment bar in viewer */}
+            <div className="flex items-center gap-4 px-4 pt-3 pb-2 border-b border-white/10">
               <button
                 onClick={() => handleToggleLike(currentPhoto.id)}
                 className="flex items-center gap-1.5 transition-colors"
               >
-                <Heart className={`w-5 h-5 ${photoLikes[currentPhoto.id]?.liked ? "fill-red-500 text-red-500" : "text-white/60 hover:text-white"}`} />
+                <Heart className={`w-6 h-6 ${photoLikes[currentPhoto.id]?.liked ? "fill-red-500 text-red-500" : "text-white/60 hover:text-white"}`} />
                 {photoLikes[currentPhoto.id] && photoLikes[currentPhoto.id].count > 0 && (
-                  <span className="text-white/80 text-sm">{photoLikes[currentPhoto.id].count}</span>
+                  <span className="text-white/80 text-sm font-medium">{photoLikes[currentPhoto.id].count}</span>
                 )}
               </button>
-              {currentPhoto.caption && <p className="text-white/80 text-sm flex-1 truncate">{currentPhoto.caption}</p>}
+              <button
+                onClick={() => { /* Focus the comment input below */ const input = document.querySelector<HTMLInputElement>('[data-comment-input="true"]'); input?.focus(); }}
+                className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors"
+              >
+                <span className="text-lg">💬</span>
+                <span className="text-sm font-medium">{comments.length || 0}</span>
+              </button>
+              {currentPhoto.caption && <p className="text-white/60 text-sm flex-1 truncate">{currentPhoto.caption}</p>}
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 min-h-0">
+            {/* Likers list — clickable to show names */}
+            {photoLikes[currentPhoto.id] && photoLikes[currentPhoto.id].count > 0 && (
+              <div className="px-4 pt-2 pb-1">
+                <button
+                  onClick={() => handleShowLikers(currentPhoto.id)}
+                  className="text-white/50 text-[11px] hover:text-white/80 transition-colors"
+                >
+                  ❤️ {photoLikes[currentPhoto.id].count} {photoLikes[currentPhoto.id].count === 1 ? "like" : "likes"} — appuie pour voir qui
+                </button>
+                {likersPhotoId === currentPhoto.id && likersList.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {likersList.map((l) => (
+                      <span key={l.id} className="inline-flex items-center gap-1 bg-white/10 rounded-full px-2.5 py-1 text-[11px] text-white/80">
+                        {l.emoji_avatar || "👤"} {l.pseudo || l.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Comments list */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3 min-h-0">
               {loadingComments ? (
                 <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-white/50" /></div>
               ) : comments.length > 0 ? (
                 comments.map((c) => (
-                  <div key={c.id} className="flex items-start gap-2 group/comment">
-                    <span className="text-xs text-white/50 shrink-0 font-medium">{c.author?.pseudo || "Anon"}</span>
-                    <p className="text-xs text-white/80 flex-1">{c.content}</p>
+                  <div key={c.id} className="flex items-start gap-2.5 group/comment">
+                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-sm">
+                      {c.author?.emoji_avatar || "👤"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-white/70 font-semibold">{c.author?.pseudo || "Anon"}</span>
+                      <p className="text-sm text-white/90 break-words">{c.content}</p>
+                    </div>
                     {(c.author_id === currentParticipant?.id || currentParticipant?.is_admin) && (
-                      <button onClick={() => handleDeleteComment(c.id)} className="text-white/30 hover:text-red-400 shrink-0 opacity-0 group-hover/comment:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                      <button onClick={() => handleDeleteComment(c.id)} className="text-white/30 hover:text-red-400 shrink-0 opacity-0 group-hover/comment:opacity-100 transition-opacity mt-1"><X className="w-3.5 h-3.5" /></button>
                     )}
                   </div>
                 ))
@@ -350,6 +386,7 @@ export default function GaleriePage() {
             {currentParticipant && (
               <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-white/10">
                 <input
+                  data-comment-input="true"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSendComment(); }}
