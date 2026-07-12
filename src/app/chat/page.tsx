@@ -252,16 +252,16 @@ export default function ChatPage() {
                       </span>
                     </div>
                     <div
-                      className={`relative inline-block rounded-2xl ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
+                      className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
                     >
                       {/* Long-press / click menu trigger — visible on all devices */}
                       {isMe && !isDeleted && !isEditing && (
                         <button
                           data-menu-trigger
                           onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === msg.id ? null : msg.id); }}
-                          className="absolute -top-1 -right-1 w-7 h-7 flex items-center justify-center text-xs bg-card/90 backdrop-blur-sm border border-border/50 rounded-full shadow-md active:scale-95 transition-all z-20"
+                          className="absolute -top-0.5 opacity-0 group-hover:opacity-50 hover:!opacity-100 p-0.5 rounded transition-opacity text-muted-foreground/40 hover:text-muted-foreground z-20"
                           aria-label="Options du message"
-                          style={{ touchAction: "manipulation" }}
+                          style={{ touchAction: "manipulation", right: isMe ? 0 : undefined, left: isMe ? undefined : 0 }}
                         >
                           ⋯
                         </button>
