@@ -179,7 +179,9 @@ export default function ParticipantsPage() {
         ) : (
           <div className="space-y-3">
             {participants.map((p) => {
-              const status = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+              // Use attendance (set by participant on landing) as primary status, fallback to admin status
+              const attendanceKey = p.attendance === "yes" ? "confirmed" : p.attendance === "maybe" ? "pending" : p.attendance === "no" ? "declined" : null;
+              const status = STATUS_CONFIG[(attendanceKey || p.status) as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
               const alcos = Array.isArray(p.alcohol_preferences) ? p.alcohol_preferences : [];
               const smokes = Array.isArray(p.smoking_preferences) ? p.smoking_preferences : [];
               const hasProfile = p.bio || p.festival_role || p.special_skill || p.superpower || p.weakness || p.catchphrase || p.theme_song || alcos.length > 0 || smokes.length > 0;
@@ -296,14 +298,6 @@ export default function ParticipantsPage() {
                             </div>
                           )}
 
-                          {p.attendance && (
-                            <div className="mt-1 text-xs">
-                              <span className="text-muted-foreground">Présence : </span>
-                              <span>
-                                {p.attendance === "yes" ? "✅ Viens" : p.attendance === "maybe" ? "🤔 Peut-être" : "❌ Pas dispo"}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
 
