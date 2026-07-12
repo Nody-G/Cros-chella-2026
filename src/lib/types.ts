@@ -194,6 +194,68 @@ export type BillardTournamentStatus = "setup" | "active" | "done";
 export type BillardMatchStatus = "pending" | "done" | "bye";
 
 // ============================================
+// TRICOUNT / EXPENSES
+// ============================================
+
+export interface Expense {
+  id: string;
+  paid_by: string; // participant id
+  title: string;
+  amount: number; // in cents to avoid float issues
+  category: ExpenseCategory;
+  receipt_url: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  paid_by_participant?: Participant;
+  splits?: ExpenseSplit[];
+}
+
+export type ExpenseCategory = "food" | "alcohol" | "transport" | "activities" | "accommodation" | "other";
+
+export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; emoji: string }[] = [
+  { value: "food", label: "Bouffe", emoji: "🍔" },
+  { value: "alcohol", label: "Alcool", emoji: "🍺" },
+  { value: "transport", label: "Transport", emoji: "🚗" },
+  { value: "activities", label: "Activités", emoji: "🎯" },
+  { value: "accommodation", label: "Logement", emoji: "🏠" },
+  { value: "other", label: "Autre", emoji: "📦" },
+];
+
+export interface ExpenseSplit {
+  id: string;
+  expense_id: string;
+  participant_id: string;
+  amount: number; // share in cents
+  is_settled: boolean;
+  created_at: string;
+  // Joined
+  participant?: Participant;
+}
+
+export interface Settlement {
+  id: string;
+  from_participant: string; // who pays
+  to_participant: string; // who receives
+  amount: number; // in cents
+  is_confirmed: boolean;
+  confirmed_at: string | null;
+  created_at: string;
+  // Joined
+  from_participant_data?: Participant;
+  to_participant_data?: Participant;
+}
+
+// Computed balance for each participant
+export interface ParticipantBalance {
+  participant_id: string;
+  participant?: Participant;
+  total_paid: number; // total they paid for others
+  total_owed: number; // total they owe
+  net_balance: number; // positive = owed money, negative = owes money
+}
+
+// ============================================
 // FEEDBACK (bugs & ideas)
 // ============================================
 

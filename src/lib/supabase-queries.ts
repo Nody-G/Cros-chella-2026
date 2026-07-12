@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback, Expense, Settlement, ParticipantBalance, ExpenseCategory } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -1478,4 +1478,238 @@ export async function deleteFeedback(id: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+// ============================================
+// TRICOUNT / EXPENSES
+// ============================================
+
+export async function getExpenses(): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("*, paid_by_participant:participants!paid_by(*), splits:expense_splits(*, participant:participants(*))")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching expenses:", error);
+    return [];
+  }
+  return data as Expense[];
+}
+
+export async function createExpense(
+  paidBy: string,
+  title: string,
+  amount: number,
+  category: ExpenseCategory,
+  splitAmong: string[] // participant ids
+): Promise<Expense | null> {
+  // Create the expense
+  const { data: expense, error: expenseError } = await supabase
+    .from("expenses")
+    .insert({ paid_by: paidBy, title: title.trim(), amount, category })
+    .select()
+    .single();
+
+  if (expenseError) {
+    console.error("Error creating expense:", expenseError);
+    return null;
+  }
+
+  // Create equal splits
+  const splitAmount = Math.floor(amount / splitAmong.length);
+  const remainder = amount - splitAmount * splitAmong.length;
+
+  const splits = splitAmong.map((participantId, index) => ({
+    expense_id: expense.id,
+    participant_id: participantId,
+    amount: splitAmount + (index === 0 ? remainder : 0), // first person pays the remainder cent
+  }));
+
+  const { error: splitsError } = await supabase
+    .from("expense_splits")
+    .insert(splits);
+
+  if (splitsError) {
+    console.error("Error creating splits:", splitsError);
+    // Cleanup expense
+    await supabase.from("expenses").delete().eq("id", expense.id);
+    return null;
+  }
+
+  return expense as Expense;
+}
+
+export async function updateExpense(
+  expenseId: string,
+  updates: { title?: string; amount?: number; category?: ExpenseCategory }
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("expenses")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", expenseId);
+
+  if (error) {
+    console.error("Error updating expense:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteExpense(expenseId: string): Promise<boolean> {
+  const { error } = await supabase.from("expenses").delete().eq("id", expenseId);
+  if (error) {
+    console.error("Error deleting expense:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function getSettlements(): Promise<Settlement[]> {
+  const { data, error } = await supabase
+    .from("settlements")
+    .select("*, from_participant_data:participants!from_participant(*), to_participant_data:participants!to_participant(*)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching settlements:", error);
+    return [];
+  }
+  return data as Settlement[];
+}
+
+export async function createSettlement(
+  fromParticipant: string,
+  toParticipant: string,
+  amount: number
+): Promise<Settlement | null> {
+  const { data, error } = await supabase
+    .from("settlements")
+    .insert({ from_participant: fromParticipant, to_participant: toParticipant, amount })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating settlement:", error);
+    return null;
+  }
+  return data as Settlement;
+}
+
+export async function confirmSettlement(settlementId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("settlements")
+    .update({ is_confirmed: true, confirmed_at: new Date().toISOString() })
+    .eq("id", settlementId);
+
+  if (error) {
+    console.error("Error confirming settlement:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteSettlement(settlementId: string): Promise<boolean> {
+  const { error } = await supabase.from("settlements").delete().eq("id", settlementId);
+  if (error) {
+    console.error("Error deleting settlement:", error);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Compute balances for all participants based on expenses and settlements.
+ * Returns a map of participant_id -> net balance (positive = owed money, negative = owes money).
+ */
+export async function computeBalances(): Promise<ParticipantBalance[]> {
+  const [expenses, settlements, participants] = await Promise.all([
+    getExpenses(),
+    getSettlements(),
+    getParticipants(),
+  ]);
+
+  const balanceMap: Record<string, { paid: number; owes: number }> = {};
+
+  // Initialize all participants
+  for (const p of participants) {
+    balanceMap[p.id] = { paid: 0, owes: 0 };
+  }
+
+  // Process expenses: payer gets credited for what others owe
+  for (const expense of expenses) {
+    if (!expense.splits) continue;
+    const payerId = expense.paid_by;
+    if (!balanceMap[payerId]) balanceMap[payerId] = { paid: 0, owes: 0 };
+
+    for (const split of expense.splits) {
+      if (split.participant_id === payerId) continue; // skip payer's own share
+      if (!balanceMap[split.participant_id]) balanceMap[split.participant_id] = { paid: 0, owes: 0 };
+
+      balanceMap[payerId].paid += split.amount; // payer is owed this
+      balanceMap[split.participant_id].owes += split.amount; // participant owes this
+    }
+  }
+
+  // Process confirmed settlements: reduce the debt
+  for (const settlement of settlements) {
+    if (!settlement.is_confirmed) continue;
+    if (!balanceMap[settlement.from_participant]) balanceMap[settlement.from_participant] = { paid: 0, owes: 0 };
+    if (!balanceMap[settlement.to_participant]) balanceMap[settlement.to_participant] = { paid: 0, owes: 0 };
+
+    balanceMap[settlement.from_participant].owes -= settlement.amount;
+    balanceMap[settlement.to_participant].paid -= settlement.amount;
+  }
+
+  // Build result
+  return participants.map((p) => {
+    const b = balanceMap[p.id] || { paid: 0, owes: 0 };
+    return {
+      participant_id: p.id,
+      participant: p,
+      total_paid: b.paid,
+      total_owed: b.owes,
+      net_balance: b.paid - b.owes, // positive = others owe them, negative = they owe others
+    };
+  });
+}
+
+/**
+ * Compute the optimal settlements (who should pay whom to settle all debts).
+ * Uses a greedy algorithm to minimize the number of transactions.
+ */
+export function computeOptimalSettlements(balances: ParticipantBalance[]): { from: string; to: string; amount: number }[] {
+  // Separate into creditors (positive balance) and debtors (negative balance)
+  const creditors = balances
+    .filter((b) => b.net_balance > 0)
+    .map((b) => ({ id: b.participant_id, amount: b.net_balance }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const debtors = balances
+    .filter((b) => b.net_balance < 0)
+    .map((b) => ({ id: b.participant_id, amount: Math.abs(b.net_balance) }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const settlements: { from: string; to: string; amount: number }[] = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < creditors.length && j < debtors.length) {
+    const settleAmount = Math.min(creditors[i].amount, debtors[j].amount);
+    if (settleAmount > 0) {
+      settlements.push({
+        from: debtors[j].id,
+        to: creditors[i].id,
+        amount: settleAmount,
+      });
+    }
+
+    creditors[i].amount -= settleAmount;
+    debtors[j].amount -= settleAmount;
+
+    if (creditors[i].amount <= 0) i++;
+    if (debtors[j].amount <= 0) j++;
+  }
+
+  return settlements;
 }

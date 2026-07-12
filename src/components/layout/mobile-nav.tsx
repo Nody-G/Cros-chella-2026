@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award } from "lucide-react";
+import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -22,6 +22,7 @@ const mainNavItems = [
 
 const moreNavItems = [
   { href: "/jeux", icon: Gamepad2, label: "Jeux", emoji: "🎮" },
+  { href: "/depenses", icon: Wallet, label: "Dépenses", emoji: "💰" },
   { href: "/alcool", icon: Wine, label: "Alcool", emoji: "🍻" },
   { href: "/spots", icon: Droplets, label: "Baignade", emoji: "🏊" },
   { href: "/sondages", icon: BarChart3, label: "Sondages", emoji: "📊" },
@@ -82,8 +83,6 @@ export function MobileNav() {
           );
         })}
 
-        <FeedbackButton />
-
         <Sheet open={open} onOpenChange={(val) => { setOpen(val); if(!val) { setShowPasswordForm(false); setStatusMsg(""); setNewPassword(""); } }}>
           <SheetTrigger asChild>
             <button
@@ -122,6 +121,10 @@ export function MobileNav() {
                   </Link>
                 );
               })}
+            </div>
+            {/* Feedback button */}
+            <div className="mt-2 flex justify-center">
+              <FeedbackButton />
             </div>
             {/* Admin link */}
             {isAdmin && (

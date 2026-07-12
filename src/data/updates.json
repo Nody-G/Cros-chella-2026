@@ -2,6 +2,41 @@
   {
     "date": "2026-07-12",
     "tag": "feature",
+    "emoji": "💰",
+    "title": "Tricount — Dépenses partagées",
+    "description": "Ajoute tes dépenses, répartis entre les potes, et vois qui doit quoi à qui. Règlements optimaux calculés automatiquement !"
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "🎨",
+    "title": "Favicon Cros-Chella",
+    "description": "Le favicon festif est enfin là — tentes, étoiles et glow violet/or sur fond nuit."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "✏️",
+    "title": "Chat : modifier & supprimer",
+    "description": "Tu peux maintenant modifier ou supprimer tes messages (bouton ⋯ ou long press)."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "improvement",
+    "emoji": "📝",
+    "title": "Bio limit → 1000 caractères",
+    "description": "La bio passe de 300 à 1000 caractères. Raconte ta vie."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "➕",
+    "title": "Admin : ajouter des participants",
+    "description": "L'admin peut ajouter de nouveaux potes directement depuis la page Participants (prénom + pseudo)."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
     "emoji": "💬",
     "title": "Commentaires sur les photos",
     "description": "Tu peux maintenant commenter les photos de la galerie dans le viewer plein écran !"
