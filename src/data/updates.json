@@ -4,125 +4,143 @@
     "tag": "feature",
     "emoji": "💰",
     "title": "Tricount — Dépenses partagées",
-    "description": "Ajoute tes dépenses, répartis entre les potes, et vois qui doit quoi à qui. Règlements optimaux calculés automatiquement !"
+    "description": "Ajoute tes dépenses, répartis entre les potes, et vois qui doit quoi à qui.",
+    "details": "Nouvelle page Dépenses accessible depuis le menu « Plus ». Tu peux ajouter une dépense avec un titre, un montant, une catégorie (🍔 Bouffe, 🍺 Alcool, 🚗 Transport, 🎯 Activités, 🏠 Logement, 📦 Autre) et choisir entre qui la répartir. L'app calcule automatiquement les soldes de chacun et propose les règlements optimaux pour minimiser les virements. Tu peux marquer un règlement comme « payé » et l'autre personne le confirme. Tout est en temps réel."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "🎨",
     "title": "Favicon Cros-Chella",
-    "description": "Le favicon festif est enfin là — tentes, étoiles et glow violet/or sur fond nuit."
+    "description": "Le favicon festif est enfin là — tentes, étoiles et glow violet/or.",
+    "details": "L'onglet de ton navigateur affiche maintenant le logo Cros-Chella : des tentes de festival roses/violettes sur fond nuit avec des étoiles, des notes de musique et le texte « CROS CHELLA » en glow doré. Compatible tous navigateurs (SVG + PNG pour Apple)."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "✏️",
     "title": "Chat : modifier & supprimer",
-    "description": "Tu peux maintenant modifier ou supprimer tes messages (bouton ⋯ ou long press)."
+    "description": "Modifie ou supprime tes messages dans le chat.",
+    "details": "Tu peux maintenant corriger tes fautes ou supprimer un message gênant. Deux options : appuie sur le bouton ⋯ à droite de tes messages, ou fais un appui long sur le message. Un menu s'ouvre avec « Modifier » et « Supprimer ». Les messages modifiés affichent un petit badge « édité ». Seul l'auteur du message peut le modifier ou le supprimer."
   },
   {
     "date": "2026-07-12",
     "tag": "improvement",
     "emoji": "📝",
     "title": "Bio limit → 1000 caractères",
-    "description": "La bio passe de 300 à 1000 caractères. Raconte ta vie."
+    "description": "La bio passe de 300 à 1000 caractères.",
+    "details": "Tu avais 300 caractères pour raconter ta vie, maintenant tu en as 1000. Soit environ 3× plus de place pour décrire tes exploits, tes talents cachés ou juste écrire un pavé que personne ne lira. Le compteur de caractères se met à jour en temps réel."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "➕",
     "title": "Admin : ajouter des participants",
-    "description": "L'admin peut ajouter de nouveaux potes directement depuis la page Participants (prénom + pseudo)."
+    "description": "L'admin peut ajouter de nouveaux potes directement.",
+    "details": "En tant qu'admin, un bouton « Ajouter un participant » apparaît en haut de la page Potes. Tu entres le prénom (obligatoire) et le pseudo (optionnel). Le nouveau participant apparaît instantanément pour tout le monde grâce au Realtime. Il pourra ensuite compléter son profil, choisir son emoji avatar, etc."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "💬",
     "title": "Commentaires sur les photos",
-    "description": "Tu peux maintenant commenter les photos de la galerie dans le viewer plein écran !"
+    "description": "Commente les photos de la galerie dans le viewer plein écran.",
+    "details": "Quand tu ouvres une photo en plein écran, tu vois maintenant un panneau de commentaires en bas. Tu peux écrire un commentaire, et tous les autres participants aussi. L'input est bien visible (fond semi-transparent, bordure blanche, taille 16px pour iOS). Tu peux supprimer tes propres commentaires. Tout se met à jour en temps réel."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "❤️",
     "title": "Likes sur les photos",
-    "description": "Like tes photos préférées et vois qui a liké."
+    "description": "Like tes photos préférées et vois qui a liké.",
+    "details": "Chaque photo de la galerie a un bouton cœur. Appuie pour liker, appuie encore pour retirer ton like. Le compteur s'affiche en temps réel. Tu peux voir la liste des personnes qui ont liké en appuyant sur le compteur."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "🏅",
     "title": "Système de badges",
-    "description": "Attribue des badges fun à tes potes (ou reçois-en)."
+    "description": "Attribue des badges fun à tes potes (ou reçois-en).",
+    "details": "Page Badges accessible depuis le menu « Plus ». Tu peux attribuer un badge à n'importe quel participant en choisissant un emoji, un titre et une description. Exemples : « 🍺 Roi de la binouze », « 🎤 Star du karaoké », « 😴 Premier endormi ». Chaque participant voit ses badges sur sa page profil."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "🎱",
     "title": "Tournoi de billard",
-    "description": "Organise des matchs de billard avec tes potes directement dans l'app."
+    "description": "Organise des matchs de billard en double avec tes potes.",
+    "details": "Page Billard accessible depuis le menu « Plus ». L'admin peut créer un tournoi (8-ball ou 9-ball), former des équipes de 2 joueurs, et générer les matchs automatiquement. Chaque match a un score à remplir. Le bracket se met à jour en temps réel. Quand la finale est jouée, le tournoi est marqué « terminé » et le vainqueur est affiché avec fanfare."
   },
   {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "🐛",
     "title": "Page feedback",
-    "description": "Tu peux remonter des bugs ou proposer des idées directement depuis l'app."
+    "description": "Remonte des bugs ou propose des idées directement depuis l'app.",
+    "details": "Le bouton « Bug » est accessible depuis le menu « Plus ». Tu peux signaler un bug ou proposer une idée d'amélioration. L'admin a une page dédiée pour voir tous les feedbacks, les marquer comme « en cours », « terminé » ou « rejeté », et ajouter une note admin."
   },
   {
     "date": "2026-07-11",
     "tag": "feature",
     "emoji": "📸",
     "title": "Galerie photos complète",
-    "description": "Upload, légendes, suppression, viewer plein écran avec navigation."
+    "description": "Upload, légendes, suppression, viewer plein écran.",
+    "details": "Page Galerie accessible depuis le menu « Plus ». Tu peux uploader des photos (compressées automatiquement pour pas exploser la 4G), ajouter une légende, modifier ou supprimer tes propres photos. Le viewer plein écran permet de naviguer gauche/droite entre les photos. Un lien vers le Google Drive est disponible pour les photos/vidéos en haute définition."
   },
   {
     "date": "2026-07-11",
     "tag": "feature",
     "emoji": "🍻",
     "title": "Préférences alcool & clope",
-    "description": "Ajoute tes préférés dans ton profil — tout le monde peut voir qui boit quoi."
+    "description": "Ajoute tes préférés dans ton profil — tout le monde peut voir.",
+    "details": "Dans ton profil, tu peux sélectionner tes boissons préférées parmi une liste de 40+ références (bières, vins, spiritueux, cocktails, sans alcool, et le fameux groupe « Botardèche » avec du WD-40 et du liquide de frein). Tu peux aussi indiquer tes préférences de clope. Tout s'affiche sur ta fiche participant visible par tous."
   },
   {
     "date": "2026-07-10",
     "tag": "feature",
     "emoji": "💬",
     "title": "Chat temps réel",
-    "description": "Mur de discussion avec Supabase Realtime — les messages arrivent instantanément."
+    "description": "Mur de discussion avec Supabase Realtime.",
+    "details": "Page Chat accessible depuis la barre de navigation principale. Les messages arrivent instantanément grâce à Supabase Realtime. Tu peux envoyer du texte et des réactions emoji (picker intégré). Les messages des autres participants s'affichent en temps réel sans rafraîchir la page."
   },
   {
     "date": "2026-07-10",
     "tag": "feature",
     "emoji": "📋",
     "title": "Programme & propositions",
-    "description": "Propose des activités, vote pour celles des autres, admin valide."
+    "description": "Propose des activités, vote, admin valide.",
+    "details": "Page Programme accessible depuis la barre de navigation principale. L'admin peut créer des créneaux (vendredi soir, samedi, dimanche) avec titre, description, emoji, horaire et lieu. Les participants peuvent proposer des activités avec photos et voter pour celles des autres. L'admin approuve ou rejette les propositions. Les propositions ont aussi un système de commentaires."
   },
   {
     "date": "2026-07-09",
     "tag": "feature",
     "emoji": "🎮",
     "title": "Système de jeux mystères",
-    "description": "Chaque participant soumet un jeu en secret. Admin les révèle un par un."
+    "description": "Chaque participant soumet un jeu en secret.",
+    "details": "Page Jeux accessible depuis le menu « Plus ». Chaque participant soumet un jeu en secret (catégories : Quiz, Défi physique, Défi alcool, Dégoûtant, Culture, Créatif, Stratégie, Vitesse, Chance, Social, Mystère). Avant la révélation, tout le monde voit « X jeux mystères vous attendent… ». L'admin peut révéler les jeux un par un ou tous d'un coup. Les règles s'affichent dans une carte festive."
   },
   {
     "date": "2026-07-09",
     "tag": "feature",
     "emoji": "👤",
     "title": "Profil personnalisé",
-    "description": "Emoji avatar, pseudo, tagline, rôle de festival, spécialité, et plus encore."
+    "description": "Emoji avatar, pseudo, tagline, rôle de festival, et plus.",
+    "details": "Page Profil accessible depuis la barre de navigation principale. Tu peux personnaliser : emoji avatar (40+ choix), pseudo, tagline, titre fun, rôle de festival (DJ, Barman, Photographe, Chef BBQ, etc.), spécialité, super-pouvoir, faiblesse, phrase fétiche, hymne et bio (1000 caractères max). Tout s'affiche sur ta fiche dans la page Potes."
   },
   {
     "date": "2026-07-08",
     "tag": "feature",
     "emoji": "🏠",
     "title": "Assignation des lits",
-    "description": "Chacun peut voir où il dort. 5 chambres, 10 options de lit."
+    "description": "Chacun peut voir où il dort. 5 chambres, 10 options.",
+    "details": "L'admin peut assigner chaque participant à un lit depuis la page Potes (dropdown avec 10 options : Chambre 1 king size, Chambre 2 lits 2 places + superposé, Chambre 3 lit 2 places, Chambre 4 lit 2 places + 1 place, Chambre 5 lit de la mama, Matelas salon, Canapé-lit, Tente jardin, Hamac, Parking). Chaque participant voit son assignation sur sa fiche."
   },
   {
     "date": "2026-07-08",
     "tag": "launch",
     "emoji": "🚀",
     "title": "Lancement de Cros-Chella",
-    "description": "La web app est en ligne ! Landing page, auth, participants, dark theme festival."
+    "description": "La web app est en ligne !",
+    "details": "La web app Cros-Chella est déployée sur Vercel. Première version avec : landing page avec compte à rebours, auth par sélection de profil, page participants, dark theme festival (fond sombre violet-nuit, accents dorés, glass morphism, glow cards). L'app est mobile-first et accessible sur tous les téléphones."
   }
 ]
