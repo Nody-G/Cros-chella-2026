@@ -193,6 +193,27 @@ export type BillardGameType = "8ball" | "9ball";
 export type BillardTournamentStatus = "setup" | "active" | "done";
 export type BillardMatchStatus = "pending" | "done" | "bye";
 
+// ============================================
+// FEEDBACK (bugs & ideas)
+// ============================================
+
+export type FeedbackType = "bug" | "idea";
+export type FeedbackStatus = "open" | "in_progress" | "done" | "dismissed";
+
+export interface Feedback {
+  id: string;
+  author_id: string | null;
+  type: FeedbackType;
+  title: string;
+  description: string | null;
+  status: FeedbackStatus;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  author?: Participant;
+}
+
 export interface BillardTournament {
   id: string;
   name: string;

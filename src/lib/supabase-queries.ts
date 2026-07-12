@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -1404,3 +1404,60 @@ export async function recordBillardResult(
   return true;
 }
 
+// ============================================
+// FEEDBACK (bugs & ideas)
+// ============================================
+
+export async function getFeedback(): Promise<Feedback[]> {
+  const { data, error } = await supabase
+    .from("feedback")
+    .select("*, author:participants!feedback_author_id_fkey(id, name, pseudo, emoji_avatar, avatar_url)")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Error fetching feedback:", error);
+    return [];
+  }
+  return (data || []) as Feedback[];
+}
+
+export async function createFeedback(entry: {
+  author_id: string;
+  type: "bug" | "idea";
+  title: string;
+  description?: string;
+}): Promise<Feedback | null> {
+  const { data, error } = await supabase
+    .from("feedback")
+    .insert(entry)
+    .select("*, author:participants!feedback_author_id_fkey(id, name, pseudo, emoji_avatar, avatar_url)")
+    .single();
+  if (error) {
+    console.error("Error creating feedback:", error);
+    return null;
+  }
+  return data as Feedback;
+}
+
+export async function updateFeedbackStatus(
+  id: string,
+  status: string,
+  adminNote?: string
+): Promise<boolean> {
+  const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (adminNote !== undefined) update.admin_note = adminNote;
+  const { error } = await supabase.from("feedback").update(update).eq("id", id);
+  if (error) {
+    console.error("Error updating feedback:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteFeedback(id: string): Promise<boolean> {
+  const { error } = await supabase.from("feedback").delete().eq("id", id);
+  if (error) {
+    console.error("Error deleting feedback:", error);
+    return false;
+  }
+  return true;
+}

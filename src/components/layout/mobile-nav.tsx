@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { FeedbackButton } from "@/components/layout/feedback-button";
 import { updatePassword } from "@/lib/supabase-queries";
 import { Input } from "@/components/ui/input";
 
@@ -33,7 +34,7 @@ const moreNavItems = [
 export function MobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { currentParticipant, logout, refreshAuth } = useAuth();
+  const { currentParticipant, logout, refreshAuth, isAdmin } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [updating, setUpdating] = useState(false);
@@ -80,6 +81,8 @@ export function MobileNav() {
           );
         })}
 
+        <FeedbackButton />
+
         <Sheet open={open} onOpenChange={(val) => { setOpen(val); if(!val) { setShowPasswordForm(false); setStatusMsg(""); setNewPassword(""); } }}>
           <SheetTrigger asChild>
             <button
@@ -119,6 +122,27 @@ export function MobileNav() {
                 );
               })}
             </div>
+            {/* Admin link */}
+            {isAdmin && (
+              <div className="mt-2">
+                <Link
+                  href="/admin/feedback"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 p-4 rounded-xl border transition-all",
+                    pathname === "/admin/feedback"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-primary/20 hover:border-primary/40 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="text-2xl">📋</span>
+                  <div>
+                    <span className="text-xs font-medium">Feedback Admin</span>
+                    <p className="text-[10px] text-muted-foreground">Bugs & idées des potes</p>
+                  </div>
+                </Link>
+              </div>
+            )}
             {/* User info + logout / change password */}
             {currentParticipant && (
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
