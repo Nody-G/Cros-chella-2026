@@ -128,9 +128,7 @@ Les migrations SQL sont dans `supabase/migrations/` et sont toutes **idempotente
 
 **Le Moulin du Cros** — 670 le Cros, 07240, Ardèche
 - 5 chambres (~16-17 places)
-- Piscine
 - Spots de baignade à proximité
-- [📍 Google Maps](https://maps.app.goo.gl/Mzno5hxobVQbWubr8)
 
 ---
 
