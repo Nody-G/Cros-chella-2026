@@ -14,17 +14,17 @@ import { Input } from "@/components/ui/input";
 
 const mainNavItems = [
   { href: "/", icon: Home, label: "Accueil" },
+  { href: "/profil", icon: UserCircle, label: "Mon Profil" },
   { href: "/participants", icon: Users, label: "Potes" },
-  { href: "/jeux", icon: Gamepad2, label: "Jeux" },
+  { href: "/chat", icon: MessageCircle, label: "Chat" },
   { href: "/programme", icon: CalendarDays, label: "Programme" },
 ];
 
 const moreNavItems = [
-  { href: "/profil", icon: UserCircle, label: "Mon Profil", emoji: "🎭" },
+  { href: "/jeux", icon: Gamepad2, label: "Jeux", emoji: "🎮" },
   { href: "/alcool", icon: Wine, label: "Alcool", emoji: "🍻" },
   { href: "/spots", icon: Droplets, label: "Baignade", emoji: "🏊" },
   { href: "/sondages", icon: BarChart3, label: "Sondages", emoji: "📊" },
-  { href: "/chat", icon: MessageCircle, label: "Chat", emoji: "💬" },
   { href: "/galerie", icon: ImageIcon, label: "Galerie", emoji: "📸" },
   { href: "/spotify", icon: Music, label: "Playlist", emoji: "🎵" },
   { href: "/billard", icon: Gamepad2, label: "Billard", emoji: "🎱" },

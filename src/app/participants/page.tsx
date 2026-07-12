@@ -23,6 +23,7 @@ const BED_OPTIONS = [
   "Chambre 3 — Lit 2 places",
   "Chambre 4 — Lit 2 places",
   "Chambre 4 — Lit 1 place",
+  "Chambre 5 — Le lit de la mama",
   "Salon — Canapé-lit",
   "Matelas supplémentaire",
 ];
