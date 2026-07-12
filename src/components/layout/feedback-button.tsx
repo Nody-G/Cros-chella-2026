@@ -45,7 +45,7 @@ export function FeedbackButton() {
       <DialogTrigger asChild>
         <button className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all w-full">
           <span className="text-2xl">🐛</span>
-          <span className="text-xs font-medium">Signaler un bug</span>
+          <span className="text-xs font-medium">Signaler un bug ou proposer une idée</span>
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

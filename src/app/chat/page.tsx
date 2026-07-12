@@ -197,7 +197,15 @@ export default function ChatPage() {
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = d.toDateString() === yesterday.toDateString();
+    const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    if (isToday) return `Auj. ${time}`;
+    if (isYesterday) return `Hier ${time}`;
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + ` ${time}`;
   };
 
   return (
@@ -268,23 +276,23 @@ export default function ChatPage() {
                       )}
                       {/* Context menu */}
                       {activeMenu === msg.id && (
-                        <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 min-w-[160px]`}>
+                        <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 flex gap-1`}>
                           <button
                             onClick={() => startEdit(msg)}
-                            className="flex items-center gap-3 w-full px-4 py-3 text-sm rounded-lg hover:bg-muted active:bg-muted transition-colors text-left"
+                            className="p-2.5 rounded-lg hover:bg-muted active:bg-muted transition-colors"
+                            title="Modifier"
                           >
                             <Pencil className="w-4 h-4 text-primary" />
-                            ✏️ Modifier
                           </button>
                           <button
                             onClick={() => {
                               if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
                               setActiveMenu(null);
                             }}
-                            className="flex items-center gap-3 w-full px-4 py-3 text-sm rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-colors text-left text-destructive"
+                            className="p-2.5 rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-colors text-destructive"
+                            title="Supprimer"
                           >
                             <Trash2 className="w-4 h-4" />
-                            🗑️ Supprimer
                           </button>
                         </div>
                       )}

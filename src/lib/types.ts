@@ -107,6 +107,17 @@ export interface ProposalComment {
   author?: Participant;
 }
 
+export interface ProgramComment {
+  id: string;
+  program_id: string;
+  participant_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  author?: Participant;
+}
+
 export interface Spot {
   id: string;
   name: string;

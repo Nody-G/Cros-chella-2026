@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { Loader2, Plus, Swords } from "lucide-react";
 import {
   getBillardTournaments,
@@ -167,6 +168,7 @@ export default function BillardPage() {
           </div>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }

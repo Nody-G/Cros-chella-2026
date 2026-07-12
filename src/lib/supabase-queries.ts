@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback, Expense, Settlement, ParticipantBalance, ExpenseCategory } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, ProgramComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback, Expense, Settlement, ParticipantBalance, ExpenseCategory } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -538,7 +538,7 @@ export async function deletePhoto(photoId: string): Promise<boolean> {
 export async function getPhotoComments(photoId: string): Promise<PhotoComment[]> {
   const { data, error } = await supabase
     .from("photo_comments")
-    .select("*, author:participants(*)")
+    .select("*, author:participants!participant_id(*)")
     .eq("photo_id", photoId)
     .order("created_at", { ascending: true });
 
@@ -552,7 +552,7 @@ export async function getPhotoComments(photoId: string): Promise<PhotoComment[]>
 export async function addPhotoComment(photoId: string, authorId: string, content: string): Promise<boolean> {
   const { error } = await supabase
     .from("photo_comments")
-    .insert({ photo_id: photoId, author_id: authorId, content: content.trim() });
+    .insert({ photo_id: photoId, participant_id: authorId, content: content.trim() });
 
   if (error) {
     console.error("Error adding photo comment:", error);
@@ -957,6 +957,62 @@ export async function updateProposalComment(commentId: string, newContent: strin
 
   if (error) {
     console.error("Error updating proposal comment:", error);
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// PROGRAM COMMENTS (commentaires sur activités)
+// ============================================
+
+export async function getProgramComments(programId: string): Promise<ProgramComment[]> {
+  const { data, error } = await supabase
+    .from("program_comments")
+    .select("*, author:participants!participant_id(*)")
+    .eq("program_id", programId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching program comments:", error);
+    return [];
+  }
+  return data as ProgramComment[];
+}
+
+export async function addProgramComment(programId: string, participantId: string, content: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_comments")
+    .insert({ program_id: programId, participant_id: participantId, content: content.trim() });
+
+  if (error) {
+    console.error("Error adding program comment:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteProgramComment(commentId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error deleting program comment:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateProgramComment(commentId: string, newContent: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("program_comments")
+    .update({ content: newContent, updated_at: new Date().toISOString() })
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error updating program comment:", error);
     return false;
   }
   return true;

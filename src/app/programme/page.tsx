@@ -25,6 +25,7 @@ import type { Program, ProgramDay, ProgramProposal } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
 import { ProposalComments } from "@/components/programme/proposal-comments";
+import { ProgramComments } from "@/components/programme/program-comments";
 
 const DAY_CONFIG: Record<ProgramDay, { label: string; emoji: string; date: string }> = {
   thursday: { label: "Jeudi", emoji: "🌙", date: "30 juillet" },
@@ -42,6 +43,7 @@ export default function ProgrammePage() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<string[]>([]);
+  const [expandedProgramComments, setExpandedProgramComments] = useState<string[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
   const [proposalForm, setProposalForm] = useState({
@@ -212,6 +214,10 @@ export default function ProgrammePage() {
     setExpandedComments((prev) => prev.includes(proposalId) ? prev.filter((id) => id !== proposalId) : [...prev, proposalId]);
   };
 
+  const toggleProgramComments = (programId: string) => {
+    setExpandedProgramComments((prev) => prev.includes(programId) ? prev.filter((id) => id !== programId) : [...prev, programId]);
+  };
+
   const grouped = (["thursday", "friday", "saturday", "sunday"] as ProgramDay[]).map((day) => ({
     ...DAY_CONFIG[day], day, events: programs.filter((p) => p.day === day),
   }));
@@ -269,9 +275,18 @@ export default function ProgrammePage() {
                                   </span>
                                 )}
                                 {event.location && <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">📍 {event.location}</span>}
+                                <button
+                                  onClick={() => toggleProgramComments(event.id)}
+                                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                  <MessageCircle className="w-3 h-3" />Commenter
+                                </button>
                               </div>
                             </div>
                           </div>
+                          {expandedProgramComments.includes(event.id) && (
+                            <ProgramComments programId={event.id} currentParticipant={currentParticipant} isAdmin={isAdmin} />
+                          )}
                         </CardContent>
                       </Card>
                     </div>

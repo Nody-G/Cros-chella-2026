@@ -5,9 +5,9 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown, UserPlus, Trash2 } from "lucide-react";
-import { getParticipants, updateAdminCode, updateParticipant, addParticipant, deleteParticipant } from "@/lib/supabase-queries";
+import { getParticipants, updateAdminCode, updateParticipant, addParticipant, deleteParticipant, getAllBadges } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
-import type { Participant } from "@/lib/types";
+import type { Participant, CustomBadge } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
@@ -51,6 +51,34 @@ export default function ParticipantsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [badgesMap, setBadgesMap] = useState<Record<string, CustomBadge[]>>({});
+
+  // Fetch badges for all participants
+  useEffect(() => {
+    getAllBadges().then((badges) => {
+      const map: Record<string, CustomBadge[]> = {};
+      badges.forEach((b) => {
+        if (!map[b.participant_id]) map[b.participant_id] = [];
+        map[b.participant_id].push(b);
+      });
+      setBadgesMap(map);
+    });
+  }, []);
+
+  // Compute alcohol/smoking compatibility with current user
+  const getCompatibility = (p: Participant) => {
+    if (!currentParticipant) return null;
+    if (p.id === currentParticipant.id) return null;
+    const myAlcos = currentParticipant.alcohol_preferences || [];
+    const theirAlcos = p.alcohol_preferences || [];
+    const mySmokes = currentParticipant.smoking_preferences || [];
+    const theirSmokes = p.smoking_preferences || [];
+    if (myAlcos.length === 0 && theirAlcos.length === 0 && mySmokes.length === 0 && theirSmokes.length === 0) return null;
+    const sharedAlcos = myAlcos.filter((a) => theirAlcos.includes(a));
+    const sharedSmokes = mySmokes.filter((s) => theirSmokes.includes(s));
+    const sameFav = currentParticipant.favorite_alcohol && p.favorite_alcohol && currentParticipant.favorite_alcohol === p.favorite_alcohol;
+    return { sharedAlcos, sharedSmokes, sameFav, hasAlcos: myAlcos.length > 0 && theirAlcos.length > 0, hasSmokes: mySmokes.length > 0 && theirSmokes.length > 0 };
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -425,12 +453,55 @@ export default function ParticipantsPage() {
                             </div>
                           )}
 
+                          {/* Badges */}
+                          {badgesMap[p.id] && badgesMap[p.id].length > 0 && (
+                            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                              {badgesMap[p.id].map((badge) => (
+                                <span
+                                  key={badge.id}
+                                  title={`${badge.title}${badge.description ? " — " + badge.description : ""}`}
+                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-300 cursor-help"
+                                >
+                                  {badge.emoji} {badge.title}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                           {p.bed_assignment && (
                             <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                               <Bed className="w-3 h-3" />
                               <span>{p.bed_assignment}</span>
                             </div>
                           )}
+
+                          {/* Compatibility badge */}
+                          {(() => {
+                            const compat = getCompatibility(p);
+                            if (!compat) return null;
+                            const alcoMatch = compat.sharedAlcos.length;
+                            const smokeMatch = compat.sharedSmokes.length;
+                            if (alcoMatch === 0 && smokeMatch === 0 && !compat.sameFav) return null;
+                            return (
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {compat.sameFav && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                                    ⭐ Même alcool favori
+                                  </span>
+                                )}
+                                {alcoMatch > 0 && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/15 border border-green-500/30 text-green-300">
+                                    🍻 {alcoMatch} alcool{alcoMatch > 1 ? "s" : ""} en commun
+                                  </span>
+                                )}
+                                {smokeMatch > 0 && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-blue-500/15 border border-blue-500/30 text-blue-300">
+                                    💨 {smokeMatch} en commun
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {(p.hype_level ?? 0) > 0 && (
                             <div className="mt-1 text-xs">
