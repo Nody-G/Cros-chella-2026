@@ -27,6 +27,7 @@ import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
 import { ProposalComments } from "@/components/programme/proposal-comments";
 
 const DAY_CONFIG: Record<ProgramDay, { label: string; emoji: string; date: string }> = {
+  thursday: { label: "Jeudi", emoji: "🌙", date: "30 juillet" },
   friday: { label: "Vendredi", emoji: "🎉", date: "31 juillet" },
   saturday: { label: "Samedi", emoji: "☀️", date: "1 août" },
   sunday: { label: "Dimanche", emoji: "🌊", date: "2 août" },
@@ -211,7 +212,7 @@ export default function ProgrammePage() {
     setExpandedComments((prev) => prev.includes(proposalId) ? prev.filter((id) => id !== proposalId) : [...prev, proposalId]);
   };
 
-  const grouped = (["friday", "saturday", "sunday"] as ProgramDay[]).map((day) => ({
+  const grouped = (["thursday", "friday", "saturday", "sunday"] as ProgramDay[]).map((day) => ({
     ...DAY_CONFIG[day], day, events: programs.filter((p) => p.day === day),
   }));
 
@@ -305,6 +306,7 @@ export default function ProgrammePage() {
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Jour</label>
                     <select value={proposalForm.day} onChange={(e) => setProposalForm({ ...proposalForm, day: e.target.value as ProgramDay })} className="w-full h-9 rounded-md bg-card border border-border text-sm px-2">
+                      <option value="thursday">🌙 Jeudi</option>
                       <option value="friday">🎉 Vendredi</option>
                       <option value="saturday">☀️ Samedi</option>
                       <option value="sunday">🌊 Dimanche</option>

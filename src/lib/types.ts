@@ -1,7 +1,7 @@
 export type ParticipantStatus = "confirmed" | "pending" | "declined";
 export type AttendanceStatus = "yes" | "maybe" | "no";
 export type GameCategory = "quiz" | "physical" | "alcohol" | "disgusting" | "culture" | "creative" | "strategy" | "speed" | "luck" | "social" | "mystery" | "other";
-export type ProgramDay = "friday" | "saturday" | "sunday";
+export type ProgramDay = "thursday" | "friday" | "saturday" | "sunday";
 export type DangerLevel = "easy" | "normal" | "hard" | "extreme";
 export type TaskStatus = "pending" | "accepted" | "done";
 
