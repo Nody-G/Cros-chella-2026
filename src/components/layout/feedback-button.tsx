@@ -43,9 +43,9 @@ export function FeedbackButton() {
   return (
     <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) { setSent(false); setTitle(""); setDescription(""); setType("bug"); } }}>
       <DialogTrigger asChild>
-        <button className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-muted-foreground hover:text-foreground transition-colors">
-          <Bug className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Bug</span>
+        <button className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all w-full">
+          <span className="text-2xl">🐛</span>
+          <span className="text-xs font-medium">Signaler un bug</span>
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
