@@ -10,17 +10,17 @@ Web app mobile-first pour organiser, s'amuser et garder les souvenirs du **Cros-
 
 | Feature | Description |
 |---|---|
-| 🏠 **Participants** | Profils personnalisés avec pseudo, emoji avatar, bio, rôle de festival, spécialité, super-pouvoir... |
-| 📋 **Programme** | Planning du week-end (jeudi → dimanche) avec CRUD admin et propositions par les participants |
+| 🏠 **Participants** | Profils personnalisés avec pseudo, emoji avatar, bio, rôle de festival, spécialité, super-pouvoir... Badges de compatibilité alcool/fume entre potes |
+| 📋 **Programme** | Planning du week-end (jeudi → dimanche) avec CRUD admin, propositions par les participants et commentaires sur chaque activité |
 | 🎮 **Jeux mystères** | Soumission secrète de jeux par chacun, révélés par l'admin au bon moment |
-| 💬 **Chat** | Mur de discussion en temps réel avec réactions emoji et modification de messages |
+| 💬 **Chat** | Mur de discussion en temps réel avec réactions emoji, modification de messages et horodatage jour + heure |
 | 📸 **Galerie** | Upload de photos avec compression, commentaires, viewer plein écran, lien Google Drive HD |
 | 💰 **Dépenses** | Tricount intégré — suivi des frais partagés, catégories, répartition automatique, règlements optimaux |
 | 🎱 **Billard** | Tournoi par équipes avec bracket automatique et suivi des scores |
-| 🏅 **Badges** | Badges custom décernés par l'admin (emoji + titre + description) |
+| 🏅 **Badges** | Badges custom décernés par l'admin (emoji + titre + description), visibles sur la page Potes |
 | 🍺 **Alcool** | Page dédiée avec préférences de chacun et inventaire absurde "Botardèche" |
 | 🔔 **Notifications** | Pastilles rouges en temps réel sur Chat, Galerie, Jeux, Dépenses |
-| 💬 **Feedback** | Système de feedback anonyme pour améliorer l'app |
+| 🐛 **Feedback** | « Signaler un bug ou proposer une idée » — feedback anonyme pour améliorer l'app |
 
 ---
 

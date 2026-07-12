@@ -150,5 +150,69 @@
     "title": "Lancement de Cros-Chella",
     "description": "La web app est en ligne !",
     "details": "La web app Cros-Chella est déployée sur Vercel. Première version avec : landing page avec compte à rebours, auth par sélection de profil, page participants, dark theme festival (fond sombre violet-nuit, accents dorés, glass morphism, glow cards). L'app est mobile-first et accessible sur tous les téléphones."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "feature",
+    "emoji": "💬",
+    "title": "Commentaires sur les activités du programme",
+    "description": "Commente directement chaque activité du programme.",
+    "details": "Chaque activité du planning (jeudi → dimanche) a maintenant un bouton « Commenter ». Tu peux laisser un commentaire, le modifier ou le supprimer. Les commentaires s'affichent sous l'activité avec le pseudo et l'avatar de l'auteur. Tout est en temps réel grâce à Supabase Realtime."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "🕐",
+    "title": "Chat : jour + heure sur les messages",
+    "description": "Les messages affichent maintenant le jour et l'heure.",
+    "details": "Avant, seul l'heure s'affichait sous chaque message. Maintenant tu vois « Auj. 14:30 », « Hier 14:30 » ou « 12 juil. 14:30 » pour les messages plus anciens. Comme ça tu sais exactement quand chaque message a été envoyé, même le lendemain matin."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "✨",
+    "title": "Chat : menu ⋯ épuré (icônes seulement)",
+    "description": "Le menu des 3 points affiche seulement les icônes ✏️ et 🗑️.",
+    "details": "Quand tu cliques sur le bouton ⋯ de tes messages, le menu affiche maintenant seulement les icônes (✏️ Modifier, 🗑️ Supprimer) sans texte. Plus compact, plus propre, moins de surcharge visuelle."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "feature",
+    "emoji": "🍻",
+    "title": "Compatibilité alcool & fume entre potes",
+    "description": "Vois d'un coup d'œil qui partage tes goûts en alcool et en clopes.",
+    "details": "Sur la page Potes, chaque participant affiche des badges de compatibilité avec toi : 🍻 avec le nombre d'alcools en commun, 💨 avec le nombre de clopes en commun, et ⭐ si vous avez le même favori. Tu vois instantanément avec qui tu peux partager une binouze ou une pause clope."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "📸",
+    "title": "Galerie : commentaires réparés",
+    "description": "Le système de commentaires sur les photos fonctionne à nouveau.",
+    "details": "Un bug empêchait les commentaires de la galerie de se charger correctement (la colonne en base s'appelait `participant_id` mais le code cherchait `author_id`). Corrigé — tu peux maintenant commenter les photos dans le viewer plein écran."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🎱",
+    "title": "Billard : retour arrière possible",
+    "description": "La barre de navigation est maintenant visible sur la page Billard.",
+    "details": "La page Billard n'avait pas de navigation, ce qui empêchait de revenir en arrière sans utiliser le bouton retour du navigateur. Le composant MobileNav a été ajouté — tu peux maintenant naviguer normalement."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "feature",
+    "emoji": "🏅",
+    "title": "Badges visibles sur la page Potes",
+    "description": "Les badges custom de chaque participant s'affichent sous son profil.",
+    "details": "Les badges décernés par l'admin (emoji + titre) sont maintenant visibles directement sous chaque participant sur la page Potes. Tu vois d'un coup d'œil qui a quel badge."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "🐛",
+    "title": "Feedback : renommé clairement",
+    "description": "Le bouton de feedback s'appelle maintenant « Signaler un bug ou proposer une idée ».",
+    "details": "Le bouton dans le menu « Plus » a été renommé pour être plus explicite. Tu sais exactement à quoi il sert : signaler un bug ou proposer une idée d'amélioration."
   }
 ]
