@@ -45,6 +45,7 @@ export function MobileNav() {
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [hasNewPhotos, setHasNewPhotos] = useState(false);
   const [hasNewGames, setHasNewGames] = useState(false);
+  const [hasNewExpenses, setHasNewExpenses] = useState(false);
 
   // Check for new chat messages
   useEffect(() => {
@@ -194,6 +195,53 @@ export function MobileNav() {
     }
   }, [pathname]);
 
+  // Check for new expenses
+  useEffect(() => {
+    if (!currentParticipant) return;
+
+    const checkNewExpenses = async () => {
+      const lastVisit = localStorage.getItem("depensesLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase
+          .from("expenses")
+          .select("*", { count: "exact", head: true });
+        setHasNewExpenses((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase
+        .from("expenses")
+        .select("*", { count: "exact", head: true })
+        .gt("created_at", lastVisit);
+      setHasNewExpenses((count || 0) > 0);
+    };
+
+    checkNewExpenses();
+
+    const channel = supabase
+      .channel("nav-expenses-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "expenses" }, (payload) => {
+        const newExpense = payload.new as { created_at: string; paid_by: string };
+        if (newExpense.paid_by === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("depensesLastVisit");
+        if (!lastVisit || newExpense.created_at > lastVisit) {
+          setHasNewExpenses(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentParticipant]);
+
+  // Clear badge when visiting /depenses
+  useEffect(() => {
+    if (pathname === "/depenses") {
+      localStorage.setItem("depensesLastVisit", new Date().toISOString());
+      setHasNewExpenses(false);
+    }
+  }, [pathname]);
+
   const handleChangePassword = async () => {
     if (!currentParticipant || !newPassword.trim()) return;
     setUpdating(true);
@@ -264,7 +312,8 @@ export function MobileNav() {
                 const isActive = pathname === item.href;
                 const showBadge =
                   (item.href === "/galerie" && hasNewPhotos) ||
-                  (item.href === "/jeux" && hasNewGames);
+                  (item.href === "/jeux" && hasNewGames) ||
+                  (item.href === "/depenses" && hasNewExpenses);
                 return (
                   <Link
                     key={item.href}
