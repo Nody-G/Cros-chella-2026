@@ -184,13 +184,13 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && tournament.status === "setup" && (
+            {isAdmin && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
                 className={`p-2 rounded-lg transition-colors ${
                   confirmDelete ? "bg-red-600 text-white" : "text-white/30 hover:text-red-400 hover:bg-white/10"
                 }`}
-                title={confirmDelete ? "Cliquez encore pour confirmer" : "Supprimer"}
+                title={confirmDelete ? "Cliquez encore pour confirmer" : "Supprimer le tournoi"}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
