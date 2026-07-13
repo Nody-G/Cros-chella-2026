@@ -169,13 +169,13 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
-  // Swipe touch handling with smooth drag animation
+  // Swipe touch handling — simple approach
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const touchDeltaX = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [swipeExit, setSwipeExit] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Ref to always have the latest commentsPhotoId for realtime callbacks
@@ -183,6 +183,7 @@ export default function GaleriePage() {
   useEffect(() => { commentsPhotoIdRef.current = commentsPhotoId; }, [commentsPhotoId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchDeltaX.current = 0;
@@ -190,6 +191,7 @@ export default function GaleriePage() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (isAnimating) return;
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     // Only start dragging if horizontal > vertical and > 10px
@@ -203,33 +205,29 @@ export default function GaleriePage() {
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging) return;
+    if (!isDragging || isAnimating) return;
     const deltaX = touchDeltaX.current;
     setIsDragging(false);
 
     if (Math.abs(deltaX) > 60) {
-      // Animate photo out in the swipe direction, then change index
-      const direction = deltaX < 0 ? "left" : "right";
-      setSwipeExit(direction);
-      setDragOffset(deltaX < 0 ? -window.innerWidth : window.innerWidth);
+      // Swipe threshold reached — animate photo out, then change index
+      setIsAnimating(true);
+      const goLeft = deltaX < 0;
+      // Animate to edge
+      setDragOffset(goLeft ? -window.innerWidth : window.innerWidth);
       setTimeout(() => {
-        if (direction === "left") handleNextPhoto();
+        // Change index
+        if (goLeft) handleNextPhoto();
         else handlePrevPhoto();
-        setSwipeExit(null);
+        // Reset for next render
         setDragOffset(0);
+        setIsAnimating(false);
       }, 250);
     } else {
-      // Snap back — didn't swipe far enough
+      // Snap back
       setDragOffset(0);
     }
   };
-
-  // Compute adjacent photo for preview during swipe or exit animation
-  const adjacentPhoto = (isDragging || swipeExit) && viewerIndex !== null
-    ? (isDragging ? dragOffset < 0 : swipeExit === "left")
-      ? (viewerIndex < photos.length - 1 ? photos[viewerIndex + 1] : null)
-      : (viewerIndex > 0 ? photos[viewerIndex - 1] : null)
-    : null;
 
   return (
     <main className="pb-20 min-h-screen">
@@ -379,24 +377,6 @@ export default function GaleriePage() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Adjacent photo preview (behind current, revealed during swipe) */}
-            {adjacentPhoto && (
-              <img
-                src={adjacentPhoto.url}
-                alt=""
-                className="absolute inset-0 w-full h-full object-contain"
-                style={swipeExit ? {
-                  // During exit animation, adjacent photo stays centered (it's the one that will remain)
-                  transform: "translateX(0)",
-                  transition: "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                } : {
-                  // During drag, adjacent photo peeks from the opposite side
-                  transform: `translateX(${dragOffset < 0 ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
-                  transition: "none",
-                }}
-                draggable={false}
-              />
-            )}
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
@@ -407,7 +387,7 @@ export default function GaleriePage() {
               alt={currentPhoto.caption || "Photo"}
               className="max-w-full max-h-full object-contain select-none relative z-[1]"
               style={{
-                transform: `translateX(${isDragging || swipeExit ? dragOffset : 0}px)`,
+                transform: `translateX(${dragOffset}px)`,
                 transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
               }}
               draggable={false}
