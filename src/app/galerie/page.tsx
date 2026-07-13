@@ -169,58 +169,101 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
-  // Swipe touch handling — single photo, slide out then snap to next
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const isHorizontalRef = useRef(false);
-  const isDraggingRef = useRef(false);
-  const dragOffsetRef = useRef(0);
+  // Swipe touch handling — native DOM listeners for 60fps (no React re-renders)
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const slideRef = useRef<HTMLDivElement>(null);
+  const dragOffsetRef = useRef(0);
 
   // Ref to always have the latest commentsPhotoId for realtime callbacks
   const commentsPhotoIdRef = useRef<string | null>(null);
   useEffect(() => { commentsPhotoIdRef.current = commentsPhotoId; }, [commentsPhotoId]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    isHorizontalRef.current = false;
-    isDraggingRef.current = false;
-    dragOffsetRef.current = 0;
-    setIsDragging(false);
-    setDragOffset(0);
+  // Preload adjacent images for instant swipe
+  useEffect(() => {
+    if (viewerIndex === null || photos.length === 0) return;
+    const preload = (idx: number) => {
+      if (idx < 0 || idx >= photos.length) return;
+      const img = new window.Image();
+      img.src = photos[idx].url;
+    };
+    preload(viewerIndex - 1);
+    preload(viewerIndex + 1);
+  }, [viewerIndex, photos]);
+
+  // Direct DOM transform — bypasses React render cycle for 60fps drag
+  const applyDragTransform = (offset: number, animate: boolean) => {
+    const el = slideRef.current;
+    if (!el) return;
+    el.style.transition = animate ? "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none";
+    el.style.transform = `translateX(${offset}px)`;
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const deltaX = e.touches[0].clientX - touchStartX.current;
-    const deltaY = e.touches[0].clientY - touchStartY.current;
-    if (!isHorizontalRef.current && Math.abs(deltaX) > 10) {
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        isHorizontalRef.current = true;
-        isDraggingRef.current = true;
-        setIsDragging(true);
+  // Attach native touch listeners with { passive: false } for better perf
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    let startX = 0;
+    let startY = 0;
+    let horizontal = false;
+    let dragging = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      horizontal = false;
+      dragging = false;
+      applyDragTransform(0, false);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const deltaX = e.touches[0].clientX - startX;
+      const deltaY = e.touches[0].clientY - startY;
+      if (!horizontal && Math.abs(deltaX) > 10) {
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          horizontal = true;
+          dragging = true;
+        }
       }
-    }
-    if (isHorizontalRef.current) {
-      dragOffsetRef.current = deltaX;
-      setDragOffset(deltaX);
-    }
-  };
+      if (horizontal) {
+        e.preventDefault(); // prevent vertical scroll during horizontal swipe
+        dragOffsetRef.current = deltaX;
+        applyDragTransform(deltaX, false);
+      }
+    };
 
-  const handleTouchEnd = () => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-    const offset = dragOffsetRef.current;
-    if (Math.abs(offset) > 60) {
-      if (offset < 0) handleNextPhoto();
-      else handlePrevPhoto();
-    }
-    dragOffsetRef.current = 0;
-    setDragOffset(0);
-  };
+    const onTouchEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+      const offset = dragOffsetRef.current;
+      if (Math.abs(offset) > 60) {
+        // Animate out, then change index
+        const direction = offset < 0 ? -1 : 1;
+        applyDragTransform(direction * window.innerWidth, true);
+        setTimeout(() => {
+          if (direction < 0) handleNextPhoto();
+          else handlePrevPhoto();
+          // Reset transform after index change (next render will show new photo)
+          requestAnimationFrame(() => applyDragTransform(0, false));
+        }, 280);
+      } else {
+        // Snap back
+        applyDragTransform(0, true);
+      }
+      dragOffsetRef.current = 0;
+    };
+
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos, viewerIndex]);
 
   return (
     <main className="pb-20 min-h-screen">
@@ -366,17 +409,12 @@ export default function GaleriePage() {
           <div
             ref={imageContainerRef}
             className="flex-1 relative min-h-0 overflow-hidden"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
           >
-            {/* Single photo with drag offset — one photo visible at a time */}
+            {/* Single photo with GPU-accelerated slide — drag via native listeners */}
             <div
+              ref={slideRef}
               className="flex items-center justify-center h-full w-full px-2"
-              style={{
-                transform: `translateX(${dragOffset}px)`,
-                transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-              }}
+              style={{ willChange: "transform", backfaceVisibility: "hidden" }}
             >
               <img
                 src={currentPhoto.url}
