@@ -385,9 +385,14 @@ export default function GaleriePage() {
                 src={adjacentPhoto.url}
                 alt=""
                 className="absolute inset-0 w-full h-full object-contain"
-                style={{
-                  transform: `translateX(${(isDragging ? dragOffset < 0 : swipeExit === "left") ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
-                  transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                style={swipeExit ? {
+                  // During exit animation, adjacent photo stays centered (it's the one that will remain)
+                  transform: "translateX(0)",
+                  transition: "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                } : {
+                  // During drag, adjacent photo peeks from the opposite side
+                  transform: `translateX(${dragOffset < 0 ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
+                  transition: "none",
                 }}
                 draggable={false}
               />
