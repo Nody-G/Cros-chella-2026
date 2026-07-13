@@ -20,7 +20,7 @@ const BED_OPTIONS = [
   "Chambre 2 — Lit 2 places B",
   "Chambre 2 — Lit superposé haut",
   "Chambre 2 — Lit superposé bas",
-  "Chambre 3 — Lit 2 places",
+  "Chambre Get 27 — Lit 2 places",
   "Chambre 4 — Lit 2 places",
   "Chambre 4 — Lit 1 place",
   "Chambre 5 — Le lit de la mama",
