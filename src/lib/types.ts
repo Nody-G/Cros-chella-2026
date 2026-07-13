@@ -174,7 +174,7 @@ export interface Photo {
 export interface PhotoComment {
   id: string;
   photo_id: string;
-  author_id: string;
+  participant_id: string;
   content: string;
   created_at: string;
   // Joined

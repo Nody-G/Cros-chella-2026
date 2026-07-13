@@ -169,20 +169,43 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
-  // Swipe touch handling for viewer
+  // Swipe touch handling with smooth drag animation
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const touchDeltaX = useRef(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    touchDeltaX.current = 0;
+    setIsDragging(false);
   };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // Only trigger swipe if horizontal movement > 60px and > vertical movement
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
-      if (deltaX < 0) handleNextPhoto(); // swipe left = next
-      else handlePrevPhoto(); // swipe right = prev
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    // Only start dragging if horizontal > vertical and > 10px
+    if (!isDragging && Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      setIsDragging(true);
+    }
+    if (isDragging) {
+      touchDeltaX.current = deltaX;
+      setDragOffset(deltaX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    const deltaX = touchDeltaX.current;
+    setIsDragging(false);
+    setDragOffset(0);
+
+    if (Math.abs(deltaX) > 60) {
+      if (deltaX < 0) handleNextPhoto();
+      else handlePrevPhoto();
     }
   };
 
@@ -327,13 +350,29 @@ export default function GaleriePage() {
             <span className="text-white/60 text-sm">{viewerIndex! + 1} / {photos.length}</span>
             <div className="w-6" />
           </div>
-          <div className="flex-1 relative flex items-center justify-center min-h-0 px-2" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          <div
+            ref={imageContainerRef}
+            className="flex-1 relative flex items-center justify-center min-h-0 px-2 overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
               </button>
             )}
-            <img src={currentPhoto.url} alt={currentPhoto.caption || "Photo"} className="max-w-full max-h-full object-contain" />
+            <img
+              src={currentPhoto.url}
+              alt={currentPhoto.caption || "Photo"}
+              className="max-w-full max-h-full object-contain select-none"
+              style={{
+                transform: `translateX(${isDragging ? dragOffset : 0}px)`,
+                transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                opacity: isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 600) : 1,
+              }}
+              draggable={false}
+            />
             {currentPhoto.source === "chat" && (
               <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm">💬 Importée du chat</span>
             )}
@@ -398,7 +437,7 @@ export default function GaleriePage() {
                       <span className="text-xs text-white/70 font-semibold">{c.author?.pseudo || "Anon"}</span>
                       <p className="text-sm text-white/90 break-words">{c.content}</p>
                     </div>
-                    {(c.author_id === currentParticipant?.id || currentParticipant?.is_admin) && (
+                    {(c.participant_id === currentParticipant?.id || currentParticipant?.is_admin) && (
                       <button onClick={() => handleDeleteComment(c.id)} className="text-white/30 hover:text-red-400 shrink-0 opacity-0 group-hover/comment:opacity-100 transition-opacity mt-1"><X className="w-3.5 h-3.5" /></button>
                     )}
                   </div>
