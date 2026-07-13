@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Trash2, Trophy, X, Play, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Plus, Trash2, Trophy, X, Users, ChevronDown, ChevronUp, Swords } from "lucide-react";
 import {
   getBillardTeams,
   createBillardTeam,
@@ -31,6 +31,7 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
   const [player2Id, setPlayer2Id] = useState("");
   const [starting, setStarting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pickingMatch, setPickingMatch] = useState<string | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
@@ -60,12 +61,47 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
     }
   }, [refreshKey, fetchData]);
 
-  // Cleanup confirm timer on unmount
   useEffect(() => {
     return () => {
       if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
     };
   }, []);
+
+  // ── Player name lookup ──
+  const participantMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of participants) {
+      map.set(p.id, p.pseudo || p.name);
+    }
+    return map;
+  }, [participants]);
+
+  const pname = useCallback((id: string) => participantMap.get(id) || "?", [participantMap]);
+
+  const teamName = useCallback((team: BillardTeam | undefined | null) => {
+    if (!team) return "❓ À définir";
+    if (team.team_name) return team.team_name;
+    return pname(team.player1_id) + " & " + pname(team.player2_id);
+  }, [pname]);
+
+  // ── Players already in a team (for filtering dropdowns) ──
+  const assignedPlayerIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const t of teams) {
+      ids.add(t.player1_id);
+      ids.add(t.player2_id);
+    }
+    return ids;
+  }, [teams]);
+
+  // Available participants = not already in a team (except the currently selected slot)
+  const availableForSlot = useCallback((excludeId: string, otherSelectedId: string) => {
+    return participants.filter((p) => {
+      if (p.id === otherSelectedId) return false; // can't pick same as other slot
+      if (p.id === excludeId) return true; // keep current selection visible
+      return !assignedPlayerIds.has(p.id); // exclude if already in a team
+    });
+  }, [participants, assignedPlayerIds]);
 
   const handleAddTeam = async () => {
     if (!player1Id || !player2Id || player1Id === player2Id) return;
@@ -90,11 +126,13 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
   };
 
   const handlePickWinner = async (matchId: string, winnerTeamId: string) => {
+    if (pickingMatch) return; // prevent double-click
+    setPickingMatch(matchId);
     await recordBillardResult(matchId, winnerTeamId);
     await fetchData();
+    setPickingMatch(null);
   };
 
-  // Double-tap delete (mobile-friendly, no confirm())
   const handleDeleteClick = () => {
     if (confirmDelete) {
       if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
@@ -108,41 +146,27 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
 
   const statusLabel = tournament.status === "done" ? "🏆 Terminé" : tournament.status === "active" ? "⚡ En cours" : "⏳ Préparation";
 
-  // Group matches by round
+  // ── Group matches by round (ascending: round 8 → 4 → 2) ──
   const roundMap = new Map<number, BillardMatch[]>();
   matches.forEach((m) => {
     if (!roundMap.has(m.round)) roundMap.set(m.round, []);
     roundMap.get(m.round)!.push(m);
   });
-  const rounds = Array.from(roundMap.entries()).sort(([a], [b]) => b - a);
-  // Find winner team name
-  const winnerTeam = tournament.winner_team_id
-    ? teams.find((t) => t.id === tournament.winner_team_id)
-    : null;
-
-  // Memoize player name lookup
-  const participantMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const p of participants) {
-      map.set(p.id, p.pseudo || p.name);
-    }
-    return map;
-  }, [participants]);
-
-  const pname = useCallback((id: string) => participantMap.get(id) || "?", [participantMap]);
-
-  const teamName = useCallback((team: BillardTeam | undefined | null) => {
-    if (!team) return "❓ À définir";
-    if (team.team_name) return team.team_name;
-    return pname(team.player1_id) + " & " + pname(team.player2_id);
-  }, [pname]);
+  const rounds = Array.from(roundMap.entries()).sort(([a], [b]) => b - a); // highest round first (qualifiers → finale)
 
   const roundLabels: Record<number, string> = {};
+  const maxRound = rounds.length > 0 ? rounds[0][0] : 0;
   rounds.forEach(([r]) => {
     if (r === 2) roundLabels[r] = "🏆 Finale";
     else if (r === 4) roundLabels[r] = "🥉 Demi-finale";
-    else roundLabels[r] = `📐 Round ${Math.log2(r)}`;
+    else if (r === maxRound && r > 4) roundLabels[r] = "🎯 Qualifications";
+    else roundLabels[r] = `📐 1/${r}`;
   });
+
+  // Winner
+  const winnerTeam = tournament.winner_team_id
+    ? teams.find((t) => t.id === tournament.winner_team_id)
+    : null;
 
   return (
     <Card className="bg-white/5 border-white/10 overflow-hidden">
@@ -186,7 +210,7 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
               </div>
             )}
 
-            {/* Teams */}
+            {/* ── SETUP: Teams management ── */}
             {tournament.status === "setup" && (
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -197,7 +221,7 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setShowAddTeam(!showAddTeam)}
+                      onClick={() => { setShowAddTeam(!showAddTeam); setPlayer1Id(""); setPlayer2Id(""); }}
                       className="text-white/60 hover:text-white h-7 px-2"
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" /> Ajouter
@@ -212,12 +236,10 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
                       onChange={(e) => setPlayer1Id(e.target.value)}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
                     >
-                      <option value="">Joueur 1</option>
-                      {participants
-                        .filter((p) => p.id !== player2Id)
-                        .map((p) => (
-                          <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
-                        ))}
+                      <option value="">🏱 Joueur 1</option>
+                      {availableForSlot(player1Id, player2Id).map((p) => (
+                        <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
+                      ))}
                     </select>
                     <p className="text-center text-white/30 text-xs">+</p>
                     <select
@@ -225,15 +247,21 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
                       onChange={(e) => setPlayer2Id(e.target.value)}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
                     >
-                      <option value="">Joueur 2</option>
-                      {participants
-                        .filter((p) => p.id !== player1Id)
-                        .map((p) => (
-                          <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
-                        ))}
+                      <option value="">🏱 Joueur 2</option>
+                      {availableForSlot(player2Id, player1Id).map((p) => (
+                        <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
+                      ))}
                     </select>
+                    {player1Id && player2Id && player1Id === player2Id && (
+                      <p className="text-red-400 text-xs text-center">⚠️ Deux joueurs différents requis</p>
+                    )}
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={handleAddTeam} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                      <Button
+                        size="sm"
+                        onClick={handleAddTeam}
+                        disabled={!player1Id || !player2Id || player1Id === player2Id}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-40"
+                      >
                         Créer l&apos;équipe
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setShowAddTeam(false)} className="text-white/60">
@@ -271,95 +299,32 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
                     disabled={starting}
                     className="w-full mt-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                   >
-                    {starting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Play className="w-4 h-4 mr-2" />
-                    )}
+                    {starting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Swords className="w-4 h-4 mr-2" />}
                     Lancer le tournoi ({teams.length} équipes)
                   </Button>
                 )}
               </div>
             )}
 
-            {/* Bracket / Matches */}
-            {tournament.status !== "setup" && (
-              <div>
-                {rounds.map(([round, roundMatches]) => (
-                  <div key={round} className="mb-4">
-                    <h4 className="text-sm font-semibold text-white/60 mb-2">{roundLabels[round] || `Round ${round}`}</h4>
+            {/* ── ACTIVE / DONE: Bracket ── */}
+            {tournament.status !== "setup" && rounds.length > 0 && (
+              <div className="space-y-4">
+                {rounds.map(([roundNum, roundMatches]) => (
+                  <div key={roundNum}>
+                    <h4 className="text-sm font-semibold text-white/70 mb-2">{roundLabels[roundNum] || `Round ${roundNum}`}</h4>
                     <div className="space-y-2">
-                      {roundMatches.map((match) => {
-                        const isClickable = isAdmin && match.status === "pending" && match.team1_id && match.team2_id;
-                        const isDone = match.status === "done" || match.status === "bye";
-
-                        return (
-                          <div
+                      {roundMatches
+                        .sort((a, b) => a.match_order - b.match_order)
+                        .map((match) => (
+                          <MatchCard
                             key={match.id}
-                            className={`rounded-lg border overflow-hidden ${
-                              isDone
-                                ? "border-green-500/20 bg-green-50/5"
-                                : match.status === "pending"
-                                ? "border-yellow-500/20 bg-yellow-50/5"
-                                : "border-white/10 bg-white/5"
-                            }`}
-                          >
-                            <div className="p-3">
-                              <div className="flex items-center justify-between text-xs text-white/40 mb-2">
-                                <span>
-                                  {match.status === "bye"
-                                    ? "🆓 Bye"
-                                    : match.status === "waiting"
-                                    ? "⏳ En attente"
-                                    : match.status === "done"
-                                    ? "✅ Terminé"
-                                    : "🎮 À jouer"}
-                                </span>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                {/* Team 1 */}
-                                <button
-                                  onClick={() => isClickable && handlePickWinner(match.id, match.team1_id!)}
-                                  disabled={!isClickable}
-                                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
-                                    match.winner_team_id === match.team1_id
-                                      ? "bg-green-600/20 border border-green-500/30"
-                                      : isClickable
-                                      ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
-                                      : "bg-white/5 border border-transparent"
-                                  }`}
-                                >
-                                  <span className={`text-sm ${match.winner_team_id === match.team1_id ? "text-green-300 font-semibold" : "text-white/80"}`}>
-                                    {teamName(teams.find((t) => t.id === match.team1_id))}
-                                  </span>
-                                  {match.winner_team_id === match.team1_id && <Trophy className="w-4 h-4 text-yellow-400" />}
-                                </button>
-
-                                <p className="text-center text-white/20 text-xs">VS</p>
-
-                                {/* Team 2 */}
-                                <button
-                                  onClick={() => isClickable && handlePickWinner(match.id, match.team2_id!)}
-                                  disabled={!isClickable || !match.team2_id}
-                                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
-                                    match.winner_team_id === match.team2_id
-                                      ? "bg-green-600/20 border border-green-500/30"
-                                      : isClickable
-                                      ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
-                                      : "bg-white/5 border border-transparent"
-                                  }`}
-                                >
-                                  <span className={`text-sm ${match.winner_team_id === match.team2_id ? "text-green-300 font-semibold" : "text-white/80"}`}>
-                                    {match.team2_id ? teamName(teams.find((t) => t.id === match.team2_id)) : "❓ À définir"}
-                                  </span>
-                                  {match.winner_team_id === match.team2_id && <Trophy className="w-4 h-4 text-yellow-400" />}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            match={match}
+                            teamName={teamName}
+                            isAdmin={isAdmin}
+                            onPickWinner={handlePickWinner}
+                            picking={pickingMatch === match.id}
+                          />
+                        ))}
                     </div>
                   </div>
                 ))}
@@ -369,5 +334,99 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── Match Card sub-component ──
+function MatchCard({
+  match,
+  teamName,
+  isAdmin,
+  onPickWinner,
+  picking,
+}: {
+  match: BillardMatch;
+  teamName: (t: BillardTeam | undefined | null) => string;
+  isAdmin: boolean;
+  onPickWinner: (matchId: string, teamId: string) => void;
+  picking: boolean;
+}) {
+  const isDone = match.status === "done" || match.status === "bye";
+  const isWaiting = match.status === "waiting";
+  const isBye = match.status === "bye";
+  const t1Name = teamName(match.team1);
+  const t2Name = teamName(match.team2);
+  const t1Winner = match.winner_team_id === match.team1_id;
+  const t2Winner = match.winner_team_id === match.team2_id;
+
+  return (
+    <div className={`rounded-lg border overflow-hidden ${
+      isDone ? "bg-white/5 border-white/10" : isWaiting ? "bg-white/[0.02] border-white/5" : "bg-white/5 border-purple-500/30"
+    }`}>
+      {/* Match header */}
+      {isBye && (
+        <div className="px-3 py-1 bg-yellow-600/10 border-b border-yellow-500/20">
+          <p className="text-[10px] text-yellow-400/70 text-center">⚡ Bye — qualification automatique</p>
+        </div>
+      )}
+      {isWaiting && (
+        <div className="px-3 py-1 bg-white/[0.02] border-b border-white/5">
+          <p className="text-[10px] text-white/30 text-center">⏳ En attente des résultats précédents</p>
+        </div>
+      )}
+
+      <div className="p-3 space-y-1">
+        {/* Team 1 */}
+        <button
+          onClick={() => !isDone && !isWaiting && match.team1_id && !picking && onPickWinner(match.id, match.team1_id)}
+          disabled={isDone || isWaiting || !match.team1_id || picking}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+            t1Winner
+              ? "bg-green-600/20 border border-green-500/40"
+              : !isDone && match.team1_id
+              ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
+              : "bg-white/[0.02] border border-transparent"
+          }`}
+        >
+          <span className={`text-sm ${t1Winner ? "text-green-300 font-bold" : match.team1_id ? "text-white" : "text-white/30 italic"}`}>
+            {t1Winner && "🏆 "}{t1Name}
+          </span>
+          {t1Winner && <span className="text-green-400 text-xs">GAGNANT</span>}
+        </button>
+
+        <p className="text-center text-white/20 text-[10px] font-medium">VS</p>
+
+        {/* Team 2 */}
+        <button
+          onClick={() => !isDone && !isWaiting && match.team2_id && !picking && onPickWinner(match.id, match.team2_id)}
+          disabled={isDone || isWaiting || !match.team2_id || picking}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+            t2Winner
+              ? "bg-green-600/20 border border-green-500/40"
+              : !isDone && match.team2_id
+              ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
+              : "bg-white/[0.02] border border-transparent"
+          }`}
+        >
+          <span className={`text-sm ${t2Winner ? "text-green-300 font-bold" : match.team2_id ? "text-white" : "text-white/30 italic"}`}>
+            {t2Winner && "🏆 "}{t2Name}
+          </span>
+          {t2Winner && <span className="text-green-400 text-xs">GAGNANT</span>}
+        </button>
+      </div>
+
+      {/* Pick winner hint */}
+      {!isDone && !isWaiting && match.team1_id && match.team2_id && isAdmin && (
+        <div className="px-3 pb-2">
+          <p className="text-[10px] text-purple-400/50 text-center">👆 Tapez sur l&apos;équipe gagnante</p>
+        </div>
+      )}
+      {picking && (
+        <div className="px-3 pb-2 flex items-center justify-center gap-1">
+          <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+          <span className="text-[10px] text-purple-400">Enregistrement...</span>
+        </div>
+      )}
+    </div>
   );
 }

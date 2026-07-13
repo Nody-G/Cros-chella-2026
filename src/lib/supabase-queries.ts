@@ -1477,7 +1477,7 @@ export async function generateBillardBracket(tournamentId: string): Promise<bool
   const allMatches = await getBillardMatches(tournamentId);
   const byeMatches = allMatches.filter((m) => m.status === "bye" && m.winner_team_id);
   for (const byeMatch of byeMatches) {
-    await propagateWinner(allMatches, byeMatch);
+    await propagateWinner(byeMatch);
   }
 
   // Mark tournament as active
@@ -1490,7 +1490,7 @@ export async function generateBillardBracket(tournamentId: string): Promise<bool
  * Helper: propagate a winner into the next round match.
  * Even match_order → team1 slot, odd → team2 slot.
  */
-async function propagateWinner(allMatches: BillardMatch[], match: BillardMatch): Promise<void> {
+async function propagateWinner(match: BillardMatch): Promise<void> {
   if (!match.winner_team_id) return;
 
   const nextRound = match.round / 2;
@@ -1499,7 +1499,8 @@ async function propagateWinner(allMatches: BillardMatch[], match: BillardMatch):
   const nextMatchOrder = Math.floor(match.match_order / 2);
   const isEvenMatch = match.match_order % 2 === 0;
 
-  // Find the next round match
+  // Re-fetch fresh matches to avoid stale data
+  const allMatches = await getBillardMatches(match.tournament_id);
   const nextMatch = allMatches.find(
     (m) => m.round === nextRound && m.match_order === nextMatchOrder
   );
@@ -1554,10 +1555,9 @@ export async function recordBillardResult(
     return true;
   }
 
-  // Propagate winner to next round
-  const allMatches = await getBillardMatches(match.tournament_id);
+  // Propagate winner to next round (re-fetch fresh data)
   const updatedMatch = { ...match, winner_team_id: winnerTeamId, status: "done" as const };
-  await propagateWinner(allMatches, updatedMatch);
+  await propagateWinner(updatedMatch);
 
   return true;
 }
