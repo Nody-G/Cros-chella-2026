@@ -1,5 +1,69 @@
 [
   {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "📱",
+    "title": "Chat : appui long sur mobile",
+    "description": "Appui long (500ms) sur tes messages pour modifier/supprimer — plus d'ouvertures accidentelles.",
+    "details": "Sur mobile, un simple tap sur un message texte ou une image ouvrait le menu modifier/supprimer, ce qui causait des ouvertures accidentelles en scrollant. Désormais, il faut faire un appui long (500ms) avec un retour haptic (vibration) pour ouvrir le menu. Sur PC, le clic simple fonctionne toujours. Les images dans le chat ont aussi un overlay avec les boutons ✏️ et 🗑️ au survol."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "👆",
+    "title": "Galerie : swipe tactile dans le viewer",
+    "description": "Swipe gauche/droite pour naviguer entre les photos en plein écran.",
+    "details": "Le viewer plein écran de la galerie supporte maintenant le swipe tactile : glisse vers la gauche pour la photo suivante, vers la droite pour la précédente. Les boutons flèches restent disponibles aussi. Le swipe ne se déclenche que si le mouvement horizontal dépasse 60px et est plus grand que le mouvement vertical (pour éviter les conflits avec le scroll)."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "📳",
+    "title": "Chat : vibration sur nouveaux messages",
+    "description": "Ton téléphone vibre quand tu reçois un message (si ce n'est pas le tien).",
+    "details": "Quand un autre participant envoie un message dans le chat, ton téléphone émet une double vibration courte (50ms-30ms-50ms) pour t'alerter discrètement. La vibration ne se déclenche pas pour tes propres messages. Compatible tous les appareils supportant l'API Vibration (Android principalement, iOS en partie)."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "📊",
+    "title": "Sondages : compteur temps réel amélioré",
+    "description": "Le compteur de votes pulse en temps réel quand quelqu'un vote.",
+    "details": "Le total de votes au bas de chaque sondage est maintenant animé (pulse) pour indiquer l'activité en temps réel. Si aucun vote n'a encore été fait, un message « Sois le premier à voter ! » s'affiche. Les barres de résultats se mettent à jour instantanément grâce à Supabase Realtime."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "🔴",
+    "title": "Pastilles : Sondages, Badges & Programme",
+    "description": "Les pastilles de notification couvrent maintenant toutes les pages.",
+    "details": "Les pastilles rouges pulsantes s'affichent maintenant aussi sur 📊 Sondages (nouveaux votes), 🏅 Badges (nouveaux badges reçus) et 📋 Programme (nouvelles propositions) en plus des pages Chat, Galerie, Jeux et Dépenses déjà existantes. Tout se clear automatiquement quand tu visites la page. Le menu « Plus » affiche aussi les pastilles sur Sondages et Badges."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🔧",
+    "title": "Fix : commentaires galerie",
+    "description": "Les commentaires sur les photos fonctionnent à nouveau.",
+    "details": "Un bug empêchait l'affichage et l'ajout de commentaires sur les photos de la galerie à cause d'un mismatch de colonnes dans la jointure Supabase (author_id vs participant_id). Corrigé et testé."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🔧",
+    "title": "Fix : badges cliquables sur mobile",
+    "description": "Les descriptions des badges sont maintenant visibles sur mobile (tap au lieu de hover).",
+    "details": "Sur mobile, on ne peut pas « survoler » un badge pour voir sa description. Le système a été changé de hover (CSS group-hover) à un système de tap/clic avec state React. Tu tapes sur un badge pour voir sa description, tu tapes à côté pour la fermer. Fonctionne aussi sur la page participants."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🔧",
+    "title": "Fix : feedback status persistant",
+    "description": "Le statut des feedbacks (en cours, terminé, rejeté) s'enregistre correctement.",
+    "details": "Un bug faisait que le changement de statut d'un feedback semblait s'appliquer mais n'était pas persisté en base. L'UI se resynchronise maintenant automatiquement si la mise à jour échoue."
+  },
+  {
     "date": "2026-07-12",
     "tag": "feature",
     "emoji": "🔴",

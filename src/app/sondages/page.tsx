@@ -140,9 +140,16 @@ export default function SondagesPage() {
                         );
                       })}
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-2 text-right">
-                      {total} vote{total !== 1 ? "s" : ""} au total
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[10px] text-muted-foreground">
+                        {total > 0 ? `${total} vote${total !== 1 ? "s" : ""} au total` : "Sois le premier à voter !"}
+                      </p>
+                      {total > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary animate-pulse">
+                          📊 {total} vote{total !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );

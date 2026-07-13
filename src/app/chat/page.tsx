@@ -24,6 +24,8 @@ export default function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
   // Galerie caption modal (après envoi image chat)
   const [galleryCaptionModal, setGalleryCaptionModal] = useState<{ imageUrl: string } | null>(null);
   const [galleryCaption, setGalleryCaption] = useState("");
@@ -66,6 +68,10 @@ export default function ChatPage() {
           .single();
         setMessages((prev) => [...prev, { ...newMsg, author: author || undefined }]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+        // Vibrate on new message (if not from self)
+        if (newMsg.author_id !== currentUserId && navigator.vibrate) {
+          navigator.vibrate([50, 30, 50]);
+        }
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (payload) => {
         const updated = payload.new as Message;
@@ -84,6 +90,7 @@ export default function ChatPage() {
       document.removeEventListener("touchstart", closeMenus);
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,10 +287,38 @@ export default function ChatPage() {
                     </div>
                     <div
                       className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"} ${isMe && !isDeleted && !isEditing ? "cursor-pointer active:scale-[0.98] transition-transform" : ""}`}
+                      data-menu-trigger
                       onClick={(e) => {
                         if (!isMe || isDeleted || isEditing) return;
                         e.stopPropagation();
+                        // On mobile: only toggle if long press wasn't triggered
+                        if (longPressTriggered.current) {
+                          longPressTriggered.current = false;
+                          return;
+                        }
                         setActiveMenu(activeMenu === msg.id ? null : msg.id);
+                      }}
+                      onTouchStart={() => {
+                        if (!isMe || isDeleted || isEditing) return;
+                        longPressTriggered.current = false;
+                        longPressTimer.current = setTimeout(() => {
+                          longPressTriggered.current = true;
+                          setActiveMenu(activeMenu === msg.id ? null : msg.id);
+                          // Vibrate feedback on supported devices
+                          if (navigator.vibrate) navigator.vibrate(30);
+                        }, 500);
+                      }}
+                      onTouchEnd={() => {
+                        if (longPressTimer.current) {
+                          clearTimeout(longPressTimer.current);
+                          longPressTimer.current = null;
+                        }
+                      }}
+                      onTouchMove={() => {
+                        if (longPressTimer.current) {
+                          clearTimeout(longPressTimer.current);
+                          longPressTimer.current = null;
+                        }
                       }}
                     >
                       {/* Context menu */}

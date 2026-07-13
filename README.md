@@ -13,14 +13,15 @@ Web app mobile-first pour organiser, s'amuser et garder les souvenirs du **Cros-
 | 🏠 **Participants** | Profils personnalisés avec pseudo, emoji avatar, bio, rôle de festival, spécialité, super-pouvoir... Badges de compatibilité alcool/fume entre potes |
 | 📋 **Programme** | Planning du week-end (jeudi → dimanche) avec CRUD admin, propositions par les participants et commentaires sur chaque activité |
 | 🎮 **Jeux mystères** | Soumission secrète de jeux par chacun, révélés par l'admin au bon moment |
-| 💬 **Chat** | Mur de discussion en temps réel avec réactions emoji, modification de messages et horodatage jour + heure |
-| 📸 **Galerie** | Upload de photos avec compression, commentaires, viewer plein écran, lien Google Drive HD |
+| 💬 **Chat** | Mur de discussion en temps réel avec réactions emoji, modification/suppression de messages (appui long mobile), images avec overlay edit/delete, vibration sur nouveaux messages |
+| 📸 **Galerie** | Upload de photos avec compression, commentaires, viewer plein écran avec swipe tactile, likes, lien Google Drive HD |
 | 💰 **Dépenses** | Tricount intégré — suivi des frais partagés, catégories, répartition automatique, règlements optimaux |
 | 🎱 **Billard** | Tournoi par équipes avec bracket automatique et suivi des scores |
-| 🏅 **Badges** | Badges custom décernés par l'admin (emoji + titre + description), visibles sur la page Potes |
+| 🏅 **Badges** | Badges custom décernés par l'admin (emoji + titre + description), visibles sur la page Potes, cliquables sur mobile |
 | 🍺 **Alcool** | Page dédiée avec préférences de chacun et inventaire absurde "Botardèche" |
-| 🔔 **Notifications** | Pastilles rouges en temps réel sur Chat, Galerie, Jeux, Dépenses |
-| 🐛 **Feedback** | « Signaler un bug ou proposer une idée » — feedback anonyme pour améliorer l'app |
+| 🔔 **Notifications** | Pastilles rouges en temps réel sur Chat, Programme, Galerie, Jeux, Dépenses, Sondages, Badges |
+| 📊 **Sondages** | Votes en temps réel avec barres de résultats animées et compteur pulse |
+| 🐛 **Feedback** | « Signaler un bug ou proposer une idée » — feedback anonyme pour améliorer l'app, admin avec statuts persistants |
 
 ---
 

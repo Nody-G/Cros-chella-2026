@@ -169,6 +169,23 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
+  // Swipe touch handling for viewer
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    // Only trigger swipe if horizontal movement > 60px and > vertical movement
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX < 0) handleNextPhoto(); // swipe left = next
+      else handlePrevPhoto(); // swipe right = prev
+    }
+  };
+
   return (
     <main className="pb-20 min-h-screen">
       <div className="max-w-lg mx-auto px-4 py-8">
@@ -310,7 +327,7 @@ export default function GaleriePage() {
             <span className="text-white/60 text-sm">{viewerIndex! + 1} / {photos.length}</span>
             <div className="w-6" />
           </div>
-          <div className="flex-1 relative flex items-center justify-center min-h-0 px-2">
+          <div className="flex-1 relative flex items-center justify-center min-h-0 px-2" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
