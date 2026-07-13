@@ -175,6 +175,7 @@ export default function GaleriePage() {
   const touchDeltaX = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [swipeExit, setSwipeExit] = useState<"left" | "right" | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Ref to always have the latest commentsPhotoId for realtime callbacks
@@ -205,17 +206,27 @@ export default function GaleriePage() {
     if (!isDragging) return;
     const deltaX = touchDeltaX.current;
     setIsDragging(false);
-    setDragOffset(0);
 
     if (Math.abs(deltaX) > 60) {
-      if (deltaX < 0) handleNextPhoto();
-      else handlePrevPhoto();
+      // Animate photo out in the swipe direction, then change index
+      const direction = deltaX < 0 ? "left" : "right";
+      setSwipeExit(direction);
+      setDragOffset(deltaX < 0 ? -window.innerWidth : window.innerWidth);
+      setTimeout(() => {
+        if (direction === "left") handleNextPhoto();
+        else handlePrevPhoto();
+        setSwipeExit(null);
+        setDragOffset(0);
+      }, 250);
+    } else {
+      // Snap back — didn't swipe far enough
+      setDragOffset(0);
     }
   };
 
-  // Compute adjacent photo for preview during swipe
-  const adjacentPhoto = isDragging && viewerIndex !== null
-    ? dragOffset < 0
+  // Compute adjacent photo for preview during swipe or exit animation
+  const adjacentPhoto = (isDragging || swipeExit) && viewerIndex !== null
+    ? (isDragging ? dragOffset < 0 : swipeExit === "left")
       ? (viewerIndex < photos.length - 1 ? photos[viewerIndex + 1] : null)
       : (viewerIndex > 0 ? photos[viewerIndex - 1] : null)
     : null;
@@ -375,7 +386,8 @@ export default function GaleriePage() {
                 alt=""
                 className="absolute inset-0 w-full h-full object-contain"
                 style={{
-                  transform: `translateX(${dragOffset < 0 ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
+                  transform: `translateX(${(isDragging ? dragOffset < 0 : swipeExit === "left") ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
+                  transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                 }}
                 draggable={false}
               />
@@ -390,8 +402,8 @@ export default function GaleriePage() {
               alt={currentPhoto.caption || "Photo"}
               className="max-w-full max-h-full object-contain select-none relative z-[1]"
               style={{
-                transform: `translateX(${isDragging ? dragOffset : 0}px)`,
-                transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                transform: `translateX(${isDragging || swipeExit ? dragOffset : 0}px)`,
+                transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
               }}
               draggable={false}
             />
