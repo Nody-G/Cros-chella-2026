@@ -204,7 +204,7 @@ export interface CustomBadge {
 
 export type BillardGameType = "8ball" | "9ball";
 export type BillardTournamentStatus = "setup" | "active" | "done";
-export type BillardMatchStatus = "pending" | "done" | "bye";
+export type BillardMatchStatus = "pending" | "done" | "bye" | "waiting";
 
 // ============================================
 // TRICOUNT / EXPENSES

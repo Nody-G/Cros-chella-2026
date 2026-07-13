@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Loader2, Plus, Swords } from "lucide-react";
@@ -23,15 +23,30 @@ export default function BillardPage() {
   const [newName, setNewName] = useState("Tournoi de Billard 🎱");
   const [newGameType, setNewGameType] = useState<"8ball" | "9ball">("8ball");
   const [refreshKey, setRefreshKey] = useState(0);
+  const mountedRef = useRef(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     const data = await getBillardTournaments();
-    setTournaments(data);
-    setLoading(false);
-  };
+    if (mountedRef.current) {
+      setTournaments(data);
+      setLoading(false);
+    }
+  }, []);
+
+  // Debounced refresh: batch multiple realtime events into one fetch
+  const debouncedRefresh = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (mountedRef.current) {
+        fetchTournaments();
+        setRefreshKey((k) => k + 1);
+      }
+    }, 300);
+  }, [fetchTournaments]);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
     fetchTournaments();
 
     const existingChannel = supabase.getChannels().find(
@@ -45,25 +60,26 @@ export default function BillardPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_tournaments" },
-        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
+        debouncedRefresh
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_teams" },
-        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
+        debouncedRefresh
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_matches" },
-        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
+        debouncedRefresh
       )
       .subscribe();
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchTournaments, debouncedRefresh]);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -75,7 +91,6 @@ export default function BillardPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce tournoi et toutes ses données ?")) return;
     await deleteBillardTournament(id);
   };
 
@@ -108,41 +123,33 @@ export default function BillardPage() {
         )}
 
         {isAdmin && showCreate && (
-          <div className="mb-4 bg-black/40 border border-purple-500/30 rounded-xl p-4 space-y-3">
+          <div className="mb-4 p-4 rounded-xl border border-white/10 bg-white/5">
             <input
-              type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nom du tournoi"
-              className="w-full px-3 py-2 bg-black/40 border border-purple-500/30 rounded-lg text-white placeholder:text-gray-500"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm mb-3"
             />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setNewGameType("8ball")}
-                className={"flex-1 py-2 rounded-lg text-sm font-medium transition-all " +
-                  (newGameType === "8ball"
-                    ? "bg-purple-600 text-white"
-                    : "bg-black/40 text-gray-400 border border-purple-500/20")
-                }
-              >
-                🎱 8-Ball
-              </button>
-              <button
-                onClick={() => setNewGameType("9ball")}
-                className={"flex-1 py-2 rounded-lg text-sm font-medium transition-all " +
-                  (newGameType === "9ball"
-                    ? "bg-purple-600 text-white"
-                    : "bg-black/40 text-gray-400 border border-purple-500/20")
-                }
-              >
-                🎱 9-Ball
-              </button>
+            <div className="flex gap-2 mb-3">
+              {(["8ball", "9ball"] as const).map((gt) => (
+                <button
+                  key={gt}
+                  onClick={() => setNewGameType(gt)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    newGameType === gt
+                      ? "bg-purple-600 text-white"
+                      : "bg-white/10 text-white/60 hover:bg-white/20"
+                  }`}
+                >
+                  {gt === "8ball" ? "8️⃣ 8-Ball" : "9️⃣ 9-Ball"}
+                </button>
+              ))}
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleCreate} className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button onClick={handleCreate} className="flex-1 bg-purple-600 hover:bg-purple-700">
                 Créer
               </Button>
-              <Button onClick={() => setShowCreate(false)} variant="outline" className="flex-1 border-purple-500/30">
+              <Button onClick={() => setShowCreate(false)} variant="ghost" className="flex-1 text-white/60">
                 Annuler
               </Button>
             </div>
@@ -150,10 +157,10 @@ export default function BillardPage() {
         )}
 
         {tournaments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Swords className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>Aucun tournoi pour l&apos;instant</p>
-            {isAdmin && <p className="text-xs mt-1">Crée le premier tournoi !</p>}
+          <div className="text-center py-16">
+            <Swords className="w-12 h-12 mx-auto text-white/20 mb-3" />
+            <p className="text-white/40">Aucun tournoi pour l&apos;instant</p>
+            <p className="text-white/25 text-sm mt-1">L&apos;admin peut en créer un !</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -170,6 +177,7 @@ export default function BillardPage() {
           </div>
         )}
       </div>
+
       <MobileNav />
     </div>
   );

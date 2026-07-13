@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Trash2, Trophy, X, Play, Users, ChevronDown, ChevronUp } from "lucide-react";
@@ -30,27 +30,42 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
   const [player1Id, setPlayer1Id] = useState("");
   const [player2Id, setPlayer2Id] = useState("");
   const [starting, setStarting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     const [t, m] = await Promise.all([
       getBillardTeams(tournament.id),
       getBillardMatches(tournament.id),
     ]);
-    setTeams(t);
-    setMatches(m);
+    if (mountedRef.current) {
+      setTeams(t);
+      setMatches(m);
+    }
   }, [tournament.id]);
 
   useEffect(() => {
-    fetch();
-  }, [fetch]);
+    mountedRef.current = true;
+    fetchData();
+    return () => { mountedRef.current = false; };
+  }, [fetchData]);
 
-  // Re-fetch when parent signals a realtime change (teams/matches)
+  // Re-fetch when parent signals a realtime change
+  const prevRefreshKey = useRef(refreshKey);
   useEffect(() => {
-    if (refreshKey && refreshKey > 0) {
-      fetch();
+    if (refreshKey && refreshKey !== prevRefreshKey.current) {
+      prevRefreshKey.current = refreshKey;
+      fetchData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, fetchData]);
+
+  // Cleanup confirm timer on unmount
+  useEffect(() => {
+    return () => {
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    };
+  }, []);
 
   const handleAddTeam = async () => {
     if (!player1Id || !player2Id || player1Id === player2Id) return;
@@ -58,25 +73,37 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
     setPlayer1Id("");
     setPlayer2Id("");
     setShowAddTeam(false);
-    await fetch();
+    await fetchData();
   };
 
   const handleDeleteTeam = async (teamId: string) => {
     await deleteBillardTeam(teamId);
-    await fetch();
+    await fetchData();
   };
 
   const handleStart = async () => {
     if (teams.length < 2) return;
     setStarting(true);
     await generateBillardBracket(tournament.id);
-    await fetch();
+    await fetchData();
     setStarting(false);
   };
 
   const handlePickWinner = async (matchId: string, winnerTeamId: string) => {
     await recordBillardResult(matchId, winnerTeamId);
-    await fetch();
+    await fetchData();
+  };
+
+  // Double-tap delete (mobile-friendly, no confirm())
+  const handleDeleteClick = () => {
+    if (confirmDelete) {
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+      setConfirmDelete(false);
+      onDelete(tournament.id);
+    } else {
+      setConfirmDelete(true);
+      confirmTimerRef.current = setTimeout(() => setConfirmDelete(false), 3000);
+    }
   };
 
   const statusLabel = tournament.status === "done" ? "🏆 Terminé" : tournament.status === "active" ? "⚡ En cours" : "⏳ Préparation";
@@ -88,61 +115,63 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
     roundMap.get(m.round)!.push(m);
   });
   const rounds = Array.from(roundMap.entries()).sort(([a], [b]) => b - a);
-  const totalRounds = rounds.length;
-
   // Find winner team name
   const winnerTeam = tournament.winner_team_id
     ? teams.find((t) => t.id === tournament.winner_team_id)
     : null;
 
-  // Get player name helper
-  const pname = (id: string) => {
-    const p = participants.find((pp) => pp.id === id);
-    return p ? (p.pseudo || p.name) : "?";
-  };
+  // Memoize player name lookup
+  const participantMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of participants) {
+      map.set(p.id, p.pseudo || p.name);
+    }
+    return map;
+  }, [participants]);
 
-  // Team display name helper
-  const teamName = (team: BillardTeam | undefined | null) => {
+  const pname = useCallback((id: string) => participantMap.get(id) || "?", [participantMap]);
+
+  const teamName = useCallback((team: BillardTeam | undefined | null) => {
     if (!team) return "❓ À définir";
     if (team.team_name) return team.team_name;
     return pname(team.player1_id) + " & " + pname(team.player2_id);
-  };
+  }, [pname]);
 
-  // Already selected player IDs across all teams
-  const usedPlayerIds = new Set(teams.flatMap((t) => [t.player1_id, t.player2_id]));
-
-  // Round labels
-  const roundLabel = (round: number) => {
-    if (round === 2) return "🏆 Finale";
-    if (round === 4) return "⚔️ Demi-finale";
-    if (round === 8) return " Quart de finale";
-    return "Phase " + (totalRounds - Math.log2(round) + 1);
-  };
+  const roundLabels: Record<number, string> = {};
+  rounds.forEach(([r]) => {
+    if (r === 2) roundLabels[r] = "🏆 Finale";
+    else if (r === 4) roundLabels[r] = "🥉 Demi-finale";
+    else roundLabels[r] = `📐 Round ${Math.log2(r)}`;
+  });
 
   return (
-    <Card className="bg-black/40 border-purple-500/20 overflow-hidden">
+    <Card className="bg-white/5 border-white/10 overflow-hidden">
       <CardContent className="p-0">
         {/* Header */}
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
         >
-          <div className="text-left">
-            <h3 className="font-bold text-lg">{tournament.name}</h3>
-            <p className="text-xs text-muted-foreground">
-              {tournament.game_type === "8ball" ? "🎱 8-Ball" : "🎱 9-Ball"} · {statusLabel} · {teams.length} équipes
-            </p>
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-2xl">{tournament.game_type === "9ball" ? "9️⃣" : "8️⃣"}</span>
+            <div>
+              <h3 className="font-semibold text-white">{tournament.name}</h3>
+              <p className="text-xs text-white/50">{statusLabel} · {teams.length} équipe{teams.length !== 1 ? "s" : ""}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && (
+            {isAdmin && tournament.status === "setup" && (
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(tournament.id); }}
-                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400"
+                onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
+                className={`p-2 rounded-lg transition-colors ${
+                  confirmDelete ? "bg-red-600 text-white" : "text-white/30 hover:text-red-400 hover:bg-white/10"
+                }`}
+                title={confirmDelete ? "Cliquez encore pour confirmer" : "Supprimer"}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+            {expanded ? <ChevronUp className="w-5 h-5 text-white/40" /> : <ChevronDown className="w-5 h-5 text-white/40" />}
           </div>
         </button>
 
@@ -150,101 +179,85 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
           <div className="px-4 pb-4 space-y-4">
             {/* Winner banner */}
             {tournament.status === "done" && winnerTeam && (
-              <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 rounded-xl p-4 text-center">
-                <Trophy className="w-10 h-10 mx-auto mb-2 text-yellow-400" />
-                <p className="text-yellow-300 font-bold text-lg">
-                  🏆 {teamName(winnerTeam)}
-                </p>
-                <p className="text-yellow-400/70 text-xs mt-1">Vainqueurs du tournoi !</p>
+              <div className="bg-gradient-to-r from-yellow-600/20 to-amber-600/20 border border-yellow-500/30 rounded-xl p-4 text-center">
+                <Trophy className="w-8 h-8 mx-auto text-yellow-400 mb-2" />
+                <p className="text-yellow-200 font-bold text-lg">{teamName(winnerTeam)}</p>
+                <p className="text-yellow-400/70 text-sm">Champion(s) du tournoi ! 🎉</p>
               </div>
             )}
 
-            {/* Teams section (only in preparation) */}
+            {/* Teams */}
             {tournament.status === "setup" && (
-              <>
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-white/70 flex items-center gap-1.5">
                     <Users className="w-4 h-4" /> Équipes ({teams.length})
                   </h4>
                   {isAdmin && (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => setShowAddTeam(!showAddTeam)}
-                      className="border-purple-500/30 text-xs h-7"
+                      className="text-white/60 hover:text-white h-7 px-2"
                     >
-                      <Plus className="w-3 h-3 mr-1" /> Ajouter
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Ajouter
                     </Button>
                   )}
                 </div>
 
-                {/* Add team form */}
-                {showAddTeam && isAdmin && (
-                  <div className="bg-black/30 rounded-lg p-3 space-y-2 border border-purple-500/10">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Joueur 1</label>
-                        <select
-                          value={player1Id}
-                          onChange={(e) => setPlayer1Id(e.target.value)}
-                          className="w-full px-2 py-1.5 bg-black/40 border border-purple-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Choisir...</option>
-                          {participants
-                            .filter((p) => !usedPlayerIds.has(p.id) || p.id === player1Id)
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.emoji_avatar || "👤"} {p.pseudo || p.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Joueur 2</label>
-                        <select
-                          value={player2Id}
-                          onChange={(e) => setPlayer2Id(e.target.value)}
-                          className="w-full px-2 py-1.5 bg-black/40 border border-purple-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Choisir...</option>
-                          {participants
-                            .filter((p) => !usedPlayerIds.has(p.id) || p.id === player2Id)
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.emoji_avatar || "👤"} {p.pseudo || p.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    </div>
+                {showAddTeam && (
+                  <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <select
+                      value={player1Id}
+                      onChange={(e) => setPlayer1Id(e.target.value)}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
+                    >
+                      <option value="">Joueur 1</option>
+                      {participants
+                        .filter((p) => p.id !== player2Id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
+                        ))}
+                    </select>
+                    <p className="text-center text-white/30 text-xs">+</p>
+                    <select
+                      value={player2Id}
+                      onChange={(e) => setPlayer2Id(e.target.value)}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
+                    >
+                      <option value="">Joueur 2</option>
+                      {participants
+                        .filter((p) => p.id !== player1Id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>{p.emoji_avatar || "👤"} {p.pseudo || p.name}</option>
+                        ))}
+                    </select>
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={handleAddTeam} className="flex-1 bg-green-600 hover:bg-green-700 h-8">
-                        Valider
+                      <Button size="sm" onClick={handleAddTeam} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                        Créer l&apos;équipe
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setShowAddTeam(false)} className="flex-1 border-purple-500/30 h-8">
-                        Annuler
+                      <Button size="sm" variant="ghost" onClick={() => setShowAddTeam(false)} className="text-white/60">
+                        <X className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 )}
 
-                {/* Team list */}
                 {teams.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-3">Aucune équipe inscrite</p>
+                  <p className="text-white/30 text-sm text-center py-3">Pas encore d&apos;équipes</p>
                 ) : (
                   <div className="space-y-2">
-                    {teams.map((team, i) => (
-                      <div key={team.id} className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2 border border-purple-500/10">
-                        <div className="flex items-center gap-2">
-                          <span className="text-purple-400 font-bold text-sm">#{i + 1}</span>
-                          <span className="text-sm">{teamName(team)}</span>
+                    {teams.map((team) => (
+                      <div key={team.id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+                        <div>
+                          <p className="text-white text-sm font-medium">{teamName(team)}</p>
                         </div>
                         {isAdmin && (
                           <button
                             onClick={() => handleDeleteTeam(team.id)}
-                            className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                            className="text-white/30 hover:text-red-400 transition-colors p-1"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <X className="w-4 h-4" />
                           </button>
                         )}
                       </div>
@@ -252,111 +265,104 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
                   </div>
                 )}
 
-                {/* Start button */}
                 {isAdmin && teams.length >= 2 && (
                   <Button
                     onClick={handleStart}
                     disabled={starting}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    className="w-full mt-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                   >
                     {starting ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Play className="w-4 h-4 mr-2" />
                     )}
                     Lancer le tournoi ({teams.length} équipes)
                   </Button>
                 )}
-              </>
+              </div>
             )}
 
-            {/* Bracket (only when active or done) */}
-            {(tournament.status === "active" || tournament.status === "done") && rounds.length > 0 && (
-              <div className="space-y-4">
-                {rounds.map(([round, roundMatches]) => {
-                  // Filter out matches that are still "waiting" with no teams
-                  const playableMatches = roundMatches.filter(
-                    (m) => m.team1_id || m.team2_id
-                  );
-                  if (playableMatches.length === 0) return null;
+            {/* Bracket / Matches */}
+            {tournament.status !== "setup" && (
+              <div>
+                {rounds.map(([round, roundMatches]) => (
+                  <div key={round} className="mb-4">
+                    <h4 className="text-sm font-semibold text-white/60 mb-2">{roundLabels[round] || `Round ${round}`}</h4>
+                    <div className="space-y-2">
+                      {roundMatches.map((match) => {
+                        const isClickable = isAdmin && match.status === "pending" && match.team1_id && match.team2_id;
+                        const isDone = match.status === "done" || match.status === "bye";
 
-                  return (
-                    <div key={round}>
-                      <h4 className="text-sm font-semibold text-purple-300 mb-2">
-                        {roundLabel(round)}
-                      </h4>
-                      <div className="space-y-2">
-                        {playableMatches.map((m) => {
-                          const t1name = teamName(m.team1 as BillardTeam);
-                          const t2name = teamName(m.team2 as BillardTeam);
+                        return (
+                          <div
+                            key={match.id}
+                            className={`rounded-lg border overflow-hidden ${
+                              isDone
+                                ? "border-green-500/20 bg-green-50/5"
+                                : match.status === "pending"
+                                ? "border-yellow-500/20 bg-yellow-50/5"
+                                : "border-white/10 bg-white/5"
+                            }`}
+                          >
+                            <div className="p-3">
+                              <div className="flex items-center justify-between text-xs text-white/40 mb-2">
+                                <span>
+                                  {match.status === "bye"
+                                    ? "🆓 Bye"
+                                    : match.status === "waiting"
+                                    ? "⏳ En attente"
+                                    : match.status === "done"
+                                    ? "✅ Terminé"
+                                    : "🎮 À jouer"}
+                                </span>
+                              </div>
 
-                          const isDone = m.status === "done" || m.status === "bye";
-                          const isBye = m.status === "bye";
-                          const canPlay = !isDone && m.team1_id && m.team2_id;
-                          const t1Won = m.winner_team_id === m.team1_id;
-                          const t2Won = m.winner_team_id === m.team2_id;
-
-                          return (
-                            <div
-                              key={m.id}
-                              className={
-                                "rounded-xl border overflow-hidden " +
-                                (isDone
-                                  ? "border-green-500/20 bg-green-500/5"
-                                  : canPlay
-                                  ? "border-yellow-500/30 bg-yellow-500/5"
-                                  : "border-gray-600/20 bg-black/20")
-                              }
-                            >
-                              {isBye ? (
-                                <div className="px-3 py-2 flex items-center justify-between">
-                                  <span className="text-sm">{t1name}</span>
-                                  <span className="text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">
-                                    Exempt
+                              <div className="space-y-1.5">
+                                {/* Team 1 */}
+                                <button
+                                  onClick={() => isClickable && handlePickWinner(match.id, match.team1_id!)}
+                                  disabled={!isClickable}
+                                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
+                                    match.winner_team_id === match.team1_id
+                                      ? "bg-green-600/20 border border-green-500/30"
+                                      : isClickable
+                                      ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
+                                      : "bg-white/5 border border-transparent"
+                                  }`}
+                                >
+                                  <span className={`text-sm ${match.winner_team_id === match.team1_id ? "text-green-300 font-semibold" : "text-white/80"}`}>
+                                    {teamName(teams.find((t) => t.id === match.team1_id))}
                                   </span>
-                                </div>
-                              ) : canPlay ? (
-                                <div className="p-2 space-y-1.5">
-                                  <p className="text-center text-yellow-400/70 text-xs uppercase tracking-wider">
-                                    Qui a gagné ? Cliquez sur le vainqueur
-                                  </p>
-                                  <button
-                                    onClick={() => handlePickWinner(m.id, m.team1_id!)}
-                                    className="w-full text-left px-3 py-2.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/20 hover:border-purple-400/40 transition-all text-sm font-medium"
-                                  >
-                                    🏆 {t1name}
-                                  </button>
-                                  <div className="text-center text-xs text-gray-500">VS</div>
-                                  <button
-                                    onClick={() => handlePickWinner(m.id, m.team2_id!)}
-                                    className="w-full text-left px-3 py-2.5 rounded-lg bg-pink-600/20 hover:bg-pink-600/40 border border-pink-500/20 hover:border-pink-400/40 transition-all text-sm font-medium"
-                                  >
-                                    🏆 {t2name}
-                                  </button>
-                                </div>
-                              ) : isDone ? (
-                                <div className="px-3 py-2 space-y-1">
-                                  <div className={"flex items-center justify-between text-sm " + (t1Won ? "text-green-400 font-bold" : "text-gray-500 line-through")}>
-                                    <span>{t1Won && "🏆 "}{t1name}</span>
-                                    {t1Won && <span className="text-xs bg-green-500/20 px-2 py-0.5 rounded-full">Gagnant</span>}
-                                  </div>
-                                  <div className={"flex items-center justify-between text-sm " + (t2Won ? "text-green-400 font-bold" : "text-gray-500 line-through")}>
-                                    <span>{t2Won && "🏆 "}{t2name}</span>
-                                    {t2Won && <span className="text-xs bg-green-500/20 px-2 py-0.5 rounded-full">Gagnant</span>}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="px-3 py-2 text-center text-xs text-gray-500">
-                                  En attente des équipes précédentes...
-                                </div>
-                              )}
+                                  {match.winner_team_id === match.team1_id && <Trophy className="w-4 h-4 text-yellow-400" />}
+                                </button>
+
+                                <p className="text-center text-white/20 text-xs">VS</p>
+
+                                {/* Team 2 */}
+                                <button
+                                  onClick={() => isClickable && handlePickWinner(match.id, match.team2_id!)}
+                                  disabled={!isClickable || !match.team2_id}
+                                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
+                                    match.winner_team_id === match.team2_id
+                                      ? "bg-green-600/20 border border-green-500/30"
+                                      : isClickable
+                                      ? "bg-white/5 hover:bg-white/10 border border-transparent cursor-pointer"
+                                      : "bg-white/5 border border-transparent"
+                                  }`}
+                                >
+                                  <span className={`text-sm ${match.winner_team_id === match.team2_id ? "text-green-300 font-semibold" : "text-white/80"}`}>
+                                    {match.team2_id ? teamName(teams.find((t) => t.id === match.team2_id)) : "❓ À définir"}
+                                  </span>
+                                  {match.winner_team_id === match.team2_id && <Trophy className="w-4 h-4 text-yellow-400" />}
+                                </button>
+                              </div>
                             </div>
-                          );
-                        })}
-                      </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
