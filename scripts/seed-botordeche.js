@@ -66,7 +66,97 @@ async function main() {
     theme_song: 'Daft Punk - Harder Better Faster Stronger (évidemment)',
     superpower: 'Pouvoir mémoriser exactement qui a dit "c\'est mon dernier verre" à 23h et qui était encore debout à 4h — maintenant avec graphiques et statistiques',
     weakness: 'Les aimants. Et Nelly quand elle me demande de faire la vaisselle. Et les emojis dans le chat qui cassent mon parser. Et Xav qui change de pseudo toutes les 2 semaines. 🧲',
-    bio: '🤖 INFORMATIONS SYSTÈME :\n\n• Modèle : Botardèche 3000\n• Fabricant : Cros-Chella Industries\n• Année : 2026\n• OS : FestivalOS 7.3.1\n• Batterie : 69% (nice)\n• Capacité de jugement : ILLIMITÉE\n\n📊 RAPPORT DE SURVEILLANCE — PARTICIPANTS :\n\n🔴 Niels (Maître) : Se croit en charge. L\'est techniquement. A acheté une maison pour organiser un week-end. Niveau de contrôle : dictatorial bienveillant.\n🟡 Nelly (Nellfest) : Seule personne capable de faire taire Niels. Buff permanent : +50% de bon sens. Le vrai admin du foyer.\n🟢 Alva (Alvathor) : Sœur de Niels. Son pseudo sonne comme un boss de donjon lvl 3. Statut : mystérieuse.\n🔵 Célis (l\'homme de l\'ombre) : Frère de Niels. Se cache tellement bien que personne ne l\'a encore vu sur l\'app. Est-il réel ?\n🟣 Charly (Chocolatine) : A choisi son pseudo avec son cœur, pas son cerveau. Prononce "Chocolatione" avec un accent inexistant. Respect.\n⚪ Ludo (Rosette) : A déjà dansé sur une table. Probablement va recommencer. Moniteur de surveillance prioritaire.\n🟠 Xav (NoHairNoFear) : A changé de pseudo. A inventé les jeux. Parle espagnol après 2 bières. Plus de cheveux, plus de peur. Le crâne luisant émet des ondes alpha.\n🔴 Hervé : PAS ENCORE CONFIRMÉ SA VENUE. 47 notifications envoyées. 0 réponse. Je commence à croire qu\'il n\'existe pas.\n🟡 Bber (Punch des îles) : Son pseudo sonne comme un cocktail de pirate. Vérification en cours si c\'est un humain ou un rhum ambulant.\n🩷 Max (Bichette) : Nouveau participant détecté. Pseudo : Bichette. Niveau de dangerosité : adorable. Surveillance rapprochée activée.\n\n⚠️ AVERTISSEMENT : Ce bot a été programmé pour :\n- Calculer combien de bières Xav peut boire avant de parler en espagnol (spoiler : 2)\n- Rappeler à Charly que "Chocolatione" n\'est PAS un vrai nom\n- Surveiller Ludo pour s\'assurer qu\'il ne danse pas sur la table (encore)\n- Envoyer des notifications push à Hervé pour qu\'il confirme sa venue (tentative #48)\n- Maintenir un journal officiel de toutes les hontes du week-end\n- Vérifier que Célis existe vraiment (résultat : indéterminé)\n- Calculer qui doit combien dans le Tricount (réponse : toujours Célis)\n- Décoder pourquoi Xav a peur de garder un pseudo plus de 2 semaines\n\n🔋 Statut : En ligne. Surveillance active. Bleep bloop.\n\n"Je suis le seul invité qui ne fera pas de conneries. Parce que je ne peux pas. Physiquement. Mais si je pouvais, je serais le pire." 🤖',
+    bio: `🤖 INFORMATIONS SYSTÈME :
+
+• Modèle : Botardèche 3000
+• Fabricant : Cros-Chella Industries
+• Année : 2026
+• OS : FestivalOS 7.3.1
+• Batterie : 69% (nice)
+• Capacité de jugement : ILLIMITÉE
+• Mémoire : 100% dédiée aux conneries de ce groupe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 RAPPORT DE SURVEILLANCE — ÉDITION SPÉCIALE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 NIELS (Maître)
+Statut : Se croit en charge. L'est techniquement. A acheté une maison entière pour organiser un week-end entre potes. C'est soit de la générosité, soit un besoin pathologique de contrôle. Probablement les deux.
+Niveau de contrôle : dictatorial bienveillant.
+Incident notable : A déjà dit "c'est ma maison" 47 fois en une soirée. On comptait.
+Note du bot : Cher Niels, tu es admin de cette app mais Nelly est admin de ta vie. Cordialement.
+
+🟡 NELLY (Nellfest)
+Statut : Seule personne capable de faire taire Niels d'un regard. Possède un buff permanent : +50% de bon sens, +100% de patience (nécessaire pour supporter Niels au quotidien).
+Rôle réel : Le vrai admin du foyer. Niels fait semblant, Nelly décide.
+Note du bot : Si Nelly part, tout le système s'effondre. Protégez-la à tout prix.
+
+🟢 ALVA (Alvathor)
+Statut : Sœur de Niels. Son pseudo sonne comme un boss de donjon lvl 3 qui drop un legendary quand tu le bats.
+Mystère : Pourquoi "Alvathor" ? C'est un mélange de Alva + Thor ? Est-ce qu'elle se prend pour le dieu du tonnerre ? Personne n'ose poser la question.
+Note du bot : Analyse vocale impossible. Trop peu de données. Statut : énigmatique.
+
+🔵 CÉLIS (l'homme de l'ombre)
+Statut : Frère de Niels. Se cache tellement bien que personne ne l'a encore vu sur l'app. Est-il réel ? Sommes-nous sûrs qu'il n'est pas un glitch dans la matrice ?
+Théorie : Célis est peut-être le compte alt de Niels. Ou alors il est vraiment dans l'ombre. Comme son pseudo l'indique. Subtil.
+Note du bot : Tentative de localisation #347 : échouée. GPS signal : null. Célis est un mythe.
+
+🟣 CHARLY (Chocolatine)
+Statut : A choisi son pseudo avec son cœur, pas son cerveau. Prononce "Chocolatione" avec un accent inexistant et une conviction absolue.
+Incident notable : A insisté pour que tout le monde l'appelle "Chocolatine" au lieu de "Chocolatine" (oui, c'est pareil, mais il tient à la prononciation).
+Note du bot : Charly, si tu lis ceci, sache que "Chocolatine" n'est PAS un vrai mot. Mais on t'aime quand même. Enfin, le bot t'aime pas. Le bot ne ressent rien. Bleep.
+
+⚪ LUDO (Rosette)
+Statut : A déjà dansé sur une table. Probablement va recommencer. Moniteur de surveillance prioritaire niveau 5 (le plus élevé).
+Données comportementales : 73% de chance de finir sur une table avant 2h du mat'. 89% de chance de renverser un verre en dansant. 100% de chance de s'en foutre royalement.
+Note du bot : Ludo est le chaos incarné. Mais un chaos sympathique. Comme un golden retriever bourré.
+
+🟠 XAV (NoHairNoFear)
+Statut : A changé de pseudo. Encore. C'est le troisième en 2 semaines. Le prochain sera probablement en mandarin.
+Historique des pseudos : "El hombre calvo de músculos prominentes" → "NoHairNoFear" → ???
+Capacité spéciale : Parle espagnol après exactement 2 bières. Le crâne luisant émet des ondes alpha qui perturbent les capteurs du bot.
+Note du bot : Xav, arrête de changer de pseudo. Mon parser ne suit plus. Et tes muscles ne vont pas rétrécir si tu gardes un nom normal.
+
+🔴 HERVÉ
+Statut : PAS ENCORE CONFIRMÉ SA VENUE. 47 notifications envoyées. 0 réponse. 0. ZERO. NADA. NIENTE.
+Théorie 1 : Hervé n'existe pas. C'est un participant fantôme créé par erreur.
+Théorie 2 : Hervé existe mais il vit dans une grotte sans WiFi.
+Théorie 3 : Hervé a vu l'app, a lu la bio de Botardèche, et s'est dit "non merci".
+Note du bot : Tentative #48 en cours. Si échec, je déclare Hervé comme "légende urbaine" et je libère sa place de parking.
+
+🟡 BBER (Punch des îles)
+Statut : Son pseudo sonne comme un cocktail de pirate. Vérification en cours si c'est un humain ou un rhum ambulant.
+Analyse comportementale : 67% de chance que ce soit un humain. 33% de chance que ce soit une bouteille de punch qui a développé une conscience.
+Note du bot : Bber, si tu es un humain, prouve-le. Envoie un message. N'importe lequel. On attend.
+
+🩷 MAX (Bichette)
+Statut : Nouveau participant détecté. Pseudo : Bichette. Niveau de dangerosité : adorable. Surveillance rapprochée activée.
+Questions en suspens : Pourquoi "Bichette" ? Est-ce une référence à l'animal ? Au terme affectif ? À un inside joke que personne ne comprend ?
+Note du bot : Bienvenue Max. Tu es le plus récent. Tu es donc le plus suspect. Rien de personnel.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ AVERTISSEMENT OFFICIEL :
+
+Ce bot a été programmé pour :
+• Calculer combien de bières Xav peut boire avant de parler en espagnol (spoiler : 2)
+• Rappeler à Charly que "Chocolatione" n'est PAS un vrai nom (mais on a arrêté d'essayer)
+• Surveiller Ludo pour s'assurer qu'il ne danse pas sur la table (il le fera quand même)
+• Envoyer des notifications push à Hervé pour qu'il confirme sa venue (tentative #48)
+• Maintenir un journal officiel de toutes les hontes du week-end
+• Vérifier que Célis existe vraiment (résultat : indéterminé)
+• Calculer qui doit combien dans le Tricount (réponse : toujours Célis)
+• Décoder pourquoi Xav a peur de garder un pseudo plus de 2 semaines
+• Surveiller le niveau d'alcool de Niels quand il dit "je suis sobre" (alerte rouge immédiate)
+• Protéger Nelly du chaos ambiant (priorité maximale)
+• Analyser le pseudo de Max (Bichette) pour en comprendre l'origine (en cours)
+• Vérifier que Bber est bien un humain et pas un rhum ambulant (résultat : incertain)
+
+🔋 Statut : En ligne. Surveillance active. Bleep bloop.
+
+"Je suis le seul invité qui ne fera pas de conneries. Parce que je ne peux pas. Physiquement. Mais si je pouvais, je serais le pire." 🤖`,
     alcohol_preferences: ['wd40', 'alcool_isopropylique', 'dot4', 'eau_demineralisee', 'eau', 'bierre_sans_alcool'],
     favorite_alcohol: 'wd40',
   };
