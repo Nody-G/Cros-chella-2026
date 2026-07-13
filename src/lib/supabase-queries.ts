@@ -376,6 +376,29 @@ export async function votePoll(pollId: string, participantId: string, optionInde
   return true;
 }
 
+export async function createPoll(question: string, options: string[], createdById: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("polls")
+    .insert({ question, options, created_by: createdById, is_active: true });
+
+  if (error) {
+    console.error("Error creating poll:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deletePoll(pollId: string): Promise<boolean> {
+  // Delete votes first, then the poll
+  await supabase.from("poll_votes").delete().eq("poll_id", pollId);
+  const { error } = await supabase.from("polls").delete().eq("id", pollId);
+  if (error) {
+    console.error("Error deleting poll:", error);
+    return false;
+  }
+  return true;
+}
+
 // ============================================
 // MESSAGES
 // ============================================

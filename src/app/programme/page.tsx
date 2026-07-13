@@ -231,7 +231,21 @@ export default function ProgrammePage() {
           <CalendarDays className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold">Programme 📅</h1>
         </div>
-        <p className="text-muted-foreground text-sm mb-6">Vendredi soir → Dimanche : le planning du carnage</p>
+        <p className="text-muted-foreground text-sm mb-4">Vendredi soir → Dimanche : le planning du carnage</p>
+
+        {/* PROPOSER BUTTON — TOP */}
+        <div className="mb-6">
+          <Button
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-500/20"
+            onClick={() => {
+              setShowProposalForm(!showProposalForm);
+              if (showProposalForm) resetProposalForm();
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {showProposalForm ? "Fermer" : "💡 Proposer une activité"}
+          </Button>
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
@@ -305,9 +319,6 @@ export default function ProgrammePage() {
               <h2 className="text-lg font-bold">💡 Propositions</h2>
               <p className="text-xs text-muted-foreground">Propose des activités pour le programme</p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => { setShowProposalForm(!showProposalForm); if (showProposalForm) resetProposalForm(); }}>
-              <Plus className="w-3.5 h-3.5 mr-1" />Proposer
-            </Button>
           </div>
 
           {showProposalForm && (
