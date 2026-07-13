@@ -286,18 +286,8 @@ export default function ChatPage() {
                       </span>
                     </div>
                     <div
-                      className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"} ${isMe && !isDeleted && !isEditing ? "cursor-pointer active:scale-[0.98] transition-transform" : ""}`}
+                      className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
                       data-menu-trigger
-                      onClick={(e) => {
-                        if (!isMe || isDeleted || isEditing) return;
-                        e.stopPropagation();
-                        // On mobile: only toggle if long press wasn't triggered
-                        if (longPressTriggered.current) {
-                          longPressTriggered.current = false;
-                          return;
-                        }
-                        setActiveMenu(activeMenu === msg.id ? null : msg.id);
-                      }}
                       onTouchStart={() => {
                         if (!isMe || isDeleted || isEditing) return;
                         longPressTriggered.current = false;

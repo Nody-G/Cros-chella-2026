@@ -19,9 +19,10 @@ interface TournamentCardProps {
   isAdmin: boolean;
   participants: { id: string; name: string; pseudo: string | null; emoji_avatar: string | null }[];
   onDelete: (id: string) => void;
+  refreshKey?: number;
 }
 
-export function TournamentCard({ tournament, isAdmin, participants, onDelete }: TournamentCardProps) {
+export function TournamentCard({ tournament, isAdmin, participants, onDelete, refreshKey }: TournamentCardProps) {
   const [teams, setTeams] = useState<BillardTeam[]>([]);
   const [matches, setMatches] = useState<BillardMatch[]>([]);
   const [expanded, setExpanded] = useState(true);
@@ -43,11 +44,13 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete }: 
     fetch();
   }, [fetch]);
 
-  // Re-fetch every 3s for realtime
+  // Re-fetch when parent signals a realtime change (teams/matches)
   useEffect(() => {
-    const interval = setInterval(fetch, 3000);
-    return () => clearInterval(interval);
-  }, [fetch]);
+    if (refreshKey && refreshKey > 0) {
+      fetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   const handleAddTeam = async () => {
     if (!player1Id || !player2Id || player1Id === player2Id) return;

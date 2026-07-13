@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Trash2, Pencil, Check, X } from "lucide-react";
 import { getProposalComments, addProposalComment, deleteProposalComment, updateProposalComment } from "@/lib/supabase-queries";
 import type { ProposalComment, Participant } from "@/lib/types";
@@ -27,9 +27,12 @@ export function ProposalComments({ proposalId, currentParticipant, isAdmin }: Pr
     setLoaded(true);
   };
 
-  if (!loaded) {
-    loadComments();
-  }
+  useEffect(() => {
+    if (!loaded) {
+      loadComments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, proposalId]);
 
   const handleSubmit = async () => {
     if (!currentParticipant || !input.trim()) return;

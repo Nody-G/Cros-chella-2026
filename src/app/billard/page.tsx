@@ -22,6 +22,7 @@ export default function BillardPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("Tournoi de Billard 🎱");
   const [newGameType, setNewGameType] = useState<"8ball" | "9ball">("8ball");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchTournaments = async () => {
     const data = await getBillardTournaments();
@@ -44,17 +45,17 @@ export default function BillardPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_tournaments" },
-        () => { if (mounted) fetchTournaments(); }
+        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_teams" },
-        () => { if (mounted) fetchTournaments(); }
+        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "billard_matches" },
-        () => { if (mounted) fetchTournaments(); }
+        () => { if (mounted) { fetchTournaments(); setRefreshKey((k) => k + 1); } }
       )
       .subscribe();
 
@@ -163,6 +164,7 @@ export default function BillardPage() {
                 isAdmin={isAdmin}
                 participants={participants}
                 onDelete={handleDelete}
+                refreshKey={refreshKey}
               />
             ))}
           </div>
