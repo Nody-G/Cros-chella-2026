@@ -52,7 +52,39 @@ export async function updateParticipant(id: string, updates: Partial<Participant
 }
 
 export async function addParticipant(name: string, pseudo?: string): Promise<Participant | null> {
-  const insertData: Record<string, unknown> = { name: name.trim(), status: "pending" };
+  const trimmedName = name.trim();
+
+  // Check if a soft-deleted participant with the same name exists — restore instead of insert
+  const { data: existing } = await supabase
+    .from("participants")
+    .select("*")
+    .eq("name", trimmedName)
+    .not("deleted_at", "is", null)
+    .limit(1)
+    .single();
+
+  if (existing) {
+    // Restore the soft-deleted participant
+    const updateData: Record<string, unknown> = { deleted_at: null, status: "pending" };
+    if (pseudo && pseudo.trim()) {
+      updateData.pseudo = pseudo.trim();
+    }
+    const { data, error } = await supabase
+      .from("participants")
+      .update(updateData)
+      .eq("id", existing.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[addParticipant] Restore error:", JSON.stringify(error, null, 2));
+      throw new Error(error.message || "Erreur lors de la restauration");
+    }
+    return data as Participant;
+  }
+
+  // No existing soft-deleted — insert new
+  const insertData: Record<string, unknown> = { name: trimmedName, status: "pending" };
   if (pseudo && pseudo.trim()) {
     insertData.pseudo = pseudo.trim();
   }

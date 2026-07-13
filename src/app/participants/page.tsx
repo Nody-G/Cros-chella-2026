@@ -158,7 +158,7 @@ export default function ParticipantsPage() {
     setDeletingParticipant(participantId);
     const success = await deleteParticipant(participantId);
     if (success) {
-      setParticipants(prev => prev.filter(p => p.id !== participantId));
+      // Don't remove from state here — the realtime UPDATE event (with deleted_at) will handle it
       setDeleteConfirmId(null);
     }
     setDeletingParticipant(null);
@@ -180,7 +180,7 @@ export default function ParticipantsPage() {
     try {
       const newP = await addParticipant(addName, addPseudo);
       if (newP) {
-        setParticipants(prev => [...prev, newP]);
+        // Don't add to state here — the realtime INSERT event will handle it
         setAddName("");
         setAddPseudo("");
         setShowAddForm(false);
