@@ -46,6 +46,9 @@ export function MobileNav() {
   const [hasNewPhotos, setHasNewPhotos] = useState(false);
   const [hasNewGames, setHasNewGames] = useState(false);
   const [hasNewExpenses, setHasNewExpenses] = useState(false);
+  const [hasNewPolls, setHasNewPolls] = useState(false);
+  const [hasNewBadges, setHasNewBadges] = useState(false);
+  const [hasNewProgram, setHasNewProgram] = useState(false);
 
   // Check for new chat messages
   useEffect(() => {
@@ -242,6 +245,98 @@ export function MobileNav() {
     }
   }, [pathname]);
 
+  // Check for new polls
+  useEffect(() => {
+    if (!currentParticipant) return;
+    const checkNewPolls = async () => {
+      const lastVisit = localStorage.getItem("sondagesLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase.from("polls").select("*", { count: "exact", head: true });
+        setHasNewPolls((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase.from("polls").select("*", { count: "exact", head: true }).gt("created_at", lastVisit);
+      setHasNewPolls((count || 0) > 0);
+    };
+    checkNewPolls();
+    const channel = supabase.channel("nav-polls-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "polls" }, (payload) => {
+        const newPoll = payload.new as { created_at: string; created_by: string };
+        if (newPoll.created_by === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("sondagesLastVisit");
+        if (!lastVisit || newPoll.created_at > lastVisit) setHasNewPolls(true);
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentParticipant]);
+
+  useEffect(() => {
+    if (pathname === "/sondages") {
+      localStorage.setItem("sondagesLastVisit", new Date().toISOString());
+      setHasNewPolls(false);
+    }
+  }, [pathname]);
+
+  // Check for new badges
+  useEffect(() => {
+    if (!currentParticipant) return;
+    const checkNewBadges = async () => {
+      const lastVisit = localStorage.getItem("badgesLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase.from("custom_badges").select("*", { count: "exact", head: true });
+        setHasNewBadges((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase.from("custom_badges").select("*", { count: "exact", head: true }).gt("created_at", lastVisit);
+      setHasNewBadges((count || 0) > 0);
+    };
+    checkNewBadges();
+    const channel = supabase.channel("nav-badges-badge")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "custom_badges" }, (payload) => {
+        const newBadge = payload.new as { created_at: string; awarded_by: string };
+        if (newBadge.awarded_by === currentParticipant.id) return;
+        const lastVisit = localStorage.getItem("badgesLastVisit");
+        if (!lastVisit || newBadge.created_at > lastVisit) setHasNewBadges(true);
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentParticipant]);
+
+  useEffect(() => {
+    if (pathname === "/badges") {
+      localStorage.setItem("badgesLastVisit", new Date().toISOString());
+      setHasNewBadges(false);
+    }
+  }, [pathname]);
+
+  // Check for new program items
+  useEffect(() => {
+    if (!currentParticipant) return;
+    const checkNewProgram = async () => {
+      const lastVisit = localStorage.getItem("programLastVisit");
+      if (!lastVisit) {
+        const { count } = await supabase.from("program").select("*", { count: "exact", head: true });
+        setHasNewProgram((count || 0) > 0);
+        return;
+      }
+      const { count } = await supabase.from("program").select("*", { count: "exact", head: true }).gt("updated_at", lastVisit);
+      setHasNewProgram((count || 0) > 0);
+    };
+    checkNewProgram();
+    const channel = supabase.channel("nav-program-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "program" }, () => {
+        const lastVisit = localStorage.getItem("programLastVisit");
+        if (!lastVisit) { setHasNewProgram(true); return; }
+        setHasNewProgram(true);
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentParticipant]);
+
+  useEffect(() => {
+    if (pathname === "/programme") {
+      localStorage.setItem("programLastVisit", new Date().toISOString());
+      setHasNewProgram(false);
+    }
+  }, [pathname]);
+
   const handleChangePassword = async () => {
     if (!currentParticipant || !newPassword.trim()) return;
     setUpdating(true);
@@ -267,6 +362,7 @@ export function MobileNav() {
         {mainNavItems.map((item) => {
           const isActive = pathname === item.href;
           const showBadge = item.href === "/chat" && hasNewChatMessages;
+          const showProgramBadge = item.href === "/programme" && hasNewProgram;
           return (
             <Link
               key={item.href}
@@ -280,7 +376,7 @@ export function MobileNav() {
             >
               <div className="relative">
                 <item.icon className="w-5 h-5" />
-                {showBadge && (
+                {(showBadge || showProgramBadge) && (
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background animate-pulse" />
                 )}
               </div>
@@ -313,7 +409,9 @@ export function MobileNav() {
                 const showBadge =
                   (item.href === "/galerie" && hasNewPhotos) ||
                   (item.href === "/jeux" && hasNewGames) ||
-                  (item.href === "/depenses" && hasNewExpenses);
+                  (item.href === "/depenses" && hasNewExpenses) ||
+                  (item.href === "/sondages" && hasNewPolls) ||
+                  (item.href === "/badges" && hasNewBadges);
                 return (
                   <Link
                     key={item.href}

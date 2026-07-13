@@ -252,6 +252,7 @@ export default function BadgesPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [expandedBadgeId, setExpandedBadgeId] = useState<string | null>(null);
   const { currentParticipant, participants, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -361,7 +362,7 @@ export default function BadgesPage() {
             className="w-full mb-6 bg-gradient-to-r from-primary to-accent text-primary-foreground"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Décerer un badge
+            Décerner un badge
           </Button>
         )}
 
@@ -370,7 +371,7 @@ export default function BadgesPage() {
           <Card className="mb-6 glass border-primary/30">
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">🏅 Décerer un badge</h3>
+                <h3 className="font-bold text-lg">🏅 Décerner un badge</h3>
                 <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
                   <X className="w-4 h-4" />
                 </Button>
@@ -484,7 +485,7 @@ export default function BadgesPage() {
                 ) : (
                   <Award className="w-4 h-4 mr-2" />
                 )}
-                Décerer ce badge !
+                Décerner ce badge !
               </Button>
             </CardContent>
           </Card>
@@ -513,11 +514,13 @@ export default function BadgesPage() {
                   {/* Badges grid */}
                   {participantBadges.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {participantBadges.map((badge) => (
+                      {participantBadges.map((badge) => {
+                        const isExpanded = expandedBadgeId === badge.id;
+                        return (
                         <div
                           key={badge.id}
-                          className="group relative flex items-center gap-1.5 bg-secondary/60 rounded-full pl-2 pr-3 py-1.5 hover:bg-secondary transition-colors"
-                          title={badge.description || badge.title}
+                          className="relative flex items-center gap-1.5 bg-secondary/60 rounded-full pl-2 pr-3 py-1.5 hover:bg-secondary transition-colors cursor-pointer"
+                          onClick={() => setExpandedBadgeId(isExpanded ? null : badge.id)}
                         >
                           <span className="text-lg">{badge.emoji}</span>
                           <span className="text-xs font-medium">{badge.title}</span>
@@ -525,24 +528,25 @@ export default function BadgesPage() {
                           {/* Admin: delete button */}
                           {isAdmin && (
                             <button
-                              onClick={() => handleDelete(badge.id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(badge.id); }}
                               className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="w-3 h-3" />
                             </button>
                           )}
 
-                          {/* Tooltip on hover */}
-                          {badge.description && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-popover border border-border rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {/* Tooltip on click/tap (mobile-friendly) */}
+                          {badge.description && isExpanded && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg text-xs max-w-[220px] whitespace-normal text-center shadow-lg z-20">
                               {badge.description}
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
+                              <div className="text-[10px] text-muted-foreground mt-1">
                                 Par {badge.awarder?.pseudo || badge.awarder?.name || "Admin"}
                               </div>
                             </div>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground italic">

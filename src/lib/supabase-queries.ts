@@ -553,7 +553,7 @@ export async function saveChatImageToGallery(authorId: string, imageUrl: string,
 export async function getPhotoComments(photoId: string): Promise<PhotoComment[]> {
   const { data, error } = await supabase
     .from("photo_comments")
-    .select("*, author:participants!participant_id(*)")
+    .select("*, author:participants!author_id(*)")
     .eq("photo_id", photoId)
     .order("created_at", { ascending: true });
 
@@ -567,7 +567,7 @@ export async function getPhotoComments(photoId: string): Promise<PhotoComment[]>
 export async function addPhotoComment(photoId: string, authorId: string, content: string): Promise<boolean> {
   const { error } = await supabase
     .from("photo_comments")
-    .insert({ photo_id: photoId, participant_id: authorId, content: content.trim() });
+    .insert({ photo_id: photoId, author_id: authorId, content: content.trim() });
 
   if (error) {
     console.error("Error adding photo comment:", error);

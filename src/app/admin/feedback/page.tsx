@@ -42,6 +42,10 @@ export default function AdminFeedbackPage() {
       setFeedback((prev) =>
         prev.map((f) => (f.id === id ? { ...f, status, updated_at: new Date().toISOString() } : f))
       );
+    } else {
+      // Re-fetch to ensure UI is in sync with DB
+      const data = await getFeedback();
+      setFeedback(data);
     }
     setUpdatingId(null);
   };

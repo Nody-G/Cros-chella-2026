@@ -52,6 +52,7 @@ export default function ParticipantsPage() {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [badgesMap, setBadgesMap] = useState<Record<string, CustomBadge[]>>({});
+  const [expandedBadgeId, setExpandedBadgeId] = useState<string | null>(null);
 
   // Fetch badges for all participants
   useEffect(() => {
@@ -435,8 +436,8 @@ export default function ParticipantsPage() {
                                 <span className="text-[10px] text-muted-foreground">+{alcos.length - 6}</span>
                               )}
                               {p.favorite_alcohol && ALCOHOL_MAP[p.favorite_alcohol] && (
-                                <span className="text-amber-300 text-sm ml-0.5">
-                                  ⭐
+                                <span className="inline-flex items-center gap-0.5 text-amber-300 text-xs ml-1 bg-amber-500/10 border border-amber-500/20 rounded-full px-1.5 py-0.5">
+                                  ⭐ {ALCOHOL_MAP[p.favorite_alcohol].label}
                                 </span>
                               )}
                             </div>
@@ -456,15 +457,23 @@ export default function ParticipantsPage() {
                           {/* Badges */}
                           {badgesMap[p.id] && badgesMap[p.id].length > 0 && (
                             <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                              {badgesMap[p.id].map((badge) => (
+                              {badgesMap[p.id].map((badge) => {
+                                const isBadgeExpanded = expandedBadgeId === badge.id;
+                                return (
                                 <span
                                   key={badge.id}
-                                  title={`${badge.title}${badge.description ? " — " + badge.description : ""}`}
-                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-300 cursor-help"
+                                  onClick={(e) => { e.stopPropagation(); setExpandedBadgeId(isBadgeExpanded ? null : badge.id); }}
+                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-300 cursor-pointer relative"
                                 >
                                   {badge.emoji} {badge.title}
+                                  {badge.description && isBadgeExpanded && (
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-popover border border-border rounded-lg text-[11px] max-w-[200px] whitespace-normal text-center shadow-lg z-30 text-foreground">
+                                      {badge.description}
+                                    </span>
+                                  )}
                                 </span>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
 

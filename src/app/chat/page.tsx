@@ -332,12 +332,33 @@ export default function ChatPage() {
                       ) : (
                         <>
                           {msg.image_url && (
-                            <img
-                              src={msg.image_url}
-                              alt="Image partagée"
-                              className="max-w-full max-h-64 object-cover cursor-pointer rounded-t-2xl"
-                              onClick={() => window.open(msg.image_url!, "_blank")}
-                            />
+                            <div className="relative">
+                              <img
+                                src={msg.image_url}
+                                alt="Image partagée"
+                                className="max-w-full max-h-64 object-cover cursor-pointer rounded-t-2xl"
+                                onClick={(e) => { e.stopPropagation(); window.open(msg.image_url!, "_blank"); }}
+                              />
+                              {/* Edit/Delete overlay for image messages (owner only) */}
+                              {isMe && !isDeleted && !isEditing && (
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
+                                    className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-colors"
+                                    title="Modifier"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id); }}
+                                    className="p-1.5 rounded-lg bg-black/60 hover:bg-red-600/80 text-white transition-colors"
+                                    title="Supprimer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           )}
                           {msg.content && (
                             <div className={`px-3 py-2 text-sm ${msg.image_url ? "pt-1" : ""}`}>
