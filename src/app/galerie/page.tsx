@@ -169,13 +169,12 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
-  // Swipe touch handling — simple approach
+  // Swipe touch handling — carousel approach
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-  const touchDeltaX = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const isHorizontalRef = useRef(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Ref to always have the latest commentsPhotoId for realtime callbacks
@@ -183,50 +182,35 @@ export default function GaleriePage() {
   useEffect(() => { commentsPhotoIdRef.current = commentsPhotoId; }, [commentsPhotoId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-    touchDeltaX.current = 0;
+    isHorizontalRef.current = false;
     setIsDragging(false);
+    setDragOffset(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (isAnimating) return;
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
-    // Only start dragging if horizontal > vertical and > 10px
-    if (!isDragging && Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
-      setIsDragging(true);
+    if (!isHorizontalRef.current && Math.abs(deltaX) > 10) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        isHorizontalRef.current = true;
+        setIsDragging(true);
+      }
     }
-    if (isDragging) {
-      touchDeltaX.current = deltaX;
+    if (isHorizontalRef.current) {
       setDragOffset(deltaX);
     }
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || isAnimating) return;
-    const deltaX = touchDeltaX.current;
+    if (!isDragging) return;
     setIsDragging(false);
-
-    if (Math.abs(deltaX) > 60) {
-      // Swipe threshold reached — animate photo out, then change index
-      setIsAnimating(true);
-      const goLeft = deltaX < 0;
-      // Animate to edge
-      setDragOffset(goLeft ? -window.innerWidth : window.innerWidth);
-      setTimeout(() => {
-        // Change index
-        if (goLeft) handleNextPhoto();
-        else handlePrevPhoto();
-        // Reset for next render
-        setDragOffset(0);
-        setIsAnimating(false);
-      }, 250);
-    } else {
-      // Snap back
-      setDragOffset(0);
+    if (Math.abs(dragOffset) > 60) {
+      if (dragOffset < 0) handleNextPhoto();
+      else handlePrevPhoto();
     }
+    setDragOffset(0);
   };
 
   return (
@@ -372,28 +356,42 @@ export default function GaleriePage() {
           </div>
           <div
             ref={imageContainerRef}
-            className="flex-1 relative flex items-center justify-center min-h-0 px-2 overflow-hidden"
+            className="flex-1 relative flex items-center justify-center min-h-0 overflow-hidden"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
+            {/* Carousel: 3 images in a row, shifted by viewerIndex */}
+            <div
+              className="flex items-center h-full"
+              style={{
+                width: `${photos.length * 100}%`,
+                transform: `translateX(calc(${-viewerIndex! * (100 / photos.length)}% + ${isDragging ? dragOffset : 0}px))`,
+                transition: isDragging ? "none" : "transform 0.25s ease-out",
+              }}
+            >
+              {photos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="flex items-center justify-center h-full px-2"
+                  style={{ width: `${100 / photos.length}%` }}
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.caption || "Photo"}
+                    className="max-w-full max-h-full object-contain select-none"
+                    draggable={false}
+                  />
+                  {photo.source === "chat" && (
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm z-10">💬 Importée du chat</span>
+                  )}
+                </div>
+              ))}
+            </div>
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
               </button>
-            )}
-            <img
-              src={currentPhoto.url}
-              alt={currentPhoto.caption || "Photo"}
-              className="max-w-full max-h-full object-contain select-none relative z-[1]"
-              style={{
-                transform: `translateX(${dragOffset}px)`,
-                transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-              }}
-              draggable={false}
-            />
-            {currentPhoto.source === "chat" && (
-              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm">💬 Importée du chat</span>
             )}
             {viewerIndex! < photos.length - 1 && (
               <button onClick={handleNextPhoto} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
