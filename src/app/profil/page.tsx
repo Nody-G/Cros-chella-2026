@@ -78,7 +78,8 @@ export default function ProfilPage() {
       setTagline(currentParticipant.tagline || "");
       setFunTitle(currentParticipant.fun_title || "");
       setSpecialSkill(currentParticipant.special_skill || "");
-      setFestivalRole(currentParticipant.festival_role || "");
+      const rawRole = currentParticipant.festival_role || "";
+      setFestivalRole(FESTIVAL_ROLES.find(r => r.label === rawRole)?.value || rawRole);
       setCatchphrase(currentParticipant.catchphrase || "");
       setThemeSong(currentParticipant.theme_song || "");
       setSuperpower(currentParticipant.superpower || "");
@@ -174,7 +175,7 @@ export default function ProfilPage() {
       tagline: tagline || null,
       fun_title: funTitle || null,
       special_skill: specialSkill || null,
-      festival_role: festivalRole || null,
+      festival_role: festivalRole ? (FESTIVAL_ROLES.find(r => r.value === festivalRole)?.label || festivalRole) : null,
       catchphrase: catchphrase || null,
       theme_song: themeSong || null,
       superpower: superpower || null,

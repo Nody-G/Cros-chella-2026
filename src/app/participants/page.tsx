@@ -15,15 +15,15 @@ import { ALCOHOL_MAP, ALCOHOL_LIST, ALCOHOL_GROUPS } from "@/lib/alcohol-data";
 import { getSmokingLabel, getSmokingEmoji } from "@/lib/smoking-data";
 
 const BED_OPTIONS = [
-  "Chambre 1 — Lit king size",
-  "Chambre 2 — Lit 2 places A",
-  "Chambre 2 — Lit 2 places B",
-  "Chambre 2 — Lit superposé haut",
-  "Chambre 2 — Lit superposé bas",
+  "Chambre du Maître — Lit king size",
+  "Dortoir petite maison — Lit 2 places A",
+  "Dortoir petite maison — Lit 2 places B",
+  "Dortoir petite maison — Lit superposé haut",
+  "Dortoir petite maison — Lit superposé bas",
   "Chambre Get 27 — Lit 2 places",
-  "Chambre 4 — Lit 2 places",
-  "Chambre 4 — Lit 1 place",
-  "Chambre 5 — Le lit de la mama",
+  "Chambre Mojito — Lit 2 places",
+  "Chambre Mojito — Lit 1 place",
+  "Chambre de Maman — Le lit de la mama",
   "Salon — Canapé-lit",
   "Matelas supplémentaire",
 ];

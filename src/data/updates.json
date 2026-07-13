@@ -294,5 +294,29 @@
     "title": "Feedback : renommé clairement",
     "description": "Le bouton de feedback s'appelle maintenant « Signaler un bug ou proposer une idée ».",
     "details": "Le bouton dans le menu « Plus » a été renommé pour être plus explicite. Tu sais exactement à quoi il sert : signaler un bug ou proposer une idée d'amélioration."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "🏠",
+    "title": "Chambres : noms officiels",
+    "description": "Les chambres ont maintenant les vrais noms du Moulin du Cros.",
+    "details": "Les noms de chambres ont été mis à jour : Chambre du Maître (king size), Dortoir petite maison (2 lits 2 places + superposé), Chambre Get 27 (lit 2 places), Chambre Mojito (lit 2 places + 1 place), Chambre de Maman (lit 2 places). Les assignations de lits existantes ont été migrées automatiquement."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🎭",
+    "title": "Rôles festival : noms corrigés",
+    "description": "Les rôles « chaos » et « wildcard » ont été renommés.",
+    "details": "Le rôle « chaos » s'appelle maintenant « Agent du chaos » et « wildcard » s'appelle « Joker ». Le dropdown du profil sauvegarde maintenant le bon label (le nom français) au lieu de la valeur technique anglaise."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "fix",
+    "emoji": "🎱",
+    "title": "Billard : lancement du tournoi réparé",
+    "description": "Le bouton « Lancer le tournoi » fonctionne à nouveau.",
+    "details": "Un bug empêchait de lancer un tournoi de billard à cause d'une contrainte de base de données qui ne permettait pas le statut 'waiting' sur les matchs. La contrainte a été corrigée pour accepter tous les statuts nécessaires (pending, waiting, active, completed)."
   }
 ]
