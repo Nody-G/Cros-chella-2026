@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Trash2, Trophy, X, Users, ChevronDown, ChevronUp, Swords } from "lucide-react";
+import { Loader2, Plus, Trash2, Trophy, X, Users, ChevronDown, ChevronUp, Swords, GitBranch, List } from "lucide-react";
 import {
   getBillardTeams,
   createBillardTeam,
@@ -12,6 +12,7 @@ import {
   generateBillardBracket,
   recordBillardResult,
 } from "@/lib/supabase-queries";
+import { BracketView } from "./bracket-view";
 import type { BillardTournament, BillardTeam, BillardMatch } from "@/lib/types";
 
 interface TournamentCardProps {
@@ -31,6 +32,7 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
   const [player2Id, setPlayer2Id] = useState("");
   const [starting, setStarting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [viewMode, setViewMode] = useState<"bracket" | "list">("bracket");
   const [pickingMatch, setPickingMatch] = useState<string | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -308,26 +310,65 @@ export function TournamentCard({ tournament, isAdmin, participants, onDelete, re
 
             {/* ── ACTIVE / DONE: Bracket ── */}
             {tournament.status !== "setup" && rounds.length > 0 && (
-              <div className="space-y-4">
-                {rounds.map(([roundNum, roundMatches]) => (
-                  <div key={roundNum}>
-                    <h4 className="text-sm font-semibold text-white/70 mb-2">{roundLabels[roundNum] || `Round ${roundNum}`}</h4>
-                    <div className="space-y-2">
-                      {roundMatches
-                        .sort((a, b) => a.match_order - b.match_order)
-                        .map((match) => (
-                          <MatchCard
-                            key={match.id}
-                            match={match}
-                            teamName={teamName}
-                            isAdmin={isAdmin}
-                            onPickWinner={handlePickWinner}
-                            picking={pickingMatch === match.id}
-                          />
-                        ))}
-                    </div>
+              <div>
+                {/* View mode toggle */}
+                <div className="flex items-center justify-end gap-1 mb-3">
+                  <button
+                    onClick={() => setViewMode("bracket")}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                      viewMode === "bracket" ? "bg-purple-600/30 text-purple-300 border border-purple-500/30" : "text-white/40 hover:text-white/60 hover:bg-white/5"
+                    }`}
+                  >
+                    <GitBranch className="w-3.5 h-3.5" />
+                    Bracket
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                      viewMode === "list" ? "bg-purple-600/30 text-purple-300 border border-purple-500/30" : "text-white/40 hover:text-white/60 hover:bg-white/5"
+                    }`}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    Liste
+                  </button>
+                </div>
+
+                {/* Bracket view */}
+                {viewMode === "bracket" && (
+                  <BracketView
+                    matches={matches}
+                    teams={teams}
+                    teamName={teamName}
+                    isAdmin={isAdmin}
+                    onPickWinner={handlePickWinner}
+                    pickingMatch={pickingMatch}
+                  />
+                )}
+
+                {/* List view */}
+                {viewMode === "list" && (
+                  <div className="space-y-4">
+                    {rounds.map(([roundNum, roundMatches]) => (
+                      <div key={roundNum}>
+                        <h4 className="text-sm font-semibold text-white/70 mb-2">{roundLabels[roundNum] || `Round ${roundNum}`}</h4>
+                        <div className="space-y-2">
+                          {roundMatches
+                            .sort((a, b) => a.match_order - b.match_order)
+                            .map((match) => (
+                              <MatchCard
+                                key={match.id}
+                                match={match}
+                                teamName={teamName}
+                                isAdmin={isAdmin}
+                                onPickWinner={handlePickWinner}
+                                picking={pickingMatch === match.id}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
