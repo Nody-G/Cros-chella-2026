@@ -239,6 +239,10 @@ export default function GaleriePage() {
                   <CardContent className="p-0">
                     <div className="aspect-square bg-muted flex items-center justify-center relative cursor-pointer" onClick={() => setViewerIndex(idx)}>
                       <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" />
+                      {/* Badge source chat */}
+                      {photo.source === "chat" && (
+                        <span className="absolute top-1.5 left-1.5 text-[10px] bg-blue-500/80 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">💬 Du chat</span>
+                      )}
                       {(isOwner || currentParticipant?.is_admin) && (
                         <button onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo.id); }}
                           className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -313,6 +317,9 @@ export default function GaleriePage() {
               </button>
             )}
             <img src={currentPhoto.url} alt={currentPhoto.caption || "Photo"} className="max-w-full max-h-full object-contain" />
+            {currentPhoto.source === "chat" && (
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm">💬 Importée du chat</span>
+            )}
             {viewerIndex! < photos.length - 1 && (
               <button onClick={handleNextPhoto} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronRight className="w-5 h-5 text-white" />

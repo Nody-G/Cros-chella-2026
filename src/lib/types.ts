@@ -164,6 +164,7 @@ export interface Photo {
   author_id: string;
   url: string;
   caption: string | null;
+  source: "gallery" | "chat";
   comment_count?: number;
   created_at: string;
   // Joined

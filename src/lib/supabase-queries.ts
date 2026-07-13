@@ -535,6 +535,21 @@ export async function deletePhoto(photoId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Sauvegarde une image du chat dans la galerie (sans re-upload, juste référence URL)
+ */
+export async function saveChatImageToGallery(authorId: string, imageUrl: string, caption?: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("photos")
+    .insert({ author_id: authorId, url: imageUrl, caption: caption?.trim() || null, source: "chat" });
+
+  if (error) {
+    console.error("Error saving chat image to gallery:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function getPhotoComments(photoId: string): Promise<PhotoComment[]> {
   const { data, error } = await supabase
     .from("photo_comments")

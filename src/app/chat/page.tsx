@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, toggleMessageReaction } from "@/lib/supabase-queries";
+import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, toggleMessageReaction, saveChatImageToGallery } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -24,6 +24,10 @@ export default function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null);
+  // Galerie caption modal (après envoi image chat)
+  const [galleryCaptionModal, setGalleryCaptionModal] = useState<{ imageUrl: string } | null>(null);
+  const [galleryCaption, setGalleryCaption] = useState("");
+  const [savingToGallery, setSavingToGallery] = useState(false);
   const { currentParticipant } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -130,6 +134,21 @@ export default function ChatPage() {
     setNewMessage("");
     clearImage();
     setSending(false);
+
+    // Si une image a été envoyée, proposer d'ajouter à la galerie
+    if (imageUrl) {
+      setGalleryCaptionModal({ imageUrl });
+      setGalleryCaption("");
+    }
+  };
+
+  const handleSaveToGallery = async () => {
+    if (!galleryCaptionModal || !currentUserId) return;
+    setSavingToGallery(true);
+    await saveChatImageToGallery(currentUserId, galleryCaptionModal.imageUrl, galleryCaption);
+    setSavingToGallery(false);
+    setGalleryCaptionModal(null);
+    setGalleryCaption("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -481,6 +500,33 @@ export default function ChatPage() {
           )}
         </div>
       </div>
+
+      {/* Modal : Ajouter l'image à la galerie */}
+      {galleryCaptionModal && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setGalleryCaptionModal(null)}>
+          <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-3 text-center">📸 Ajouter à la galerie ?</h3>
+            <img src={galleryCaptionModal.imageUrl} alt="Aperçu" className="w-full max-h-48 object-cover rounded-xl mb-3" />
+            <Input
+              placeholder="Ajoute une description (optionnel)..."
+              value={galleryCaption}
+              onChange={(e) => setGalleryCaption(e.target.value)}
+              className="mb-4"
+              autoFocus={false}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setGalleryCaptionModal(null)}>
+                Non merci
+              </Button>
+              <Button className="flex-1" onClick={handleSaveToGallery} disabled={savingToGallery}>
+                {savingToGallery ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Ajouter 🎉
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MobileNav />
     </main>
   );
