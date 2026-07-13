@@ -537,12 +537,17 @@ export default function BadgesPage() {
 
                           {/* Tooltip on click/tap (mobile-friendly) */}
                           {badge.description && isExpanded && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg text-xs max-w-[220px] whitespace-normal text-center shadow-lg z-20">
-                              {badge.description}
-                              <div className="text-[10px] text-muted-foreground mt-1">
-                                Par {badge.awarder?.pseudo || badge.awarder?.name || "Admin"}
+                            <>
+                              {/* Backdrop to close */}
+                              <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setExpandedBadgeId(null); }} />
+                              {/* Popover */}
+                              <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-popover border border-border rounded-xl text-sm max-w-[320px] w-[calc(100vw-2rem)] shadow-xl text-center">
+                                <p className="text-foreground">{badge.description}</p>
+                                <p className="text-[11px] text-muted-foreground mt-1.5">
+                                  Par {badge.awarder?.pseudo || badge.awarder?.name || "Admin"}
+                                </p>
                               </div>
-                            </div>
+                            </>
                           )}
                         </div>
                         );

@@ -467,9 +467,12 @@ export default function ParticipantsPage() {
                                 >
                                   {badge.emoji} {badge.title}
                                   {badge.description && isBadgeExpanded && (
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-popover border border-border rounded-lg text-[11px] max-w-[200px] whitespace-normal text-center shadow-lg z-30 text-foreground">
-                                      {badge.description}
-                                    </span>
+                                    <>
+                                      <span className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setExpandedBadgeId(null); }} />
+                                      <span className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-popover border border-border rounded-xl text-sm max-w-[320px] w-[calc(100vw-2rem)] shadow-xl text-center text-foreground block whitespace-normal">
+                                        {badge.description}
+                                      </span>
+                                    </>
                                   )}
                                 </span>
                                 );

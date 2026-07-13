@@ -65,7 +65,7 @@ export default function GaleriePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const channel = (supabase as any).channel("photos-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "photos" }, () => { fetchPhotos(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "photo_comments" }, () => { if (commentsPhotoId) loadComments(commentsPhotoId); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "photo_comments" }, () => { if (commentsPhotoIdRef.current) loadComments(commentsPhotoIdRef.current); })
       .on("postgres_changes", { event: "*", schema: "public", table: "photo_likes" }, () => { fetchPhotos(); })
       .subscribe();
 
@@ -177,6 +177,10 @@ export default function GaleriePage() {
   const [isDragging, setIsDragging] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
+  // Ref to always have the latest commentsPhotoId for realtime callbacks
+  const commentsPhotoIdRef = useRef<string | null>(null);
+  useEffect(() => { commentsPhotoIdRef.current = commentsPhotoId; }, [commentsPhotoId]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -208,6 +212,13 @@ export default function GaleriePage() {
       else handlePrevPhoto();
     }
   };
+
+  // Compute adjacent photo for preview during swipe
+  const adjacentPhoto = isDragging && viewerIndex !== null
+    ? dragOffset < 0
+      ? (viewerIndex < photos.length - 1 ? photos[viewerIndex + 1] : null)
+      : (viewerIndex > 0 ? photos[viewerIndex - 1] : null)
+    : null;
 
   return (
     <main className="pb-20 min-h-screen">
@@ -357,6 +368,18 @@ export default function GaleriePage() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
+            {/* Adjacent photo preview (behind current, revealed during swipe) */}
+            {adjacentPhoto && (
+              <img
+                src={adjacentPhoto.url}
+                alt=""
+                className="absolute inset-0 w-full h-full object-contain"
+                style={{
+                  transform: `translateX(${dragOffset < 0 ? `calc(100% + ${dragOffset}px)` : `calc(-100% + ${dragOffset}px)`})`,
+                }}
+                draggable={false}
+              />
+            )}
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
@@ -365,11 +388,10 @@ export default function GaleriePage() {
             <img
               src={currentPhoto.url}
               alt={currentPhoto.caption || "Photo"}
-              className="max-w-full max-h-full object-contain select-none"
+              className="max-w-full max-h-full object-contain select-none relative z-[1]"
               style={{
                 transform: `translateX(${isDragging ? dragOffset : 0}px)`,
                 transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                opacity: isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 600) : 1,
               }}
               draggable={false}
             />
