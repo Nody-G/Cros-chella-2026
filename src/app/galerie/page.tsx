@@ -31,6 +31,8 @@ export default function GaleriePage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
+  const commentsCacheRef = useRef<Record<string, PhotoComment[]>>({});
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   // Likes state
   const [photoLikes, setPhotoLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
@@ -65,7 +67,7 @@ export default function GaleriePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const channel = (supabase as any).channel("photos-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "photos" }, () => { fetchPhotos(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "photo_comments" }, () => { if (commentsPhotoIdRef.current) loadComments(commentsPhotoIdRef.current); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "photo_comments" }, () => { if (commentsPhotoIdRef.current) loadComments(commentsPhotoIdRef.current, true); })
       .on("postgres_changes", { event: "*", schema: "public", table: "photo_likes" }, () => { fetchPhotos(); })
       .subscribe();
 
@@ -73,9 +75,14 @@ export default function GaleriePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadComments = async (photoId: string) => {
+  const loadComments = async (photoId: string, force = false) => {
+    if (!force && commentsCacheRef.current[photoId]) {
+      setComments(commentsCacheRef.current[photoId]);
+      return;
+    }
     setLoadingComments(true);
     const data = await getPhotoComments(photoId);
+    commentsCacheRef.current[photoId] = data;
     setComments(data);
     setLoadingComments(false);
   };
@@ -88,16 +95,45 @@ export default function GaleriePage() {
 
   const handleSendComment = async () => {
     if (!currentParticipant || !commentsPhotoId || !newComment.trim()) return;
-    setSendingComment(true);
-    await addPhotoComment(commentsPhotoId, currentParticipant.id, newComment.trim());
+    const content = newComment.trim();
     setNewComment("");
-    await loadComments(commentsPhotoId);
+    setSendingComment(true);
+
+    // Optimistic: add comment locally immediately
+    const optimisticComment: PhotoComment = {
+      id: `temp-${Date.now()}`,
+      photo_id: commentsPhotoId,
+      participant_id: currentParticipant.id,
+      content,
+      created_at: new Date().toISOString(),
+      author: currentParticipant,
+    };
+    setComments((prev) => {
+      const updated = [...prev, optimisticComment];
+      commentsCacheRef.current[commentsPhotoId] = updated;
+      return updated;
+    });
+    // Auto-scroll to bottom
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+
+    const ok = await addPhotoComment(commentsPhotoId, currentParticipant.id, content);
+    if (ok) {
+      // Re-fetch to get real ID from server
+      await loadComments(commentsPhotoId, true);
+    }
     setSendingComment(false);
   };
 
   const handleDeleteComment = async (commentId: string) => {
+    if (!commentsPhotoId) return;
+    // Optimistic: remove locally immediately
+    setComments((prev) => {
+      const updated = prev.filter((c) => c.id !== commentId);
+      commentsCacheRef.current[commentsPhotoId] = updated;
+      return updated;
+    });
     await deletePhotoComment(commentId);
-    if (commentsPhotoId) await loadComments(commentsPhotoId);
+    // No re-fetch needed — optimistic is enough for deletes
   };
 
   const handleToggleLike = async (photoId: string) => {
@@ -501,6 +537,7 @@ export default function GaleriePage() {
               ) : (
                 <p className="text-white/30 text-xs text-center py-2">Pas encore de commentaire</p>
               )}
+              <div ref={commentsEndRef} />
             </div>
             {currentParticipant && (
               <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-white/10">
