@@ -318,5 +318,13 @@
     "title": "Billard : lancement du tournoi réparé",
     "description": "Le bouton « Lancer le tournoi » fonctionne à nouveau.",
     "details": "Un bug empêchait de lancer un tournoi de billard à cause d'une contrainte de base de données qui ne permettait pas le statut 'waiting' sur les matchs. La contrainte a été corrigée pour accepter tous les statuts nécessaires (pending, waiting, active, completed)."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "feature",
+    "emoji": "🤖",
+    "title": "Botardèche : le bot trash du Cros-Chella",
+    "description": "Discute avec Botardèche, le bot IA qui connaît tout sur tout le monde.",
+    "details": "Nouvelle page dédiée pour discuter 1-on-1 avec Botardèche (menu Plus → 🤖). Il connaît tous les profils, le programme, les jeux, les sondages, les dépenses, le billard et les badges. Pose-lui une question, demande un roast, ou discute simplement. Tu peux aussi le mentionner dans le chat principal avec @bot pour qu'il réponde à tous. Powered by Xiaomi MiMo v2.5. Limité à 20 messages par heure."
   }
 ]

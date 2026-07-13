@@ -11,6 +11,8 @@ import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
 
+const BOT_ID = "d9cb3a3e-058b-47cc-86ca-150915ea5d62";
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,30 @@ export default function ChatPage() {
     }
 
     await sendMessage(currentUserId, newMessage.trim() || "📷", imageUrl);
+
+    // Check if message mentions @bot → trigger Botardèche reply
+    const msgText = newMessage.trim();
+    if (msgText.toLowerCase().includes("@bot") || msgText.toLowerCase().includes("@botardeche")) {
+      // Fire and forget — bot replies asynchronously
+      fetch("/api/bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: currentUserId,
+          message: `Quelqu'un t'a mentionné dans le chat général. Voici le message : "${msgText}". Réponds dans le style de Botardèche, comme si tu répondais dans le chat du festival.`,
+          chatMention: true,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          // Post bot reply as a message in the main chat
+          if (data.reply) {
+            await sendMessage(BOT_ID, data.reply);
+          }
+        }
+      }).catch(() => {});
+    }
+
     setNewMessage("");
     clearImage();
     setSending(false);
