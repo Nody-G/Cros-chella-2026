@@ -169,12 +169,14 @@ export default function GaleriePage() {
   const handlePrevPhoto = () => { if (viewerIndex !== null && viewerIndex > 0) setViewerIndex(viewerIndex - 1); };
   const handleNextPhoto = () => { if (viewerIndex !== null && viewerIndex < photos.length - 1) setViewerIndex(viewerIndex + 1); };
 
-  // Swipe touch handling — carousel approach
+  // Swipe touch handling — single photo, slide out then snap to next
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const isHorizontalRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const dragOffsetRef = useRef(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Ref to always have the latest commentsPhotoId for realtime callbacks
@@ -185,6 +187,8 @@ export default function GaleriePage() {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isHorizontalRef.current = false;
+    isDraggingRef.current = false;
+    dragOffsetRef.current = 0;
     setIsDragging(false);
     setDragOffset(0);
   };
@@ -195,21 +199,26 @@ export default function GaleriePage() {
     if (!isHorizontalRef.current && Math.abs(deltaX) > 10) {
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         isHorizontalRef.current = true;
+        isDraggingRef.current = true;
         setIsDragging(true);
       }
     }
     if (isHorizontalRef.current) {
+      dragOffsetRef.current = deltaX;
       setDragOffset(deltaX);
     }
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsDragging(false);
-    if (Math.abs(dragOffset) > 60) {
-      if (dragOffset < 0) handleNextPhoto();
+    const offset = dragOffsetRef.current;
+    if (Math.abs(offset) > 60) {
+      if (offset < 0) handleNextPhoto();
       else handlePrevPhoto();
     }
+    dragOffsetRef.current = 0;
     setDragOffset(0);
   };
 
@@ -349,45 +358,37 @@ export default function GaleriePage() {
       {/* Fullscreen viewer */}
       {currentPhoto && (
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-4 shrink-0">
             <button onClick={() => setViewerIndex(null)} className="text-white/80 hover:text-white"><X className="w-6 h-6" /></button>
             <span className="text-white/60 text-sm">{viewerIndex! + 1} / {photos.length}</span>
             <div className="w-6" />
           </div>
           <div
             ref={imageContainerRef}
-            className="flex-1 relative flex items-center justify-center min-h-0 overflow-hidden"
+            className="flex-1 relative min-h-0 overflow-hidden"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Carousel: 3 images in a row, shifted by viewerIndex */}
+            {/* Single photo with drag offset — one photo visible at a time */}
             <div
-              className="flex items-center h-full"
+              className="flex items-center justify-center h-full w-full px-2"
               style={{
-                width: `${photos.length * 100}%`,
-                transform: `translateX(calc(${-viewerIndex! * (100 / photos.length)}% + ${isDragging ? dragOffset : 0}px))`,
-                transition: isDragging ? "none" : "transform 0.25s ease-out",
+                transform: `translateX(${dragOffset}px)`,
+                transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
               }}
             >
-              {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="flex items-center justify-center h-full px-2"
-                  style={{ width: `${100 / photos.length}%` }}
-                >
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || "Photo"}
-                    className="max-w-full max-h-full object-contain select-none"
-                    draggable={false}
-                  />
-                  {photo.source === "chat" && (
-                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm z-10">💬 Importée du chat</span>
-                  )}
-                </div>
-              ))}
+              <img
+                src={currentPhoto.url}
+                alt={currentPhoto.caption || "Photo"}
+                className="max-w-full max-h-full object-contain select-none"
+                draggable={false}
+              />
+              {currentPhoto.source === "chat" && (
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs bg-blue-500/80 text-white px-2 py-1 rounded-full backdrop-blur-sm z-10">💬 Importée du chat</span>
+              )}
             </div>
+            {/* Arrow buttons */}
             {viewerIndex! > 0 && (
               <button onClick={handlePrevPhoto} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 z-10">
                 <ChevronLeft className="w-5 h-5 text-white" />
