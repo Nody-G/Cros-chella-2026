@@ -1,6 +1,22 @@
 [
   {
     "date": "2026-07-13",
+    "tag": "feature",
+    "emoji": "🗳️",
+    "title": "Sondages : tout le monde peut créer",
+    "description": "Tu peux maintenant créer tes propres sondages depuis la page Sondages.",
+    "details": "Un bouton « Créer un sondage » apparaît en haut de la page Sondages. Tu choisis une question et de 2 à 6 options de réponse. Ton sondage est visible par tous les participants qui peuvent voter en temps réel. Tu peux supprimer tes propres sondages. Indication « ✓ Tu as voté » quand tu as déjà voté. Le créateur du sondage est affiché sous la question."
+  },
+  {
+    "date": "2026-07-13",
+    "tag": "improvement",
+    "emoji": "💡",
+    "title": "Programme : bouton Proposer en haut",
+    "description": "Le bouton « Proposer une activité » est maintenant en haut de la page programme.",
+    "details": "Auparavant, le bouton pour proposer une activité était caché tout en bas de la page dans la section propositions. Il est maintenant placé juste sous la description du programme, bien visible et accessible sans scroller. La section propositions reste en bas pour consulter et voter."
+  },
+  {
+    "date": "2026-07-13",
     "tag": "improvement",
     "emoji": "📱",
     "title": "Chat : appui long sur mobile",
