@@ -1,0 +1,105 @@
+{
+  "description": "Fiches personnelles des participants — utilisé par Botardèche pour nourrir ses réponses. Ne pas révéler les infos marquées secret.",
+  "participants": {
+    "nelly": {
+      "prenom": "Nelly",
+      "pseudo": "Nellfest",
+      "relation": "Meuf de Niels",
+      "infos": [
+        "A une société d'immobilier qui s'appelle Nellimmo",
+        "Elle est la seule employée de Nellimmo"
+      ],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "charly": {
+      "prenom": "Charly",
+      "pseudo": "Chocolatine",
+      "relation": "Pote",
+      "infos": [
+        "Policier de métier",
+        "A travaillé à Paris et Lyon",
+        "A été CRS (Compagnies Républicaines de Sécurité)",
+        "A été agent pénitentiaire"
+      ],
+      "famille": {
+        "femme": "Charline",
+        "enfants": ["Liv (fille)"]
+      },
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "ludo": {
+      "prenom": "Ludo",
+      "pseudo": "Rosette",
+      "relation": "Pote",
+      "infos": [
+        "Habite à Fos-sur-Mer"
+      ],
+      "famille": {
+        "femme": "Pauline",
+        "enfants": ["Emy (fille)"]
+      },
+      "fun_facts": [
+        "Pauline (sa femme) est un peu maniaque du ménage"
+      ],
+      "anecdotes": []
+    },
+    "niels": {
+      "prenom": "Niels",
+      "pseudo": "Maître",
+      "relation": "Admin / Orga",
+      "infos": [
+        "Propriétaire de la maison du Cros",
+        "Hôte du festival"
+      ],
+      "famille": {
+        "compagne": "Nelly"
+      },
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "alva": {
+      "prenom": "Alva",
+      "pseudo": "Alvathor",
+      "relation": "Sœur de Niels",
+      "infos": [],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "celis": {
+      "prenom": "Célis",
+      "pseudo": "l'homme de l'ombre",
+      "relation": "Frère de Niels",
+      "infos": [],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "xav": {
+      "prenom": "Xav",
+      "pseudo": "El hombre calvo de músculos prominentes",
+      "relation": "Pote",
+      "infos": [
+        "A eu l'idée des jeux"
+      ],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "herve": {
+      "prenom": "Hervé",
+      "pseudo": "",
+      "relation": "Pote",
+      "infos": [],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "bber": {
+      "prenom": "Bber",
+      "pseudo": "Punch des îles",
+      "relation": "Pote",
+      "infos": [],
+      "fun_facts": [],
+      "anecdotes": []
+    }
+  }
+}

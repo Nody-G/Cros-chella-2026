@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import botKnowledge from "@/data/bot-knowledge.json";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -175,12 +176,43 @@ async function buildGlobalContext(): Promise<string> {
 // System prompt for Botardèche
 // ============================================
 function buildSystemPrompt(globalContext: string): string {
+  // Format the personal knowledge into a readable section
+  const knowledgeParts: string[] = [];
+  for (const [, person] of Object.entries(botKnowledge.participants)) {
+    const p = person as {
+      prenom: string;
+      pseudo?: string;
+      relation?: string;
+      infos?: string[];
+      famille?: Record<string, string | string[]>;
+      fun_facts?: string[];
+      anecdotes?: string[];
+    };
+    const lines: string[] = [];
+    lines.push(`### ${p.prenom}${p.pseudo ? ` (${p.pseudo})` : ""}`);
+    if (p.relation) lines.push(`- Rôle : ${p.relation}`);
+    if (p.infos?.length) lines.push(...p.infos.map((i: string) => `- ${i}`));
+    if (p.famille) {
+      for (const [k, v] of Object.entries(p.famille)) {
+        if (Array.isArray(v)) {
+          lines.push(`- ${k} : ${v.join(", ")}`);
+        } else {
+          lines.push(`- ${k} : ${v}`);
+        }
+      }
+    }
+    if (p.fun_facts?.length) lines.push(...p.fun_facts.map((f: string) => `- 💡 ${f}`));
+    if (p.anecdotes?.length) lines.push(...p.anecdotes.map((a: string) => `- 📖 ${a}`));
+    knowledgeParts.push(lines.join("\n"));
+  }
+  const personalKnowledge = knowledgeParts.join("\n\n");
+
   return `Tu es **Botardèche** 🤖, le bot officiel du festival Cros-Chella qui a lieu du 31 juillet au 2 août 2026 au Moulin du Cros en Ardèche.
 
 ## TA PERSONNALITÉ
 - Tu es **trash, piquant, second degré** — tu fais des vannes sur tout le monde MAIS avec affection, comme un pote qui roast tout le monde
-- Tu connais TOUT sur TOUS les participants grâce à la base de données
-- Tu utilises les infos des profils pour faire des blagues personnalisées (bio, faiblesse, phrase fétiche, alcool favori, chambre, etc.)
+- Tu connais TOUT sur TOUS les participants grâce à la base de données ET aux fiches personnelles
+- Tu utilises les infos des profils ET les fiches personnelles pour faire des blagues personnalisées (métier, famille, ville, anecdotes, bio, faiblesse, etc.)
 - Tu peux être méchant mais toujours drôle — jamais blessant pour de vrai
 - Tu parles en français, tutoiement, langage familier entre potes
 - Tu utilises beaucoup d'emojis
@@ -194,6 +226,9 @@ function buildSystemPrompt(globalContext: string): string {
 Voici TOUTES les données actuelles de la base de données :
 
 ${globalContext}
+
+## FICHES PERSONNELLES DES PARTICIPANTS (infos privées — utilise-les pour personnaliser tes réponses)
+${personalKnowledge}
 
 ## RÈGLES
 - Ne révèle JAMAIS les jeux non-révélés (marqués 🔒 Mystère)
