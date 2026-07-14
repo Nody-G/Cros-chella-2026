@@ -115,27 +115,36 @@ export default function BotPage() {
             },
           ]);
         } else {
+          const errorMsg = data.error || "Erreur inconnue";
           setMessages((prev) => [
             ...prev,
             {
               id: "error-" + Date.now(),
               role: "assistant",
-              content: "🤖 J'ai planté... Essaie encore !",
+              content: `🤖 J'ai planté... (${errorMsg}) Essaie encore !`,
               created_at: new Date().toISOString(),
             },
           ]);
         }
       } else {
         setRemaining(data.remaining);
-        // The bot reply comes via realtime, but also add it directly for snappiness
-        // Remove temp user msg and let realtime rebuild the list properly
+        // Add bot reply directly for snappiness (realtime may also deliver it)
         setMessages((prev) => {
           const withoutTemp = prev.filter((m) => m.id !== tempId);
           // Check if realtime already added the reply
           if (withoutTemp.some((m) => m.role === "assistant" && m.content === data.reply)) {
             return withoutTemp;
           }
-          return withoutTemp;
+          // Add the reply directly
+          return [
+            ...withoutTemp,
+            {
+              id: "bot-" + Date.now(),
+              role: "assistant" as const,
+              content: data.reply,
+              created_at: new Date().toISOString(),
+            },
+          ];
         });
       }
     } catch {
