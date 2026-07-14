@@ -1,5 +1,13 @@
 [
   {
+    "date": "2026-07-14",
+    "tag": "feature",
+    "emoji": "🤖",
+    "title": "Botardèche : base de connaissances enrichie",
+    "description": "Le bot connaît maintenant les participants en détail — villes, métiers, famille, anecdotes.",
+    "details": "Botardèche dispose désormais de fiches détaillées pour chaque participant : ville d'habitation, métier, situation familiale, anecdotes et surnoms. Il peut sortir des réponses personnalisées et ciblées. Par exemple, il sait que Charly est policier à Lyon, que Niels est surnommé Starlink, ou que Xav organisait les meilleures soirées du coin à Chazay-d'Azergues. Le bot enrichit ses réponses avec ces infos pour un maximum de fun."
+  },
+  {
     "date": "2026-07-13",
     "tag": "feature",
     "emoji": "🗳️",

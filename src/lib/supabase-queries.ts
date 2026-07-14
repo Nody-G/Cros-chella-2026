@@ -487,6 +487,45 @@ export async function deleteMessage(messageId: string): Promise<boolean> {
   return true;
 }
 
+export async function adminDeleteMessage(messageId: string): Promise<boolean> {
+  // 1. Récupérer le message pour avoir l'image_url avant suppression
+  const { data: msg, error: fetchError } = await supabase
+    .from("messages")
+    .select("image_url")
+    .eq("id", messageId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching message for admin delete:", fetchError);
+    return false;
+  }
+
+  // 2. Supprimer l'image du Storage si elle existe
+  if (msg?.image_url) {
+    try {
+      const urlParts = msg.image_url.split("/avatars/");
+      if (urlParts.length > 1) {
+        const storagePath = urlParts[1];
+        await supabase.storage.from("avatars").remove([storagePath]);
+      }
+    } catch (e) {
+      console.warn("Could not delete image from storage:", e);
+    }
+  }
+
+  // 3. Hard delete — supprime complètement la ligne de la DB
+  const { error } = await supabase
+    .from("messages")
+    .delete()
+    .eq("id", messageId);
+
+  if (error) {
+    console.error("Error admin deleting message:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function toggleMessageReaction(messageId: string, participantId: string, emoji: string): Promise<Record<string, string[]> | null> {
   const { data: msg, error: fetchError } = await supabase
     .from("messages")

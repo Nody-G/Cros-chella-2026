@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, toggleMessageReaction, saveChatImageToGallery } from "@/lib/supabase-queries";
+import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, adminDeleteMessage, toggleMessageReaction, saveChatImageToGallery } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -32,7 +32,7 @@ export default function ChatPage() {
   const [galleryCaptionModal, setGalleryCaptionModal] = useState<{ imageUrl: string } | null>(null);
   const [galleryCaption, setGalleryCaption] = useState("");
   const [savingToGallery, setSavingToGallery] = useState(false);
-  const { currentParticipant } = useAuth();
+  const { currentParticipant, isAdmin } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +84,12 @@ export default function ChatPage() {
               : m
           )
         );
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (payload) => {
+        const oldId = (payload.old as { id?: string })?.id;
+        if (oldId) {
+          setMessages((prev) => prev.filter((m) => m.id !== oldId));
+        }
       })
       .subscribe();
 
@@ -228,6 +234,15 @@ export default function ChatPage() {
     setActiveMenu(null);
   };
 
+  const handleAdminDelete = async (msgId: string) => {
+    const ok = await adminDeleteMessage(msgId);
+    if (ok) {
+      // Hard delete — retirer complètement de la liste, aucune trace
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    }
+    setActiveMenu(null);
+  };
+
   const startEdit = (msg: Message) => {
     setEditingId(msg.id);
     setEditContent(msg.content);
@@ -315,7 +330,8 @@ export default function ChatPage() {
                       className={`relative inline-block rounded-2xl group ${isMe ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}
                       data-menu-trigger
                       onTouchStart={() => {
-                        if (!isMe || isDeleted || isEditing) return;
+                        // Owner can long press own messages, admin can long press any message
+                        if ((!isMe && !isAdmin) || isDeleted || isEditing) return;
                         longPressTriggered.current = false;
                         longPressTimer.current = setTimeout(() => {
                           longPressTriggered.current = true;
@@ -337,27 +353,43 @@ export default function ChatPage() {
                         }
                       }}
                     >
-                      {/* Context menu */}
+                      {/* Context menu — owner: edit + delete, admin: admin delete on any message */}
                       {activeMenu === msg.id && (
                         <div data-msg-menu className={`absolute ${isMe ? "right-0" : "left-0"} top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl p-1.5 flex gap-1`}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
-                            className="p-2.5 rounded-lg hover:bg-muted active:bg-muted transition-colors"
-                            title="Modifier"
-                          >
-                            <Pencil className="w-4 h-4 text-primary" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
-                              setActiveMenu(null);
-                            }}
-                            className="p-2.5 rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-colors text-destructive"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isMe && !isDeleted && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
+                                className="p-2.5 rounded-lg hover:bg-muted active:bg-muted transition-colors"
+                                title="Modifier"
+                              >
+                                <Pencil className="w-4 h-4 text-primary" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id);
+                                  setActiveMenu(null);
+                                }}
+                                className="p-2.5 rounded-lg hover:bg-destructive/10 active:bg-destructive/10 transition-colors text-destructive"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm("⚠️ Supprimer ce message définitivement ? (admin)")) handleAdminDelete(msg.id);
+                              }}
+                              className="p-2.5 rounded-lg hover:bg-red-600/20 active:bg-red-600/20 transition-colors text-red-500"
+                              title="Supprimer (admin)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       )}
                       {isDeleted ? (
@@ -390,23 +422,36 @@ export default function ChatPage() {
                                 className="max-w-full max-h-64 object-cover cursor-pointer rounded-t-2xl"
                                 onClick={(e) => { e.stopPropagation(); window.open(msg.image_url!, "_blank"); }}
                               />
-                              {/* Edit/Delete overlay for image messages (owner only) */}
-                              {isMe && !isDeleted && !isEditing && (
+                              {/* Edit/Delete overlay for image messages (owner + admin) */}
+                              {(isMe || isAdmin) && !isDeleted && !isEditing && (
                                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
-                                    className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-colors"
-                                    title="Modifier"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id); }}
-                                    className="p-1.5 rounded-lg bg-black/60 hover:bg-red-600/80 text-white transition-colors"
-                                    title="Supprimer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  {isMe && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); startEdit(msg); }}
+                                      className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-colors"
+                                      title="Modifier"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {isMe && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); if (window.confirm("Supprimer ce message ?")) handleDelete(msg.id); }}
+                                      className="p-1.5 rounded-lg bg-black/60 hover:bg-red-600/80 text-white transition-colors"
+                                      title="Supprimer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {isAdmin && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); if (window.confirm("⚠️ Supprimer ce message définitivement ? (admin)")) handleAdminDelete(msg.id); }}
+                                      className="p-1.5 rounded-lg bg-black/60 hover:bg-red-700/80 text-red-400 transition-colors"
+                                      title="Supprimer (admin)"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>

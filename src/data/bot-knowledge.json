@@ -9,7 +9,9 @@
         "A une société d'immobilier qui s'appelle Nellimmo",
         "Elle est la seule employée de Nellimmo",
         "A deux filles : Ava et Mia",
-        "Séparée de leur père depuis un peu plus d'un an et demi"
+        "Séparée de leur père depuis un peu plus d'un an et demi",
+        "Adore le metal et la musique en général",
+        "Fan de sport en général, surtout la course à pied — vraie runneuse"
       ],
       "fun_facts": [],
       "anecdotes": []
@@ -26,7 +28,8 @@
         "Habite à Lyon",
         "Bientôt muté à Bordeaux",
         "Absolument fan de Jack Daniels — c'est sa boisson fétiche",
-        "A fait du parkour dans sa jeunesse avec Niels et Ludo (a arrêté depuis)"
+        "A fait du parkour dans sa jeunesse avec Niels et Ludo (a arrêté depuis)",
+        "Joue au foot régulièrement avec ses collègues de la police"
       ],
       "famille": {
         "femme": "Charline",
@@ -41,7 +44,8 @@
       "relation": "Pote",
       "infos": [
         "Habite à Fos-sur-Mer",
-        "A fait du parkour dans sa jeunesse avec Niels et Charly (a arrêté depuis)"
+        "A fait du parkour dans sa jeunesse avec Niels et Charly (a arrêté depuis)",
+        "A acheté une Tesla Model 3 il y a quelques mois"
       ],
       "famille": {
         "femme": "Pauline",
@@ -65,7 +69,7 @@
         "Avait une société d'audiovisuel avec Emily appelée Ynception — ils créaient des vidéos ensemble",
         "Passionné de nouvelles technologies et d'IA",
         "L'informaticien et l'ingénieur du groupe",
-        "Surnommé 'Starlink' par Charly et Bber"
+        "Surnommé 'Starlink' par Charly et Bber car c'est le geek du groupe qui connait tout des nouvelles technologies"
       ],
       "famille": {
         "compagne": "Nelly"
@@ -77,7 +81,10 @@
       "prenom": "Alva",
       "pseudo": "Alvathor",
       "relation": "Sœur de Niels",
-      "infos": [],
+      "infos": [
+        "Habite en Nouvelle-Calédonie",
+        "Web designer de métier"
+      ],
       "fun_facts": [],
       "anecdotes": []
     },
@@ -115,7 +122,8 @@
       "infos": [
         "Habite à Chazay-d'Azergues",
         "A une société de paysagisme",
-        "Travaillait avant avec son frère Xav (qui ne travaille plus avec lui)"
+        "Travaillait avant avec son frère Xav (qui ne travaille plus avec lui)",
+        "Sa femme s'appelle Marie"
       ],
       "fun_facts": [],
       "anecdotes": []
@@ -126,6 +134,17 @@
       "relation": "Pote",
       "infos": [
         "Travaille dans la police"
+      ],
+      "fun_facts": [],
+      "anecdotes": []
+    },
+    "max": {
+      "prenom": "Max",
+      "pseudo": "",
+      "relation": "Pote",
+      "infos": [
+        "Cascadeur de métier",
+        "S'est blessé au genou il y a quelques mois"
       ],
       "fun_facts": [],
       "anecdotes": []
