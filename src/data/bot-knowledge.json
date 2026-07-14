@@ -25,7 +25,8 @@
         "A été agent pénitentiaire",
         "Habite à Lyon",
         "Bientôt muté à Bordeaux",
-        "Absolument fan de Jack Daniels — c'est sa boisson fétiche"
+        "Absolument fan de Jack Daniels — c'est sa boisson fétiche",
+        "A fait du parkour dans sa jeunesse avec Niels et Ludo (a arrêté depuis)"
       ],
       "famille": {
         "femme": "Charline",
@@ -39,7 +40,8 @@
       "pseudo": "Rosette",
       "relation": "Pote",
       "infos": [
-        "Habite à Fos-sur-Mer"
+        "Habite à Fos-sur-Mer",
+        "A fait du parkour dans sa jeunesse avec Niels et Charly (a arrêté depuis)"
       ],
       "famille": {
         "femme": "Pauline",
@@ -56,7 +58,9 @@
       "relation": "Admin / Orga",
       "infos": [
         "Propriétaire de la maison du Cros",
-        "Hôte du festival"
+        "Hôte du festival",
+        "A fait du parkour dans sa jeunesse avec Charly et Ludo — seul des trois à avoir continué",
+        "A fait du parkour son métier"
       ],
       "famille": {
         "compagne": "Nelly"
