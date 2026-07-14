@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const MIMO_API_KEY = process.env.MIMO_API_KEY;
+const MIMO_API_KEY = process.env.MIMO_API_KEY || process.env.NEXT_PUBLIC_MIMO_API_KEY;
 const MIMO_ENDPOINT = "https://mimo-v2.com/v1/chat/completions";
 const MIMO_MODEL = "mimo-v2.5-pro";
 
