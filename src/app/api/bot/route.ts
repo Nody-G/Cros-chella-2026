@@ -281,7 +281,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${MIMO_API_KEY}`,
+        "api-key": MIMO_API_KEY!,
       },
       body: JSON.stringify({
         model: MIMO_MODEL,
