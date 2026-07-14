@@ -226,7 +226,14 @@ async function checkRateLimit(participantId: string): Promise<{ allowed: boolean
 export async function POST(req: NextRequest) {
   try {
     if (!MIMO_API_KEY) {
-      return NextResponse.json({ error: "Clé API Mimo non configurée" }, { status: 500 });
+      return NextResponse.json({ 
+        error: "Clé API Mimo non configurée",
+        debug: {
+          hasMimoKey: !!process.env.MIMO_API_KEY,
+          hasPublicKey: !!process.env.NEXT_PUBLIC_MIMO_API_KEY,
+          allEnvKeys: Object.keys(process.env).filter(k => k.includes('MIMO') || k.includes('mimo'))
+        }
+      }, { status: 500 });
     }
 
     const body = await req.json();
