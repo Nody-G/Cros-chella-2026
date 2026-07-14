@@ -2,6 +2,14 @@
   {
     "date": "2026-07-14",
     "tag": "feature",
+    "emoji": "🗑️",
+    "title": "Chat : suppression admin sans trace",
+    "description": "L'admin peut supprimer n'importe quel message — texte ou image — sans laisser de trace.",
+    "details": "Niels (admin) dispose d'un pouvoir de modération total sur le chat. Il peut supprimer définitivement n'importe quel message envoyé par n'importe quel participant, que ce soit du texte ou une image. La suppression est totale : le message disparaît de la base de données SQL ET du Storage Supabase pour les images. Aucun message « [message supprimé] » n'apparaît — le message s'évapore purement et simplement. La suppression est synchronisée en temps réel pour tous les utilisateurs connectés. Sur mobile, appui long sur n'importe quel message pour accéder au bouton de suppression admin (icône 🗑️ rouge). Sur PC, clic simple. Les images des autres participants ont aussi un overlay de suppression visible par l'admin."
+  },
+  {
+    "date": "2026-07-14",
+    "tag": "feature",
     "emoji": "🤖",
     "title": "Botardèche : base de connaissances enrichie",
     "description": "Le bot connaît maintenant les participants en détail — villes, métiers, famille, anecdotes.",
