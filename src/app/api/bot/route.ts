@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
     if (!mimoRes.ok) {
       const errText = await mimoRes.text();
       console.error("Mimo API error:", mimoRes.status, errText);
-      return NextResponse.json({ error: "Erreur API Mimo" }, { status: 502 });
+      return NextResponse.json({ error: `Erreur API Mimo (${mimoRes.status}): ${errText}` }, { status: 502 });
     }
 
     const mimoData = await mimoRes.json();
