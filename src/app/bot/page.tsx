@@ -8,6 +8,108 @@ import { Send, Loader2, Trash2, Bot, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 
+// ============================================
+// Simple markdown renderer for bot messages
+// ============================================
+function renderMarkdown(text: string): React.ReactNode[] {
+  // Normalize line endings
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Split into paragraphs (double newline)
+  const blocks = normalized.split(/\n{2,}/);
+
+  return blocks.map((block, bi) => {
+    const trimmed = block.trim();
+    if (!trimmed) return null;
+
+    // Check if it's a list block (lines starting with - or *)
+    const lines = trimmed.split("\n");
+    const isList = lines.every((l) => /^\s*[-*•]\s/.test(l) || l.trim() === "");
+
+    if (isList) {
+      const items = lines.filter((l) => /^\s*[-*•]\s/.test(l));
+      return (
+        <ul key={bi} className="list-none space-y-1 my-1.5">
+          {items.map((item, li) => {
+            const content = item.replace(/^\s*[-*•]\s/, "");
+            return (
+              <li key={li} className="flex gap-1.5">
+                <span className="text-orange-400 shrink-0">▸</span>
+                <span>{renderInline(content)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    // Check if it's a heading (starts with #)
+    if (/^#{1,3}\s/.test(trimmed)) {
+      const level = trimmed.match(/^(#{1,3})\s/)?.[1].length || 1;
+      const headingText = trimmed.replace(/^#{1,3}\s/, "");
+      const sizeClass = level === 1 ? "text-base font-bold" : level === 2 ? "text-sm font-bold" : "text-sm font-semibold";
+      return (
+        <p key={bi} className={`${sizeClass} text-orange-300 my-1.5`}>
+          {renderInline(headingText)}
+        </p>
+      );
+    }
+
+    // Regular paragraph — preserve single newlines within the block
+    return (
+      <p key={bi} className="my-1">
+        {lines.map((line, li) => (
+          <span key={li}>
+            {renderInline(line)}
+            {li < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </p>
+    );
+  }).filter(Boolean);
+}
+
+// Render inline markdown: **bold**, *italic*, `code`
+function renderInline(text: string): React.ReactNode[] {
+  // Split on markdown patterns: **bold**, *italic*, `code`, emoji patterns
+  const parts: React.ReactNode[] = [];
+  // Regex: **bold** | *italic* | `code` | regular text
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(`(.+?)`)/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before match
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[1]) {
+      // **bold**
+      parts.push(<strong key={key++} className="font-bold text-white">{match[2]}</strong>);
+    } else if (match[3]) {
+      // *italic*
+      parts.push(<em key={key++} className="italic text-white/90">{match[4]}</em>);
+    } else if (match[5]) {
+      // `code`
+      parts.push(
+        <code key={key++} className="bg-white/10 px-1 py-0.5 rounded text-orange-300 text-xs font-mono">
+          {match[6]}
+        </code>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
 interface BotMessage {
   id: string;
   role: "user" | "assistant";
@@ -270,7 +372,11 @@ export default function BotPage() {
                       <span className="text-orange-400 text-xs font-bold">Botardèche</span>
                     </div>
                   )}
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  {msg.role === "user" ? (
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  ) : (
+                    <div className="text-sm leading-relaxed space-y-0.5">{renderMarkdown(msg.content)}</div>
+                  )}
                   <p className={`text-[10px] mt-1 ${msg.role === "user" ? "text-white/40" : "text-white/30"}`}>
                     {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
                       hour: "2-digit",
