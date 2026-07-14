@@ -7,7 +7,9 @@
       "relation": "Meuf de Niels",
       "infos": [
         "A une société d'immobilier qui s'appelle Nellimmo",
-        "Elle est la seule employée de Nellimmo"
+        "Elle est la seule employée de Nellimmo",
+        "A deux filles : Ava et Mia",
+        "Séparée de leur père depuis un peu plus d'un an et demi"
       ],
       "fun_facts": [],
       "anecdotes": []
@@ -20,7 +22,10 @@
         "Policier de métier",
         "A travaillé à Paris et Lyon",
         "A été CRS (Compagnies Républicaines de Sécurité)",
-        "A été agent pénitentiaire"
+        "A été agent pénitentiaire",
+        "Habite à Lyon",
+        "Bientôt muté à Bordeaux",
+        "Absolument fan de Jack Daniels — c'est sa boisson fétiche"
       ],
       "famille": {
         "femme": "Charline",
@@ -71,7 +76,10 @@
       "prenom": "Célis",
       "pseudo": "l'homme de l'ombre",
       "relation": "Frère de Niels",
-      "infos": [],
+      "infos": [
+        "Habite à Francheville",
+        "Ingénieur son chez GL Events"
+      ],
       "fun_facts": [],
       "anecdotes": []
     },
@@ -80,7 +88,11 @@
       "pseudo": "El hombre calvo de músculos prominentes",
       "relation": "Pote",
       "infos": [
-        "A eu l'idée des jeux"
+        "A eu l'idée des jeux",
+        "Habite à Chazay-d'Azergues",
+        "Ancien associé d'Hervé dans la société de paysagisme (ne travaille plus avec lui)",
+        "L'un des meilleurs amis de Charly",
+        "Cascadeur — habite un peu partout à cause de ses tournages"
       ],
       "fun_facts": [],
       "anecdotes": []
@@ -89,7 +101,11 @@
       "prenom": "Hervé",
       "pseudo": "",
       "relation": "Pote",
-      "infos": [],
+      "infos": [
+        "Habite à Chazay-d'Azergues",
+        "A une société de paysagisme",
+        "Travaillait avant avec son frère Xav (qui ne travaille plus avec lui)"
+      ],
       "fun_facts": [],
       "anecdotes": []
     },
@@ -97,7 +113,9 @@
       "prenom": "Bber",
       "pseudo": "Punch des îles",
       "relation": "Pote",
-      "infos": [],
+      "infos": [
+        "Travaille dans la police"
+      ],
       "fun_facts": [],
       "anecdotes": []
     }
