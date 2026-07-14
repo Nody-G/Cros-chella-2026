@@ -21,6 +21,7 @@ export default function BotPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const skipNextBotInsert = useRef(false); // Flag to skip realtime duplicate
   const { currentParticipant } = useAuth();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +62,11 @@ export default function BotPage() {
         },
         (payload) => {
           const newMsg = payload.new as BotMessage;
+          // Skip if we already added this bot reply directly after fetch
+          if (newMsg.role === "assistant" && skipNextBotInsert.current) {
+            skipNextBotInsert.current = false;
+            return;
+          }
           setMessages((prev) => {
             // Avoid duplicates (we already add user messages optimistically)
             if (prev.some((m) => m.id === newMsg.id)) return prev;
@@ -128,14 +134,11 @@ export default function BotPage() {
         }
       } else {
         setRemaining(data.remaining);
-        // Add bot reply directly for snappiness (realtime may also deliver it)
+        // Set flag so realtime doesn't duplicate this reply
+        skipNextBotInsert.current = true;
+        // Add bot reply directly for snappiness
         setMessages((prev) => {
           const withoutTemp = prev.filter((m) => m.id !== tempId);
-          // Check if realtime already added the reply
-          if (withoutTemp.some((m) => m.role === "assistant" && m.content === data.reply)) {
-            return withoutTemp;
-          }
-          // Add the reply directly
           return [
             ...withoutTemp,
             {
