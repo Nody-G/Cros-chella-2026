@@ -305,8 +305,9 @@ export async function POST(req: NextRequest) {
       reply: botReply,
       remaining: rateCheck.remaining - 1,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Bot API error:", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Erreur serveur: ${msg}` }, { status: 500 });
   }
 }
