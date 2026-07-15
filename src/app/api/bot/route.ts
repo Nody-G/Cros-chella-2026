@@ -306,7 +306,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { participantId, message } = body;
+    const { participantId, message, chatMention, chatContext } = body;
 
     if (!participantId || !message?.trim()) {
       return NextResponse.json({ error: "participantId et message requis" }, { status: 400 });
@@ -328,21 +328,38 @@ export async function POST(req: NextRequest) {
       content: message.trim(),
     });
 
-    // Load conversation history (last N messages)
-    const { data: history } = await supabase
-      .from("bot_conversations")
-      .select("role, content")
-      .eq("participant_id", participantId)
-      .order("created_at", { ascending: true })
-      .limit(MAX_HISTORY);
-
     // Build global context from DB
     const globalContext = await buildGlobalContext();
+
+    // Build conversation history depending on context
+    let conversationHistory: { role: "user" | "assistant"; content: string }[] = [];
+
+    if (chatMention && Array.isArray(chatContext) && chatContext.length > 0) {
+      // Chat mention mode: use recent chat messages as context
+      const chatHistoryText = chatContext
+        .map((m: { author: string; content: string }) => `${m.author}: ${m.content}`)
+        .join("\n");
+      conversationHistory = [
+        {
+          role: "user",
+          content: `Voici les derniers messages du chat général pour que tu aies le contexte :\n\n${chatHistoryText}\n\n---\n${message}`,
+        },
+      ];
+    } else {
+      // DM mode: load private conversation history
+      const { data: history } = await supabase
+        .from("bot_conversations")
+        .select("role, content")
+        .eq("participant_id", participantId)
+        .order("created_at", { ascending: true })
+        .limit(MAX_HISTORY);
+      conversationHistory = (history || []).map((h) => ({ role: h.role as "user" | "assistant", content: h.content }));
+    }
 
     // Build messages array for Mimo
     const messages = [
       { role: "system", content: buildSystemPrompt(globalContext) },
-      ...(history || []).map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
+      ...conversationHistory,
     ];
 
     // Call Mimo API

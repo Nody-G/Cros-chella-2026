@@ -150,14 +150,21 @@ export default function ChatPage() {
     // Check if message mentions @bot → trigger Botardèche reply
     const msgText = newMessage.trim();
     if (msgText.toLowerCase().includes("@bot") || msgText.toLowerCase().includes("@botardeche")) {
+      // Build chat context: last 15 messages from the chat (with author names)
+      const recentChat = messages.slice(-15).map((m) => ({
+        author: m.author?.name || m.author?.pseudo || "Inconnu",
+        content: m.content || "[image]",
+      }));
+
       // Fire and forget — bot replies asynchronously
       fetch("/api/bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: currentUserId,
-          message: `Quelqu'un t'a mentionné dans le chat général. Voici le message : "${msgText}". Réponds dans le style de Botardèche, comme si tu répondais dans le chat du festival.`,
+          message: `${currentParticipant?.name || "Quelqu'un"} t'a mentionné dans le chat général. Voici son message : "${msgText}". Réponds dans le style de Botardèche, comme si tu répondais dans le chat du festival.`,
           chatMention: true,
+          chatContext: recentChat,
         }),
       }).then(async (res) => {
         if (res.ok) {
