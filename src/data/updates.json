@@ -2,6 +2,14 @@
   {
     "date": "2026-07-14",
     "tag": "feature",
+    "emoji": "🤖",
+    "title": "Botardèche : le bot du festival",
+    "description": "Tape @bot dans le chat pour parler à Botardèche, le bot officiel de Cros-Chella.",
+    "details": "Botardèche est un assistant IA intégré au chat général. Pour l'appeler, il suffit de taper @bot (ou @botardeche) suivi de ta question dans le chat. Il connaît tout sur le festival : les participants, le programme, les jeux, les lieux, et plein d'anecdotes. Tu peux lui demander n'importe quoi — il répond dans le style décalé de Cros-Chella avec des emojis et son humour à lui. Il a accès à la liste complète des participants avec leurs profils, villes, métiers et anecdotes. Ses réponses s'affichent directement dans le chat comme un message normal."
+  },
+  {
+    "date": "2026-07-14",
+    "tag": "feature",
     "emoji": "🗑️",
     "title": "Chat : suppression admin sans trace",
     "description": "L'admin peut supprimer n'importe quel message — texte ou image — sans laisser de trace.",
