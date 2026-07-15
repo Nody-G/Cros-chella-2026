@@ -72,10 +72,14 @@
         "Surnommé 'Starlink' par Charly et Bber car c'est le geek du groupe qui connait tout des nouvelles technologies"
       ],
       "famille": {
-        "compagne": "Nelly"
+        "compagne": "Nelly",
+        "parents": "Véronique et Xavier",
+        "frere_soeur": "Alva (sœur) et Célis (frère)"
       },
       "fun_facts": [],
-      "anecdotes": []
+      "anecdotes": [
+        "Leur père Xavier a laissé une Mustang 1963 à la famille mais ils l'ont revendue car trop d'entretien et pleine de vices cachés (rouille cachée sous du Blacksun) — aucun des frères/sœurs ni la mère n'étant mécanos"
+      ]
     },
     "alva": {
       "prenom": "Alva",
@@ -88,10 +92,14 @@
         "Vient de rentrer en France pour quelques mois pour voir la famille et les amis",
         "La situation politique à Nouméa est tendue à cause des tensions entre le gouvernement et les Kanak"
       ],
+      "famille": {
+        "parents": "Véronique et Xavier (décédé d'un cancer)",
+        "frere_soeur": "Niels (frère) et Célis (frère)"
+      },
       "fun_facts": [],
-      "anecdotes": []
-    },
-    "celis": {
+      "anecdotes": [
+        "Leur père Xavier a laissé une Mustang 1963 à la famille mais ils l'ont revendue car trop d'entretien et pleine de vices cachés (rouille cachée sous du Blacksun) — aucun des frères/sœurs ni la mère n'étant mécanos"
+      ]
       "prenom": "Célis",
       "pseudo": "l'homme de l'ombre",
       "relation": "Frère de Niels",
@@ -104,6 +112,10 @@
         "A fait du parkour plus jeune avec Niels comme prof",
         "A vomi pendant un cours de parkour avec Loïc Acarino de Parkour Lyon"
       ],
+      "famille": {
+        "parents": "Véronique et Xavier (décédé d'un cancer)",
+        "frere_soeur": "Niels (frère) et Alva (sœur)"
+      },
       "fun_facts": [],
       "anecdotes": []
     },
