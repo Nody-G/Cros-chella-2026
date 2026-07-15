@@ -107,12 +107,23 @@
         "A eu l'idée des jeux",
         "Habite à Chazay-d'Azergues",
         "Ancien associé d'Hervé dans la société de paysagisme (ne travaille plus avec lui)",
+        "Futur rentier avec Hervé",
+        "Travaille en tant que commercial dans une société de luminaires",
+        "Tête de banquier",
+        "Son père a un bonnet de bain géant",
+        "Pieds palmés",
+        "Adore les échecs, la moto, les shampoings, mettre le feu à tout",
+        "Aime se battre",
+        "A peur de sauter de la rivière et des poux",
+        "Sa phrase fétiche : « Je suis brassé... »",
         "L'un des meilleurs amis de Charly",
-        "Cascadeur — habite un peu partout à cause de ses tournages",
         "A une maison à Chazay-d'Azergues où il organisait des soirées légendaires — LE spot des meilleures soirées du coin",
         "Vient d'investir avec sa meuf Mélanie dans une autre maison (a quitté la maison de Chazay)"
       ],
-      "fun_facts": [],
+      "fun_facts": [
+        "Ce n'est PAS lui le cascadeur — c'est Max, un autre pote",
+        "Son père porte un bonnet de bain géant, personne ne sait pourquoi"
+      ],
       "anecdotes": []
     },
     "herve": {
@@ -122,10 +133,22 @@
       "infos": [
         "Habite à Chazay-d'Azergues",
         "A une société de paysagisme",
-        "Travaillait avant avec son frère Xav (qui ne travaille plus avec lui)",
-        "Sa femme s'appelle Marie"
+        "Ancien associé de Xav (ne travaille plus avec lui)",
+        "Futur rentier avec Xav",
+        "Sa femme s'appelle Marie",
+        "A des pieds palmés et un doigt palmé",
+        "Ses doigts sont des boudins mais il roule bien",
+        "Aime la moto",
+        "Roule en voiture comme un idiot"
       ],
-      "fun_facts": [],
+      "famille": {
+        "femme": "Marie",
+        "enfants": ["Léonie", "Basile"]
+      },
+      "fun_facts": [
+        "Pieds palmés + doigt palmé = le mutant du groupe",
+        "Ses doigts sont des boudins mais ça l'empêche pas de rouler"
+      ],
       "anecdotes": []
     },
     "bber": {
@@ -133,9 +156,56 @@
       "pseudo": "Punch des îles",
       "relation": "Pote",
       "infos": [
-        "Travaille dans la police"
+        "Surnommé Punch des îles",
+        "Travaille en police municipale à Saint-Fond (anciennement police nationale)",
+        "Maire partie LFI",
+        "Un Réunionnais qui cauze créole",
+        "De Saint-André, le côté où il pleut tout le temps",
+        "Est fer à Valorant",
+        "Le plus gros fumeur du groupe",
+        "Adore rouler des joints",
+        "A une grande sœur Johanna qui fait du twerk",
+        "Fait de bons rougails",
+        "S'est fait les ligaments croisés au concours de police nationale en sautant de la poutre"
       ],
-      "fun_facts": [],
+      "fun_facts": [
+        "S'est explosé les ligaments en sautant de la poutre au concours de police — la légende",
+        "Le seul flic qui roule plus de joints que de PV"
+      ],
+      "anecdotes": []
+    },
+    "ludo": {
+      "prenom": "Ludo",
+      "pseudo": "Rosette",
+      "relation": "Pote",
+      "infos": [
+        "Habite à Fos-sur-Mer",
+        "A fait du parkour dans sa jeunesse avec Niels et Charly (a arrêté depuis)",
+        "A acheté une Tesla Model 3 il y a quelques mois",
+        "Alias Tête Rouge",
+        "Adore les gâteaux secs, manger et manger",
+        "Était fort en équilibre sur les mains mais maintenant ne tient pas 15 secondes",
+        "A peur de sauter de hauteur dans la rivière — même pas 5 mètres",
+        "Va tenter d'être le maître du week-end",
+        "Adore les défis",
+        "Se fait brainer souvent par Charly",
+        "Est sec comme un coucou",
+        "A failli finir en SEGPA au collège",
+        "Au début du parkour, on l'appelait le Cameraman car il était nul",
+        "Sa première copine s'appelait Léa",
+        "Sa première relation sexuelle avec Marie Petit Pied Rond",
+        "A plus de vaisseaux sanguins dans le cou que sur le sexe"
+      ],
+      "famille": {
+        "femme": "Pauline",
+        "enfants": ["Emy (fille)"]
+      },
+      "fun_facts": [
+        "Pauline (sa femme) est un peu maniaque du ménage",
+        "Surnommé « le Cameraman » au début du parkour parce qu'il filmait tout vu qu'il était nul",
+        "A failli finir en SEGPA — le redressement est réel",
+        "Marie Petit Pied Rond... on en reparlera"
+      ],
       "anecdotes": []
     },
     "max": {
