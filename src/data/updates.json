@@ -9,6 +9,22 @@
   },
   {
     "date": "2026-07-14",
+    "tag": "improvement",
+    "emoji": "🧹",
+    "title": "Chat : plus de « message supprimé »",
+    "description": "Les messages supprimés disparaissent complètement — plus de trace « 🚫 message supprimé ».",
+    "details": "Avant, quand un message était supprimé, une bulle « 🚫 Message supprimé » restait visible dans le chat. C'était brouillon, surtout quand l'admin supprimait des messages de spam ou de test. Maintenant, les messages supprimés sont totalement invisibles — ils n'apparaissent plus du tout dans le flux du chat. Nettoyé."
+  },
+  {
+    "date": "2026-07-14",
+    "tag": "improvement",
+    "emoji": "📝",
+    "title": "Chat : retours à la ligne des messages",
+    "description": "Les messages longs du bot et des participants respectent les retours à la ligne.",
+    "details": "Les messages envoyés dans le chat (notamment les réponses de Botardèche qui sont souvent des listes ou des paragraphes) affichent maintenant correctement les retours à la ligne. Avant, tout était collé en un seul bloc illisible. Maintenant, chaque \\n dans le message devient un vrai saut de ligne à l'écran."
+  },
+  {
+    "date": "2026-07-14",
     "tag": "feature",
     "emoji": "🤖",
     "title": "Botardèche : base de connaissances enrichie",
@@ -342,5 +358,29 @@
     "title": "Botardèche : le bot trash du Cros-Chella",
     "description": "Discute avec Botardèche, le bot IA qui connaît tout sur tout le monde.",
     "details": "Nouvelle page dédiée pour discuter 1-on-1 avec Botardèche (menu Plus → 🤖). Il connaît tous les profils, le programme, les jeux, les sondages, les dépenses, le billard et les badges. Pose-lui une question, demande un roast, ou discute simplement. Tu peux aussi le mentionner dans le chat principal avec @bot pour qu'il réponde à tous. Powered by Xiaomi MiMo v2.5. Limité à 20 messages par heure."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "📷",
+    "title": "Chat : envoi d'images",
+    "description": "Envoie des photos directement dans le chat.",
+    "details": "Tu peux maintenant envoyer des images dans le chat via le bouton 📎 à gauche du champ de message. Deux options : importer depuis ta galerie ou prendre une photo avec l'appareil. Les images sont compressées automatiquement pour ne pas exploser la 4G. Après l'envoi, l'app te propose d'ajouter l'image à la galerie du festival avec une légende optionnelle."
+  },
+  {
+    "date": "2026-07-12",
+    "tag": "feature",
+    "emoji": "😂",
+    "title": "Chat : réactions emoji",
+    "description": "Réagis aux messages avec des emojis (❤️ 😂 🔥 👍 💀...).",
+    "details": "Chaque message du chat a un bouton smiley discret. Appuie pour ouvrir le picker avec 10 emojis : ❤️ 😂 🔥 👍 👎 😮 😢 🎉 💀 🤡. Ta réaction s'affiche sous le message avec le compteur. Appuie à nouveau pour retirer ta réaction. Tout est en temps réel."
+  },
+  {
+    "date": "2026-07-11",
+    "tag": "improvement",
+    "emoji": "📅",
+    "title": "Programme : étendu au jeudi",
+    "description": "Le planning inclut maintenant le jeudi pour les early birds.",
+    "details": "Le programme du Cros-Chella couvre maintenant du jeudi soir au dimanche. Les participants qui arrivent en avance le jeudi peuvent voir et proposer des activités pour cette soirée. Le planning affiche les créneaux par jour avec timeline."
   }
 ]

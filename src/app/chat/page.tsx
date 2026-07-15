@@ -307,6 +307,9 @@ export default function ChatPage() {
               const isEdited = !!msg.edited_at && !isDeleted;
               const isEditing = editingId === msg.id;
 
+              // Masquer complètement les messages supprimés (admin delete sans trace)
+              if (isDeleted) return null;
+
               return (
                 <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs overflow-hidden ${isMe ? "bg-primary/20" : ""}`}>
@@ -392,11 +395,7 @@ export default function ChatPage() {
                           )}
                         </div>
                       )}
-                      {isDeleted ? (
-                        <div className="px-3 py-2 text-sm italic opacity-50">
-                          🚫 Message supprimé
-                        </div>
-                      ) : isEditing ? (
+                      {isEditing ? (
                         <div className="px-2 py-1.5 flex items-center gap-1">
                           <input
                             autoFocus
@@ -457,7 +456,7 @@ export default function ChatPage() {
                             </div>
                           )}
                           {msg.content && (
-                            <div className={`px-3 py-2 text-sm ${msg.image_url ? "pt-1" : ""}`}>
+                            <div className={`px-3 py-2 text-sm whitespace-pre-line ${msg.image_url ? "pt-1" : ""}`}>
                               {msg.content}
                             </div>
                           )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award, Wallet, Bot } from "lucide-react";
+import { Home, Users, Gamepad2, CalendarDays, MoreHorizontal, LogOut, UserCircle, Award, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +22,6 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
-  { href: "/bot", icon: Bot, label: "Botardèche", emoji: "🤖" },
   { href: "/jeux", icon: Gamepad2, label: "Jeux", emoji: "🎮" },
   { href: "/depenses", icon: Wallet, label: "Dépenses", emoji: "💰" },
   { href: "/alcool", icon: Wine, label: "Alcool", emoji: "🍻" },
