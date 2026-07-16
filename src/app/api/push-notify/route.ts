@@ -6,19 +6,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Set VAPID keys
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+// Set VAPID keys (with fallbacks so Vercel always has keys even without env setup)
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BAYlSx2VGmwAji5M4_FZAryjFV1flBD9o4Onclkfk8O6KpyaRYE3Zc82RgfnJY6smByNditRu2KAMCxjbKTHp4I";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "9OUs8naBem72ow-qOZGOCHgQc9mGxZ-FaLZ-vNB8p_0";
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    "mailto:niels@moulinducros.com",
-    vapidPublicKey,
-    vapidPrivateKey
-  );
-} else {
-  console.warn("VAPID keys are missing from environment variables.");
-}
+webpush.setVapidDetails(
+  "mailto:niels@moulinducros.com",
+  vapidPublicKey,
+  vapidPrivateKey
+);
 
 export async function POST(req: NextRequest) {
   try {

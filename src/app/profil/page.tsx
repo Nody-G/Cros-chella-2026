@@ -104,10 +104,12 @@ export default function ProfilPage() {
       if (res.ok) {
         alert("Notification de test envoyée ! Tu devrais la recevoir dans quelques instants sur tes appareils abonnés.");
       } else {
-        alert("Erreur lors de l'envoi du test.");
+        const errData = await res.json().catch(() => ({}));
+        alert("Erreur serveur (" + res.status + ") : " + (errData.error || errData.message || res.statusText));
       }
-    } catch {
-      alert("Erreur lors du test de notification.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert("Erreur réseau lors du test : " + (error.message || String(error)));
     }
   };
 
