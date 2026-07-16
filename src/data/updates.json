@@ -1,5 +1,13 @@
 [
   {
+    "date": "2026-07-16",
+    "tag": "feature",
+    "emoji": "🔔",
+    "title": "Notifications Push en temps réel",
+    "description": "Active les notifications push pour ne manquer aucun message important du chat général.",
+    "details": "L'application gère désormais les notifications push en tâche de fond (PWA native). Rends-toi dans les réglages de ton profil pour activer les notifications push sur ton téléphone. Une bannière apparaîtra également dans le chat si ce n'est pas encore activé. Tu recevras une notification système dès que quelqu'un ou Botardèche poste un message !"
+  },
+  {
     "date": "2026-07-15",
     "tag": "improvement",
     "emoji": "🤖",

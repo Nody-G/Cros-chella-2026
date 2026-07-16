@@ -13,6 +13,7 @@ import { SMOKING_LIST } from "@/lib/smoking-data";
 import { compressImage, getCroppedImage } from "@/lib/image-utils";
 import Cropper from "react-easy-crop";
 import type { Point, Area } from "react-easy-crop";
+import { getPushSubscription, subscribeToPush, unsubscribeFromPush } from "@/lib/push-utils";
 
 const EMOJI_CHOICES = [
   "😎", "🤪", "🗿", "🦊", "🌶️", "🎸", "💀", "🤡", "🦄", "🐸",
@@ -39,6 +40,49 @@ export default function ProfilPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Push Notifications state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [checkingPush, setCheckingPush] = useState(true);
+  const [pushPermission, setPushPermission] = useState<string>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hasSupport = "serviceWorker" in navigator && "PushManager" in window;
+      setPushSupported(hasSupport);
+      setPushPermission(Notification.permission);
+      
+      if (hasSupport) {
+        getPushSubscription().then((sub) => {
+          setPushSubscribed(!!sub);
+          setCheckingPush(false);
+        }).catch(() => setCheckingPush(false));
+      } else {
+        setCheckingPush(false);
+      }
+    }
+  }, []);
+
+  const handleTogglePush = async () => {
+    if (!currentParticipant) return;
+    
+    if (pushSubscribed) {
+      const ok = await unsubscribeFromPush();
+      if (ok) {
+        setPushSubscribed(false);
+        setPushPermission(Notification.permission);
+      }
+    } else {
+      const ok = await subscribeToPush(currentParticipant.id);
+      if (ok) {
+        setPushSubscribed(true);
+        setPushPermission(Notification.permission);
+      } else {
+        setPushPermission(Notification.permission);
+      }
+    }
+  };
 
   // Profile fields
   const [pseudo, setPseudo] = useState("");
@@ -675,6 +719,53 @@ export default function ProfilPage() {
               Ton code secret personnel. Garde-le pour toi, c&apos;est sacré. 🔒
             </p>
           </div>
+
+          {/* Push Notifications Settings Card */}
+          {pushSupported && (
+            <Card className="border-border bg-card">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Notifications Push 🔔</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Reçois des alertes directes sur ton téléphone.
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    {checkingPush ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant={pushSubscribed ? "destructive" : "default"}
+                        size="sm"
+                        onClick={handleTogglePush}
+                        className="text-xs h-8"
+                      >
+                        {pushSubscribed ? "Désactiver" : "Activer"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {!checkingPush && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {pushPermission === "denied" ? (
+                      <span className="text-destructive font-medium">
+                        ⚠️ Bloqué : Autorise les notifications dans les réglages de ton navigateur pour cet appareil.
+                      </span>
+                    ) : pushSubscribed ? (
+                      <span className="text-green-500 font-medium">
+                        ✓ Actif : Tu reçois les notifications push sur cet appareil.
+                      </span>
+                    ) : (
+                      <span>Les notifications push sont inactives sur cet appareil.</span>
+                    )}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Save error */}
           {saveError && (

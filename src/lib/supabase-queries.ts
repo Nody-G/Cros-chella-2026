@@ -417,6 +417,18 @@ export async function getMessages(): Promise<Message[]> {
   return data as Message[];
 }
 
+export async function triggerPushNotification(authorId: string, content: string, imageUrl?: string): Promise<void> {
+  try {
+    fetch("/api/push-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authorId, text: content, imageUrl }),
+    }).catch((err) => console.error("Failed to trigger push notification API:", err));
+  } catch (err) {
+    console.error("Error in triggerPushNotification:", err);
+  }
+}
+
 export async function sendMessage(authorId: string, content: string, imageUrl?: string): Promise<boolean> {
   const insertData: { author_id: string; content: string; image_url?: string } = { author_id: authorId, content };
   if (imageUrl) insertData.image_url = imageUrl;
@@ -429,6 +441,10 @@ export async function sendMessage(authorId: string, content: string, imageUrl?: 
     console.error("Error sending message:", error);
     return false;
   }
+
+  // Trigger push notifications asynchronously
+  triggerPushNotification(authorId, content, imageUrl);
+
   return true;
 }
 

@@ -19,7 +19,7 @@ Web app mobile-first pour organiser, s'amuser et garder les souvenirs du **Cros-
 | 🎱 **Billard** | Tournoi par équipes avec bracket automatique et suivi des scores |
 | 🏅 **Badges** | Badges custom décernés par l'admin (emoji + titre + description), visibles sur la page Potes, cliquables sur mobile |
 | 🍺 **Alcool** | Page dédiée avec préférences de chacun et inventaire absurde "Botardèche" |
-| 🔔 **Notifications** | Pastilles rouges en temps réel sur Chat, Programme, Galerie, Jeux, Dépenses, Sondages, Badges |
+| 🔔 **Notifications** | Pastilles rouges en temps réel + **Notifications Push natives (PWA)** en tâche de fond pour ne rater aucun message du chat |
 | 📊 **Sondages** | Votes en temps réel avec barres de résultats animées et compteur pulse |
 | 🐛 **Feedback** | « Signaler un bug ou proposer une idée » — feedback anonyme pour améliorer l'app, admin avec statuts persistants |
 

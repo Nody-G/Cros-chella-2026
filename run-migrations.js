@@ -21,6 +21,7 @@ const MIGRATION_FILES = [
   'supabase/migration-photo-likes.sql',
   'supabase/migration-reactions.sql',
   'supabase/migrations/20260710-badges-billard.sql',
+  'supabase/migration-push-subscriptions.sql',
 ];
 
 async function run() {

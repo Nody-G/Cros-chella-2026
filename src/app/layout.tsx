@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGate } from "@/components/layout/auth-gate";
+import { SwRegister } from "@/components/layout/sw-register";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
     <html lang="fr" className={cn("dark font-sans", inter.variable)}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <AuthProvider>
+          <SwRegister />
           <AuthGate>{children}</AuthGate>
         </AuthProvider>
       </body>
