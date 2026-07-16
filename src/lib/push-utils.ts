@@ -43,7 +43,7 @@ export async function subscribeToPush(participantId: string): Promise<boolean> {
       return false;
     }
 
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BAYlSx2VGmwAji5M4_FZAryjFV1flBD9o4Onclkfk8O6KpyaRYE3Zc82RgfnJY6smByNditRu2KAMCxjbKTHp4I";
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BHljHs9FEEKB2ZMZTltLMrEZykSiCpE0ZURpL8yVELwNS5fXq0Z8G0ufBMY7cvoBH_Y4nMrSLxROSqO8mZwV9ZA";
     if (!publicKey) {
       console.error("VAPID public key is missing.");
       return false;
