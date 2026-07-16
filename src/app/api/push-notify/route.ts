@@ -51,11 +51,13 @@ export async function POST(req: NextRequest) {
     const notificationBody = body || "";
     const targetUrl = url || "/chat";
 
-    // 2. Fetch all subscriptions EXCEPT the author's own subscriptions
-    const { data: subscriptions, error: subError } = await supabase
-      .from("push_subscriptions")
-      .select("*")
-      .neq("participant_id", authorId);
+    // 2. Fetch subscriptions (exclude author's own subscriptions if authorId is a valid UUID)
+    const isUuid = typeof authorId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authorId);
+    let query = supabase.from("push_subscriptions").select("*");
+    if (isUuid) {
+      query = query.neq("participant_id", authorId);
+    }
+    const { data: subscriptions, error: subError } = await query;
 
     if (subError) {
       console.error("Error fetching subscriptions:", subError);
