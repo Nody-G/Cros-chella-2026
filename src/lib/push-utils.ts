@@ -42,7 +42,7 @@ export async function subscribeToPush(participantId: string): Promise<boolean> {
       return false;
     }
 
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BAYlSx2VGmwAji5M4_FZAryjFV1flBD9o4Onclkfk8O6KpyaRYE3Zc82RgfnJY6smByNditRu2KAMCxjbKTHp4I";
     if (!publicKey) {
       console.error("VAPID public key is missing.");
       return false;
@@ -64,8 +64,10 @@ export async function subscribeToPush(participantId: string): Promise<boolean> {
     });
 
     return res.ok;
-  } catch (err) {
-    console.error("Error subscribing to push notifications:", err);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("Error subscribing to push notifications:", error);
+    alert("Erreur lors de l'abonnement : " + (error.message || String(error)));
     return false;
   }
 }
