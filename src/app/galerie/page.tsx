@@ -5,7 +5,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, Loader2, Camera, Upload, Trash2, X, Pencil, Send, ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { getPhotos, updatePhotoCaption, deletePhoto, getPhotoComments, addPhotoComment, deletePhotoComment, togglePhotoLike, getPhotoLikeCount, hasLikedPhoto, getPhotoLikers } from "@/lib/supabase-queries";
+import { getPhotos, updatePhotoCaption, deletePhoto, getPhotoComments, addPhotoComment, deletePhotoComment, togglePhotoLike, getPhotoLikeCount, hasLikedPhoto, getPhotoLikers, triggerPushNotification } from "@/lib/supabase-queries";
 import type { Photo, PhotoComment } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { compressImage, readFileAsDataURL } from "@/lib/image-utils";
@@ -179,7 +179,13 @@ export default function GaleriePage() {
 
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const { error: dbError } = await supabase.from("photos").insert({ author_id: currentParticipant.id, url: urlData.publicUrl, caption: caption.trim() || null });
-    if (dbError) console.error("Error saving photo record:", dbError);
+    if (dbError) {
+      console.error("Error saving photo record:", dbError);
+    } else {
+      const senderName = currentParticipant.pseudo || currentParticipant.name;
+      const bodyText = caption.trim() ? `${senderName} a publié une photo : "${caption.trim()}" 📸` : `${senderName} a publié une photo dans la galerie 📸`;
+      triggerPushNotification(currentParticipant.id, "Galerie 📸", bodyText, "/galerie");
+    }
 
     setSelectedFile(null); setPreview(null); setCaption(""); setUploading(false);
   };

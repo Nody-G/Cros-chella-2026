@@ -22,30 +22,38 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { authorId, text, imageUrl } = await req.json();
+    const bodyJson = await req.json();
+    const { authorId, text, imageUrl } = bodyJson;
+    let { title, body, url } = bodyJson;
 
     if (!authorId) {
       return NextResponse.json({ error: "Missing authorId" }, { status: 400 });
     }
 
-    // 1. Get author name/pseudo
-    const { data: author } = await supabase
-      .from("participants")
-      .select("name, pseudo")
-      .eq("id", authorId)
-      .single();
+    // 1. Get author and format notification details if body is not present
+    if (!body && text) {
+      const { data: author } = await supabase
+        .from("participants")
+        .select("name, pseudo")
+        .eq("id", authorId)
+        .single();
 
-    const senderName = author ? (author.pseudo || author.name) : "Quelqu'un";
-    const notificationTitle = "Cros-Chella 🎪";
-    
-    let notificationBody = "";
-    if (imageUrl && !text) {
-      notificationBody = `${senderName} a envoyé une photo 📷`;
-    } else if (imageUrl && text) {
-      notificationBody = `${senderName}: ${text} 📷`;
-    } else {
-      notificationBody = `${senderName}: ${text || ""}`;
+      const senderName = author ? (author.pseudo || author.name) : "Quelqu'un";
+      title = title || "Cros-Chella 🎪";
+      url = url || "/chat";
+      
+      if (imageUrl && !text) {
+        body = `${senderName} a envoyé une photo 📷`;
+      } else if (imageUrl && text) {
+        body = `${senderName}: ${text} 📷`;
+      } else {
+        body = `${senderName}: ${text || ""}`;
+      }
     }
+
+    const notificationTitle = title || "Cros-Chella 🎪";
+    const notificationBody = body || "";
+    const targetUrl = url || "/chat";
 
     // 2. Fetch all subscriptions EXCEPT the author's own subscriptions
     const { data: subscriptions, error: subError } = await supabase
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
     const payload = JSON.stringify({
       title: notificationTitle,
       body: notificationBody,
-      url: "/chat",
+      url: targetUrl,
       icon: "/logo.png",
       badge: "/logo.png",
     });

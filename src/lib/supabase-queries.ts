@@ -385,6 +385,21 @@ export async function createPoll(question: string, options: string[], createdByI
     console.error("Error creating poll:", error);
     return false;
   }
+
+  // Trigger push notifications
+  try {
+    const { data: creator } = await supabase.from("participants").select("name, pseudo").eq("id", createdById).single();
+    const creatorName = creator ? (creator.pseudo || creator.name) : "Quelqu'un";
+    triggerPushNotification(
+      createdById,
+      "Nouveau Sondage ! 🗳️",
+      `${creatorName} a lancé le sondage : "${question}"`,
+      "/sondages"
+    );
+  } catch (e) {
+    console.error("Error triggering poll push notification:", e);
+  }
+
   return true;
 }
 
@@ -417,12 +432,17 @@ export async function getMessages(): Promise<Message[]> {
   return data as Message[];
 }
 
-export async function triggerPushNotification(authorId: string, content: string, imageUrl?: string): Promise<void> {
+export async function triggerPushNotification(
+  authorId: string,
+  title: string,
+  body: string,
+  url: string = "/chat"
+): Promise<void> {
   try {
     fetch("/api/push-notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authorId, text: content, imageUrl }),
+      body: JSON.stringify({ authorId, title, body, url }),
     }).catch((err) => console.error("Failed to trigger push notification API:", err));
   } catch (err) {
     console.error("Error in triggerPushNotification:", err);
@@ -443,7 +463,19 @@ export async function sendMessage(authorId: string, content: string, imageUrl?: 
   }
 
   // Trigger push notifications asynchronously
-  triggerPushNotification(authorId, content, imageUrl);
+  try {
+    const { data: author } = await supabase
+      .from("participants")
+      .select("name, pseudo")
+      .eq("id", authorId)
+      .single();
+    const senderName = author ? (author.pseudo || author.name) : "Quelqu'un";
+    const bodyText = imageUrl ? (content ? `${senderName}: ${content} 📷` : `${senderName} a envoyé une photo 📷`) : `${senderName}: ${content}`;
+    triggerPushNotification(authorId, "Chat Cros-Chella 💬", bodyText, "/chat");
+  } catch (e) {
+    console.error("Failed to trigger message push:", e);
+    triggerPushNotification(authorId, "Chat Cros-Chella 💬", content || "Nouveau message 📷", "/chat");
+  }
 
   return true;
 }
@@ -657,6 +689,17 @@ export async function saveChatImageToGallery(authorId: string, imageUrl: string,
     console.error("Error saving chat image to gallery:", error);
     return false;
   }
+
+  // Trigger push notification
+  try {
+    const { data: author } = await supabase.from("participants").select("name, pseudo").eq("id", authorId).single();
+    const senderName = author ? (author.pseudo || author.name) : "Quelqu'un";
+    const bodyText = caption?.trim() ? `${senderName} a enregistré une photo du chat dans la galerie : "${caption.trim()}" 📸` : `${senderName} a enregistré une photo du chat dans la galerie 📸`;
+    triggerPushNotification(authorId, "Galerie mise à jour 📸", bodyText, "/galerie");
+  } catch (e) {
+    console.error("Error triggering gallery push:", e);
+  }
+
   return true;
 }
 
@@ -747,6 +790,21 @@ export async function createProgram(entry: {
     console.error("Error creating program entry:", error);
     return false;
   }
+
+  // Trigger notification
+  try {
+    const { data: admin } = await supabase.from("participants").select("id").eq("is_admin", true).limit(1).single();
+    const adminId = admin?.id || "system";
+    triggerPushNotification(
+      adminId,
+      "Timeline mise à jour 📅",
+      `L'activité "${entry.emoji || "🎪"} ${entry.title}" a été ajoutée au programme !`,
+      "/programme"
+    );
+  } catch (e) {
+    console.error("Error triggering program push:", e);
+  }
+
   return true;
 }
 
@@ -874,6 +932,21 @@ export async function submitProposal(proposal: {
     console.error("Error submitting proposal:", error);
     return false;
   }
+
+  // Trigger notification
+  try {
+    const { data: proposer } = await supabase.from("participants").select("name, pseudo").eq("id", proposal.proposer_id).single();
+    const proposerName = proposer ? (proposer.pseudo || proposer.name) : "Quelqu'un";
+    triggerPushNotification(
+      proposal.proposer_id,
+      "Nouvelle proposition 💡",
+      `${proposerName} propose l'activité : "${proposal.emoji || "🎪"} ${proposal.title}"`,
+      "/programme"
+    );
+  } catch (e) {
+    console.error("Error triggering proposal push:", e);
+  }
+
   return true;
 }
 
@@ -1016,6 +1089,24 @@ export async function approveProposal(proposalId: string): Promise<boolean> {
     console.error("Error approving proposal:", error);
     return false;
   }
+
+  // Trigger notification
+  try {
+    const { data: prop } = await supabase.from("program_proposals").select("title, proposed_by").eq("id", proposalId).single();
+    if (prop) {
+      const { data: admin } = await supabase.from("participants").select("id").eq("is_admin", true).limit(1).single();
+      const adminId = admin?.id || "admin";
+      triggerPushNotification(
+        adminId,
+        "Proposition approuvée ! ✅",
+        `L'activité "${prop.title}" a été approuvée par l'admin !`,
+        "/programme"
+      );
+    }
+  } catch (e) {
+    console.error("Error triggering approve proposal push:", e);
+  }
+
   return true;
 }
 
@@ -1256,6 +1347,23 @@ export async function awardBadge(badge: {
     console.error("Error awarding badge:", error);
     return false;
   }
+
+  // Trigger push notifications
+  try {
+    const { data: giver } = await supabase.from("participants").select("name, pseudo").eq("id", badge.awarded_by).single();
+    const { data: receiver } = await supabase.from("participants").select("name, pseudo").eq("id", badge.participant_id).single();
+    const giverName = giver ? (giver.pseudo || giver.name) : "Quelqu'un";
+    const receiverName = receiver ? (receiver.pseudo || receiver.name) : "quelqu'un";
+    triggerPushNotification(
+      badge.awarded_by,
+      "Nouveau Badge ! 🏅",
+      `${giverName} a décerné le badge "${badge.emoji} ${badge.title}" à ${receiverName} 🎉`,
+      "/badges"
+    );
+  } catch (e) {
+    console.error("Error triggering badge push notification:", e);
+  }
+
   return true;
 }
 
@@ -1730,6 +1838,20 @@ export async function createExpense(
     // Cleanup expense
     await supabase.from("expenses").delete().eq("id", expense.id);
     return null;
+  }
+
+  // Trigger notifications
+  try {
+    const { data: payer } = await supabase.from("participants").select("name, pseudo").eq("id", paidBy).single();
+    const payerName = payer ? (payer.pseudo || payer.name) : "Quelqu'un";
+    triggerPushNotification(
+      paidBy,
+      "Dépense ajoutée 🍕",
+      `${payerName} a ajouté une dépense : "${title}" (${amount}€)`,
+      "/depenses"
+    );
+  } catch (e) {
+    console.error("Error triggering expense push notification:", e);
   }
 
   return expense as Expense;

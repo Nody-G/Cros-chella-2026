@@ -30,8 +30,15 @@ export async function subscribeToPush(participantId: string): Promise<boolean> {
   try {
     const registration = await navigator.serviceWorker.ready;
     
-    if (Notification.permission === "denied") {
-      alert("Les notifications sont bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.");
+    let permission = Notification.permission;
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+    }
+    
+    if (permission !== "granted") {
+      if (permission === "denied") {
+        alert("Les notifications sont bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.");
+      }
       return false;
     }
 
