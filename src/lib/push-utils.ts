@@ -10,7 +10,7 @@ export function urlBase64ToUint8Array(base64String: string) {
 }
 
 export async function getPushSubscription(): Promise<PushSubscription | null> {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
     return null;
   }
   try {
@@ -23,7 +23,8 @@ export async function getPushSubscription(): Promise<PushSubscription | null> {
 }
 
 export async function subscribeToPush(participantId: string): Promise<boolean> {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    alert("Les notifications push ne sont pas supportées dans ce navigateur. Si tu es sur iPhone (iOS), tu dois impérativement ajouter Cros-Chella à ton écran d'accueil (Bouton Partager ⎘ ➔ 'Sur l'écran d'accueil' 📲) et l'ouvrir depuis l'icône !");
     return false;
   }
 
@@ -37,7 +38,7 @@ export async function subscribeToPush(participantId: string): Promise<boolean> {
     
     if (permission !== "granted") {
       if (permission === "denied") {
-        alert("Les notifications sont bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.");
+        alert("Les notifications sont bloquées dans ton navigateur. Appuie sur le cadenas 🔒 de la barre d'adresse ➔ Paramètres du site ➔ Notifications ➔ Autoriser.");
       }
       return false;
     }

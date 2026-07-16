@@ -14,7 +14,7 @@ export default function Home() {
   const [showPushBanner, setShowPushBanner] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window) {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window) {
       getPushSubscription().then((sub) => {
         if (!sub && Notification.permission !== "denied") {
           const dismissed = sessionStorage.getItem("cros-chella-dismissed-push-banner-home");
@@ -22,7 +22,7 @@ export default function Home() {
             setShowPushBanner(true);
           }
         }
-      });
+      }).catch((err) => console.error("Error checking push subscription:", err));
     }
   }, []);
 

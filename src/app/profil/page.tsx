@@ -49,9 +49,13 @@ export default function ProfilPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const hasSupport = "serviceWorker" in navigator && "PushManager" in window;
+      const hasSupport = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
       setPushSupported(hasSupport);
-      setPushPermission(Notification.permission);
+      if ("Notification" in window) {
+        setPushPermission(Notification.permission);
+      } else {
+        setPushPermission("denied");
+      }
       
       if (hasSupport) {
         getPushSubscription().then((sub) => {
@@ -71,16 +75,39 @@ export default function ProfilPage() {
       const ok = await unsubscribeFromPush();
       if (ok) {
         setPushSubscribed(false);
-        setPushPermission(Notification.permission);
+        if ("Notification" in window) setPushPermission(Notification.permission);
       }
     } else {
       const ok = await subscribeToPush(currentParticipant.id);
       if (ok) {
         setPushSubscribed(true);
-        setPushPermission(Notification.permission);
+        if ("Notification" in window) setPushPermission(Notification.permission);
       } else {
-        setPushPermission(Notification.permission);
+        if ("Notification" in window) setPushPermission(Notification.permission);
       }
+    }
+  };
+
+  const handleTestNotification = async () => {
+    if (!currentParticipant) return;
+    try {
+      const res = await fetch("/api/push-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          authorId: "test-sender",
+          title: "Test de Notification 🔔",
+          body: "Bravo ! Les notifications push fonctionnent parfaitement sur ton appareil 🎉",
+          url: "/profil",
+        }),
+      });
+      if (res.ok) {
+        alert("Notification de test envoyée ! Tu devrais la recevoir dans quelques instants sur tes appareils abonnés.");
+      } else {
+        alert("Erreur lors de l'envoi du test.");
+      }
+    } catch {
+      alert("Erreur lors du test de notification.");
     }
   };
 
@@ -721,17 +748,17 @@ export default function ProfilPage() {
           </div>
 
           {/* Push Notifications Settings Card */}
-          {pushSupported && (
-            <Card className="border-border bg-card">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Notifications Push 🔔</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Reçois des alertes directes sur ton téléphone.
-                    </p>
-                  </div>
-                  <div className="flex items-center">
+          <Card className="border-border bg-card">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Notifications Push 🔔</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Reçois des alertes directes sur ton téléphone.
+                  </p>
+                </div>
+                {pushSupported && (
+                  <div className="flex items-center gap-2">
                     {checkingPush ? (
                       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                     ) : (
@@ -746,26 +773,52 @@ export default function ProfilPage() {
                       </Button>
                     )}
                   </div>
+                )}
+              </div>
+
+              {!pushSupported && (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs space-y-1.5 text-amber-200">
+                  <p className="font-semibold text-amber-400">📱 Sur iPhone (iOS) ?</p>
+                  <p>Pour activer les notifications sur Safari iOS :</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground text-[11px]">
+                    <li>Appuie sur le bouton <strong>Partager</strong> (icône ⎘ en bas de Safari).</li>
+                    <li>Sélectionne <strong>&quot;Sur l&apos;écran d&apos;accueil&quot;</strong> 📲.</li>
+                    <li>Ouvre l&apos;application depuis ton écran d&apos;accueil pour activer les notifications !</li>
+                  </ol>
                 </div>
-                
-                {!checkingPush && (
-                  <p className="text-[10px] text-muted-foreground">
-                    {pushPermission === "denied" ? (
-                      <span className="text-destructive font-medium">
-                        ⚠️ Bloqué : Autorise les notifications dans les réglages de ton navigateur pour cet appareil.
-                      </span>
-                    ) : pushSubscribed ? (
-                      <span className="text-green-500 font-medium">
+              )}
+
+              {pushSupported && !checkingPush && (
+                <div className="text-xs space-y-2">
+                  {pushPermission === "denied" ? (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-[11px] space-y-1">
+                      <p className="font-semibold">⚠️ Notifications bloquées dans ton navigateur</p>
+                      <p>Pour débloquer : appuie sur le cadenas 🔒 à côté de l&apos;adresse du site (URL) ➔ Paramètres du site ➔ Notifications ➔ Autoriser.</p>
+                    </div>
+                  ) : pushSubscribed ? (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-green-500 font-medium text-[11px]">
                         ✓ Actif : Tu reçois les notifications push sur cet appareil.
                       </span>
-                    ) : (
-                      <span>Les notifications push sont inactives sur cet appareil.</span>
-                    )}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTestNotification}
+                        className="text-[10px] h-7 px-2"
+                      >
+                        Tester 🔔
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">
+                      Les notifications push sont inactives sur cet appareil. Clique sur &quot;Activer&quot; ci-dessus.
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Save error */}
           {saveError && (
