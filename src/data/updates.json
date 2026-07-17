@@ -1,5 +1,13 @@
 [
   {
+    "date": "2026-07-18",
+    "tag": "feature",
+    "emoji": "💣",
+    "title": "Nouveau : Le Mur des Dossiers Botardèche (100% Anonyme)",
+    "description": "Une page dédiée pour balancer librement des anecdotes, casseroles et secrets sur les potes. Botardèche les apprend en direct pour clasher la cible !",
+    "details": "Découvrez la nouvelle page '💣 Dossiers Bot' dans le menu navigation ! Écrivez librement n'importe quelle info, dossier ou souvenir sur un participant : l'envoi est 100% anonyme. L'IA Botardèche analyse automatiquement ce que vous écrivez et l'enregistre dans sa mémoire pour clasher la cible lors de vos conversations sur le chat."
+  },
+  {
     "date": "2026-07-17",
     "tag": "fix",
     "emoji": "💬",
