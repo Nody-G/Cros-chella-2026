@@ -812,6 +812,7 @@ export async function createProgram(entry: {
   end_time?: string;
   location?: string;
   sort_order?: number;
+  created_by?: string;
 }): Promise<boolean> {
   const { error } = await supabase
     .from("program")

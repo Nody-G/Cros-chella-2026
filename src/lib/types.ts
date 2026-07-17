@@ -62,6 +62,7 @@ export interface Program {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  created_by?: string | null;
   // Nouveau : assignation de tâches
   responsible_id: string | null;
   task_status: TaskStatus;

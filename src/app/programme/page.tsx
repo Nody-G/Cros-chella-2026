@@ -174,6 +174,7 @@ export default function ProgrammePage() {
         start_time: proposalForm.start_time || undefined,
         end_time: proposalForm.end_time || undefined,
         location: proposalForm.location || undefined,
+        created_by: currentParticipant?.id,
       });
       if (programSuccess) {
         await fetchData();
@@ -274,7 +275,7 @@ export default function ProgrammePage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <h3 className="font-bold text-sm">{event.title}</h3>
-                                {isAdmin && (
+                                {(isAdmin || (currentParticipant?.id && event.created_by === currentParticipant.id)) && (
                                   <button onClick={() => handleDelete(event.id)} disabled={deletingId === event.id}
                                     className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                                     {deletingId === event.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -430,7 +431,7 @@ export default function ProgrammePage() {
                               </button>
                             )}
 
-                            {isMyProposal && (
+                            {(isAdmin || isMyProposal) && (
                               <>
                                 <Button size="sm" variant="ghost" className="h-7 text-[10px] px-2 text-muted-foreground" onClick={() => handleEditProposal(prop)}>
                                   ✏️ Modifier
