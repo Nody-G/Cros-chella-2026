@@ -235,7 +235,7 @@ export default function ProgrammePage() {
         <p className="text-muted-foreground text-sm mb-4">Vendredi soir → Dimanche : le planning du carnage</p>
 
         {/* PROPOSER BUTTON — TOP */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
           <Button
             className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-500/20"
             onClick={() => {
@@ -246,6 +246,68 @@ export default function ProgrammePage() {
             <Plus className="w-4 h-4 mr-2" />
             {showProposalForm ? "Fermer" : "💡 Proposer une activité"}
           </Button>
+
+          {showProposalForm && (
+            <Card className="card-glow-violet overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm">{editingProposalId ? "Modifier la proposition" : "Nouvelle proposition"}</h3>
+                  <button onClick={() => { setShowProposalForm(false); resetProposalForm(); }} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Jour</label>
+                    <select value={proposalForm.day} onChange={(e) => setProposalForm({ ...proposalForm, day: e.target.value as ProgramDay })} className="w-full h-9 rounded-md bg-card border border-border text-sm px-2">
+                      <option value="thursday">🌙 Jeudi</option>
+                      <option value="friday">🎉 Vendredi</option>
+                      <option value="saturday">☀️ Samedi</option>
+                      <option value="sunday">🌊 Dimanche</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Emoji</label>
+                    <Input value={proposalForm.emoji} onChange={(e) => setProposalForm({ ...proposalForm, emoji: e.target.value })} className="bg-card border-border h-9 text-center text-lg" maxLength={2} />
+                  </div>
+                </div>
+                <Input placeholder="Titre de l'activité *" value={proposalForm.title} onChange={(e) => setProposalForm({ ...proposalForm, title: e.target.value })} className="bg-card border-border" />
+                <Textarea placeholder="Détails (optionnel)" value={proposalForm.description} onChange={(e) => setProposalForm({ ...proposalForm, description: e.target.value })} className="bg-card border-border min-h-[50px]" />
+
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase mb-1.5 block">Photo (optionnel)</label>
+                  <input ref={proposalFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProposalFileSelect} />
+                  {proposalImagePreview ? (
+                    <div className="relative">
+                      <img src={proposalImagePreview} alt="Preview" className="w-full max-h-64 object-contain rounded-lg border border-border" />
+                      <button onClick={handleRemoveProposalImage} className="absolute top-2 right-2 bg-black/70 rounded-full p-1.5 hover:bg-black/90">
+                        <Trash2 className="w-3.5 h-3.5 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => proposalFileInputRef.current?.click()} className="w-full h-24 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+                      <Camera className="w-5 h-5" /><span className="text-[10px]">Ajouter une photo</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Début</label><Input type="time" value={proposalForm.start_time} onChange={(e) => setProposalForm({ ...proposalForm, start_time: e.target.value })} className="bg-card border-border h-9" /></div>
+                  <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Fin</label><Input type="time" value={proposalForm.end_time} onChange={(e) => setProposalForm({ ...proposalForm, end_time: e.target.value })} className="bg-card border-border h-9" /></div>
+                </div>
+                <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Lieu</label><Input placeholder="Où ça se passe ?" value={proposalForm.location} onChange={(e) => setProposalForm({ ...proposalForm, location: e.target.value })} className="bg-card border-border h-9" /></div>
+
+                <Button onClick={handleSubmitProposal} disabled={submittingProposal || !proposalForm.title.trim()} className="w-full" variant="secondary">
+                  {submittingProposal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                  {editingProposalId ? "Modifier" : "Soumettre la proposition"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {proposalSuccess && (
+            <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-green-400 text-sm font-medium">✅ &quot;{proposalSuccess}&quot; ajouté au programme !</p>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -321,68 +383,6 @@ export default function ProgrammePage() {
               <p className="text-xs text-muted-foreground">Propose des activités pour le programme</p>
             </div>
           </div>
-
-          {showProposalForm && (
-            <Card className="mb-4 card-glow-violet overflow-hidden">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm">{editingProposalId ? "Modifier la proposition" : "Nouvelle proposition"}</h3>
-                  <button onClick={() => { setShowProposalForm(false); resetProposalForm(); }} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Jour</label>
-                    <select value={proposalForm.day} onChange={(e) => setProposalForm({ ...proposalForm, day: e.target.value as ProgramDay })} className="w-full h-9 rounded-md bg-card border border-border text-sm px-2">
-                      <option value="thursday">🌙 Jeudi</option>
-                      <option value="friday">🎉 Vendredi</option>
-                      <option value="saturday">☀️ Samedi</option>
-                      <option value="sunday">🌊 Dimanche</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted-foreground uppercase mb-1 block">Emoji</label>
-                    <Input value={proposalForm.emoji} onChange={(e) => setProposalForm({ ...proposalForm, emoji: e.target.value })} className="bg-card border-border h-9 text-center text-lg" maxLength={2} />
-                  </div>
-                </div>
-                <Input placeholder="Titre de l'activité *" value={proposalForm.title} onChange={(e) => setProposalForm({ ...proposalForm, title: e.target.value })} className="bg-card border-border" />
-                <Textarea placeholder="Détails (optionnel)" value={proposalForm.description} onChange={(e) => setProposalForm({ ...proposalForm, description: e.target.value })} className="bg-card border-border min-h-[50px]" />
-
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase mb-1.5 block">Photo (optionnel)</label>
-                  <input ref={proposalFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProposalFileSelect} />
-                  {proposalImagePreview ? (
-                    <div className="relative">
-                      <img src={proposalImagePreview} alt="Preview" className="w-full max-h-64 object-contain rounded-lg border border-border" />
-                      <button onClick={handleRemoveProposalImage} className="absolute top-2 right-2 bg-black/70 rounded-full p-1.5 hover:bg-black/90">
-                        <Trash2 className="w-3.5 h-3.5 text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => proposalFileInputRef.current?.click()} className="w-full h-24 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors">
-                      <Camera className="w-5 h-5" /><span className="text-[10px]">Ajouter une photo</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Début</label><Input type="time" value={proposalForm.start_time} onChange={(e) => setProposalForm({ ...proposalForm, start_time: e.target.value })} className="bg-card border-border h-9" /></div>
-                  <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Fin</label><Input type="time" value={proposalForm.end_time} onChange={(e) => setProposalForm({ ...proposalForm, end_time: e.target.value })} className="bg-card border-border h-9" /></div>
-                </div>
-                <div><label className="text-[10px] text-muted-foreground uppercase mb-1 block">Lieu</label><Input placeholder="Où ça se passe ?" value={proposalForm.location} onChange={(e) => setProposalForm({ ...proposalForm, location: e.target.value })} className="bg-card border-border h-9" /></div>
-
-                <Button onClick={handleSubmitProposal} disabled={submittingProposal || !proposalForm.title.trim()} className="w-full" variant="secondary">
-                  {submittingProposal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                  {editingProposalId ? "Modifier" : "Soumettre la proposition"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {proposalSuccess && (
-            <div className="mb-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-green-400 text-sm font-medium">✅ &quot;{proposalSuccess}&quot; ajouté au programme !</p>
-            </div>
-          )}
 
           {pendingProposals.length === 0 ? (
             <div className="p-6 rounded-xl bg-card border border-border text-center">
