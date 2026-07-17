@@ -153,19 +153,18 @@ async function buildGlobalContext(): Promise<string> {
 
   parts.push(`\n## GALERIE\n- ${photoCount || 0} photos partagées au total`);
 
-  // Messages récents (les 100 derniers pour contexte d'ambiance)
+  // Messages complets du chat (SANS AUCUNE LIMITE)
   const { data: recentMsgs } = await supabase
     .from("messages")
     .select("*, author:participants(name, pseudo)")
     .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .order("created_at", { ascending: true });
 
   if (recentMsgs?.length) {
-    parts.push("\n## DERNIERS MESSAGES DU CHAT (pour ambiance)");
-    for (const m of recentMsgs.reverse()) {
+    parts.push("\n## HISTORIQUE COMPLET DU CHAT (l'intégralité des messages depuis le début)");
+    for (const m of recentMsgs) {
       const author = m.author?.pseudo || m.author?.name || "inconnu";
-      parts.push(`- ${author}: "${m.content?.substring(0, 100) || "[image]"}"`);
+      parts.push(`- ${author}: "${m.content?.substring(0, 150) || "[image]"}"`);
     }
   }
 

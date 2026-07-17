@@ -434,18 +434,31 @@ export async function deletePoll(pollId: string): Promise<boolean> {
 // MESSAGES
 // ============================================
 
-export async function getMessages(limit: number = 1000): Promise<Message[]> {
+export async function getMessages(limit?: number): Promise<Message[]> {
+  if (limit) {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*, author:participants(*)")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching messages:", error);
+      return [];
+    }
+    return (data as Message[]).reverse();
+  }
+
   const { data, error } = await supabase
     .from("messages")
     .select("*, author:participants(*)")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Error fetching messages:", error);
     return [];
   }
-  return (data as Message[]).reverse();
+  return data as Message[];
 }
 
 export async function triggerPushNotification(
