@@ -153,13 +153,13 @@ async function buildGlobalContext(): Promise<string> {
 
   parts.push(`\n## GALERIE\n- ${photoCount || 0} photos partagées au total`);
 
-  // Messages récents (les 5 derniers pour contexte d'ambiance)
+  // Messages récents (les 100 derniers pour contexte d'ambiance)
   const { data: recentMsgs } = await supabase
     .from("messages")
     .select("*, author:participants(name, pseudo)")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(100);
 
   if (recentMsgs?.length) {
     parts.push("\n## DERNIERS MESSAGES DU CHAT (pour ambiance)");

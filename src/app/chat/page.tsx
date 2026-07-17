@@ -150,8 +150,8 @@ export default function ChatPage() {
     // Check if message mentions @bot → trigger Botardèche reply
     const msgText = newMessage.trim();
     if (msgText.toLowerCase().includes("@bot") || msgText.toLowerCase().includes("@botardeche")) {
-      // Build chat context: last 15 messages from the chat (with author names)
-      const recentChat = messages.slice(-15).map((m) => ({
+      // Build chat context: last 100 messages from the chat (with author names)
+      const recentChat = messages.slice(-100).map((m) => ({
         author: m.author?.name || m.author?.pseudo || "Inconnu",
         content: m.content || "[image]",
       }));
