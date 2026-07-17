@@ -146,6 +146,21 @@ async function buildGlobalContext(): Promise<string> {
     }
   }
 
+  // Dossiers & Anecdotes balancés par les participants en direct
+  const { data: userDossiers } = await supabase
+    .from("bot_dossiers")
+    .select("*, target:participants!target_participant_id(name, pseudo), author:participants!author_participant_id(name, pseudo)")
+    .order("created_at", { ascending: false });
+
+  if (userDossiers?.length) {
+    parts.push("\n## DOSSIERS ET ANECDOTES BALANCÉS PAR LES PARTICIPANTS EN DIRECT");
+    for (const d of userDossiers) {
+      const targetName = d.target?.pseudo || d.target?.name || "inconnu";
+      const authorName = d.is_anonymous ? "Un inconnu" : (d.author?.pseudo || d.author?.name || "un participant");
+      parts.push(`- SUR ${targetName.toUpperCase()} [${d.category}] par ${authorName} : "${d.content}"`);
+    }
+  }
+
   // Galerie (compteur)
   const { count: photoCount } = await supabase
     .from("photos")

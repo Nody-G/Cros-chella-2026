@@ -248,6 +248,32 @@ export interface ExpenseSplit {
   participant?: Participant;
 }
 
+// ============================================
+// BOT DOSSIERS / ANECDOTES
+// ============================================
+
+export type DossierCategory = "anecdote" | "surnom" | "dossier" | "enfance" | "autre";
+
+export interface BotDossier {
+  id: string;
+  target_participant_id: string;
+  author_participant_id: string | null;
+  is_anonymous: boolean;
+  category: DossierCategory;
+  content: string;
+  created_at: string;
+  target?: Participant;
+  author?: Participant;
+}
+
+export const DOSSIER_CATEGORIES: { value: DossierCategory; label: string; emoji: string }[] = [
+  { value: "dossier", label: "Gros dossier", emoji: "💣" },
+  { value: "anecdote", label: "Anecdote drôle", emoji: "📖" },
+  { value: "surnom", label: "Surnom gênant", emoji: "🏷️" },
+  { value: "enfance", label: "Souvenir d'enfance", emoji: "👶" },
+  { value: "autre", label: "Autre pépite", emoji: "🤫" },
+];
+
 export interface Settlement {
   id: string;
   from_participant: string; // who pays

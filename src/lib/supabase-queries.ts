@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, ProgramComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback, Expense, Settlement, ParticipantBalance, ExpenseCategory } from "@/lib/types";
+import type { Participant, Game, Program, ProgramProposal, ProgramProposalVote, ProposalComment, ProgramComment, Spot, Poll, PollVote, Message, Photo, PhotoComment, CustomBadge, BillardTournament, BillardTeam, BillardMatch, Feedback, Expense, Settlement, ParticipantBalance, ExpenseCategory, BotDossier } from "@/lib/types";
 
 // ============================================
 // PARTICIPANTS
@@ -2151,4 +2151,93 @@ export function computeOptimalSettlements(balances: ParticipantBalance[]): { fro
   }
 
   return settlements;
+}
+
+// ============================================
+// BOT DOSSIERS & ANECDOTES
+// ============================================
+
+export async function getBotDossiers(): Promise<BotDossier[]> {
+  const { data, error } = await supabase
+    .from("bot_dossiers")
+    .select("*, target:participants!target_participant_id(*), author:participants!author_participant_id(*)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching bot dossiers:", error);
+    return [];
+  }
+  return data as BotDossier[];
+}
+
+export async function createBotDossier(
+  targetParticipantId: string,
+  authorParticipantId: string | null,
+  content: string,
+  category: string = "anecdote",
+  isAnonymous: boolean = false
+): Promise<BotDossier | null> {
+  const { data, error } = await supabase
+    .from("bot_dossiers")
+    .insert({
+      target_participant_id: targetParticipantId,
+      author_participant_id: authorParticipantId,
+      content: content.trim(),
+      category,
+      is_anonymous: isAnonymous,
+    })
+    .select("*, target:participants!target_participant_id(*), author:participants!author_participant_id(*)")
+    .single();
+
+  if (error) {
+    console.error("Error creating bot dossier:", error);
+    return null;
+  }
+
+  // Trigger Push Notification to all participants
+  try {
+    const { data: targetPerson } = await supabase
+      .from("participants")
+      .select("name, pseudo")
+      .eq("id", targetParticipantId)
+      .single();
+
+    const targetName = targetPerson?.pseudo || targetPerson?.name || "un participant";
+    const authorName = isAnonymous ? "Un inconnu" : "Quelqu'un";
+    triggerPushNotification(
+      authorParticipantId || "anonymous",
+      "💣 Nouveau dossier balancé !",
+      `${authorName} vient de balancer un dossier sur ${targetName} ! Botardèche est déjà au courant... 🤖`,
+      "/dossiers"
+    );
+  } catch (err) {
+    console.error("Error sending push notification for bot dossier:", err);
+  }
+
+  return data as BotDossier;
+}
+
+export async function deleteBotDossier(id: string): Promise<boolean> {
+  const { error } = await supabase.from("bot_dossiers").delete().eq("id", id);
+  if (error) {
+    console.error("Error deleting bot dossier:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateBotDossier(
+  id: string,
+  updates: { target_participant_id?: string; content?: string; category?: string; is_anonymous?: boolean }
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("bot_dossiers")
+    .update(updates)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating bot dossier:", error);
+    return false;
+  }
+  return true;
 }

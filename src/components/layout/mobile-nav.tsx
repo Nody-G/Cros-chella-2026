@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine, Megaphone } from "lucide-react";
+import { Droplets, BarChart3, MessageCircle, ImageIcon, Music, KeyRound, Check, X, Wine, Megaphone, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { FeedbackButton } from "@/components/layout/feedback-button";
 import { updatePassword } from "@/lib/supabase-queries";
@@ -22,6 +22,7 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { href: "/dossiers", icon: FileText, label: "Dossiers Bot", emoji: "💣" },
   { href: "/jeux", icon: Gamepad2, label: "Jeux", emoji: "🎮" },
   { href: "/depenses", icon: Wallet, label: "Dépenses", emoji: "💰" },
   { href: "/alcool", icon: Wine, label: "Alcool", emoji: "🍻" },
