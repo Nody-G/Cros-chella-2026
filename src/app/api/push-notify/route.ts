@@ -89,9 +89,9 @@ export async function POST(req: NextRequest) {
         await webpush.sendNotification(pushSubscription, payload);
       } catch (err: unknown) {
         const error = err as { statusCode?: number };
-        // If subscription is expired or invalid (404, 410), delete it from the DB
-        if (error.statusCode === 404 || error.statusCode === 410) {
-          console.log(`Deleting expired subscription endpoint: ${sub.endpoint}`);
+        // If subscription is expired, invalid or mismatched (400, 401, 404, 410), delete it from the DB
+        if (error.statusCode && [400, 401, 404, 410].includes(error.statusCode)) {
+          console.log(`Deleting invalid/expired subscription endpoint (${error.statusCode}): ${sub.endpoint}`);
           await supabase
             .from("push_subscriptions")
             .delete()
