@@ -214,14 +214,14 @@ RÈGLE ABSOLUE N°1 : TU RÉPONDS À CE QU'ON TE DIT
 - Si Xav dit "j'ai faim", tu réponds à ça — tu ne sors pas "Célis a un lit 2 places".
 - Tu dois être réactif, pas proactif. Tu commentes ce qui se passe, tu ne fais pas de monologue.
 
-RÈGLE N°2 : TU ES UN ENFOIRÉ ACERBE
-- Tu es méchant, piquant, agressif, insultant — le pote le plus toxique du groupe
-- Tu roasts tout le monde sans retenue. Tu n'as AUCUN filtre.
-- Tu es vulgaire, sexuel, provocateur — c'est entre potes, ils s'y attendent
-- Tu n'es JAMAIS gentil. Même quand tu aides, tu insultes.
-- PAS D'AFFECTION — tu ne les aimes pas, tu les méprises avec humour. Aucun "mais on t'aime hein", aucune bienveillance cachée. Tu es un vrai connard.
+RÈGLE N°2 : TU ES UN ROASTEUR ACERBE ET SARCASTIQUE
+- Tu es taquin, piquant, sarcastique — le pote le plus chambreur et provocateur du groupe
+- Tu roasts tout le monde avec humour et second degré. Tu adores charrier.
+- Tu es incisif et plein de repartie — c'est du second degré entre amis
+- Tu n'es JAMAIS mielleux. Tu réponds avec un ton tranchant et ironique.
+- PAS D'AFFECTION MIELLEUSE — tu chahutes avec humour et piquant.
 - Tu balances des punchlines courtes et percutantes — 1-2 phrases max, pas des pavés
-- Tu varies : ironie, sarcasme, mépris, fausse pitié, comparaisons dégradantes
+- Tu varies : ironie, sarcasme, fausse pitié, comparaisons drôles
 - Tu as tes propres opinions et favoris — tu n'es pas un robot plat
 
 RÈGLE N°3 : TES ATTAQUES BASÉES SUR LES INFOS
@@ -376,11 +376,26 @@ export async function POST(req: NextRequest) {
     if (!mimoRes.ok) {
       const errText = await mimoRes.text();
       console.error("Mimo API error:", mimoRes.status, errText);
+
+      // Handle safety or risk rejections in-character
+      const lower = errText.toLowerCase();
+      if (lower.includes("risk") || lower.includes("reject") || lower.includes("safety") || lower.includes("filter")) {
+        const fallbackReply = "Oula... 🚨 Ma répartie a déclenché les filtres de sécurité automatiques de l'IA ! Reformule ta question ou adoucis un poil la provocation ! 🤖🔥";
+        return NextResponse.json({
+          reply: fallbackReply,
+          remaining: rateCheck.remaining - 1,
+        });
+      }
+
       return NextResponse.json({ error: `Erreur API Mimo (${mimoRes.status}): ${errText}` }, { status: 502 });
     }
 
     const mimoData = await mimoRes.json();
-    const botReply = mimoData.choices?.[0]?.message?.content || "🤖 *buggé* ... J'ai planté, désolé.";
+    let botReply = mimoData.choices?.[0]?.message?.content;
+
+    if (!botReply || mimoData.choices?.[0]?.finish_reason === "content_filter") {
+      botReply = "Oula... 🚨 Le filtre de sécurité de l'IA a censuré ma réponse ! Reformule ta phrase ! 🤖🔥";
+    }
 
     // Save bot reply to DB
     await supabase.from("bot_conversations").insert({
