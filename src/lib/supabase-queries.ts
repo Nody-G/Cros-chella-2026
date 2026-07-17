@@ -434,18 +434,18 @@ export async function deletePoll(pollId: string): Promise<boolean> {
 // MESSAGES
 // ============================================
 
-export async function getMessages(): Promise<Message[]> {
+export async function getMessages(limit: number = 500): Promise<Message[]> {
   const { data, error } = await supabase
     .from("messages")
     .select("*, author:participants(*)")
-    .order("created_at", { ascending: true })
-    .limit(100);
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) {
     console.error("Error fetching messages:", error);
     return [];
   }
-  return data as Message[];
+  return (data as Message[]).reverse();
 }
 
 export async function triggerPushNotification(
