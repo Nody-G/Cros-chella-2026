@@ -869,7 +869,7 @@ export async function deleteProgram(id: string): Promise<boolean> {
 export async function getProgramWithResponsible(): Promise<Program[]> {
   const { data, error } = await supabase
     .from("program")
-    .select("*, responsible:participants(*)")
+    .select("*, responsible:participants!program_responsible_id_fkey(*)")
     .order("sort_order", { ascending: true });
 
   if (error) {
