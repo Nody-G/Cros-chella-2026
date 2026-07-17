@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getParticipants, getBotDossiers, createBotDossier, deleteBotDossier, updateBotDossier } from "@/lib/supabase-queries";
-import { Participant, BotDossier, DOSSIER_CATEGORIES, DossierCategory } from "@/lib/types";
+import { Participant, BotDossier } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,17 +24,15 @@ export default function DossiersPage() {
   // Form state (create)
   const [openForm, setOpenForm] = useState(false);
   const [targetId, setTargetId] = useState<string>("");
-  const [category, setCategory] = useState<DossierCategory>("libre");
   const [content, setContent] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // Edit state
   const [editingDossier, setEditingDossier] = useState<BotDossier | null>(null);
   const [editTargetId, setEditTargetId] = useState<string>("");
-  const [editCategory, setEditCategory] = useState<DossierCategory>("dossier");
   const [editContent, setEditContent] = useState("");
-  const [editIsAnonymous, setEditIsAnonymous] = useState(false);
+  const [editIsAnonymous, setEditIsAnonymous] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -85,7 +83,7 @@ export default function DossiersPage() {
       targetId,
       currentUserId || null,
       content,
-      category,
+      "libre",
       isAnonymous
     );
 
@@ -100,7 +98,6 @@ export default function DossiersPage() {
   const openEditModal = (dos: BotDossier) => {
     setEditingDossier(dos);
     setEditTargetId(dos.target_participant_id);
-    setEditCategory(dos.category);
     setEditContent(dos.content);
     setEditIsAnonymous(dos.is_anonymous);
   };
@@ -113,7 +110,7 @@ export default function DossiersPage() {
     const success = await updateBotDossier(editingDossier.id, {
       target_participant_id: editTargetId,
       content: editContent,
-      category: editCategory,
+      category: "libre",
       is_anonymous: editIsAnonymous,
     });
 
@@ -125,7 +122,7 @@ export default function DossiersPage() {
                 ...d,
                 target_participant_id: editTargetId,
                 content: editContent,
-                category: editCategory,
+                category: "libre",
                 is_anonymous: editIsAnonymous,
                 target: participants.find((p) => p.id === editTargetId),
               }
@@ -188,15 +185,18 @@ export default function DossiersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-red-950/40 via-background to-amber-950/40 p-5 rounded-2xl border border-red-500/20">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold tracking-tight text-red-400">💣 Le Mur des Dossiers</h1>
+            <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 gap-1">
+              <span>🤫 100% Anonyme</span>
+            </Badge>
             <Badge variant="outline" className="border-red-500/40 text-red-400 bg-red-500/10">
               Alimente Botardèche 🤖
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-            Balance une anecdote, un souvenir d&apos;enfance ou un gros dossier sur un participant.
-            Botardèche l&apos;enregistre <span className="font-semibold text-foreground">immédiatement</span> dans sa mémoire pour roaster la cible dans le chat !
+            Écris librement ce que tu veux sur n&apos;importe quel participant.
+            <span className="font-semibold text-emerald-400"> C&apos;est 100% anonyme !</span> Botardèche traite automatiquement l&apos;information et l&apos;enregistre dans sa mémoire pour clasher la cible dans le chat.
           </p>
         </div>
 
@@ -204,21 +204,21 @@ export default function DossiersPage() {
           <DialogTrigger asChild>
             <Button className="bg-red-600 hover:bg-red-700 text-white font-semibold gap-2 shadow-lg shadow-red-600/20">
               <Plus className="w-4 h-4" />
-              Balancer un dossier
+              Balancer une info / dossier
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-red-400">
-                <span>💣</span> Balancer une pépite / dossier
+                <span>💣</span> Balancer une info (100% Anonyme)
               </DialogTitle>
               <CardDescription>
-                Ce dossier sera immédiatement mémorisé par Botardèche pour ses futurs roasts.
+                Écris librement. L&apos;IA traitera et classera automatiquement ton information dans sa mémoire.
               </CardDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4 pt-2">
               <div className="space-y-1.5">
-                <Label>Cible (sur qui est ce dossier ?) *</Label>
+                <Label>Cible (sur qui est cette info ?) *</Label>
                 <Select value={targetId} onValueChange={setTargetId} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionne un participant" />
@@ -237,50 +237,35 @@ export default function DossiersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Catégorie (Optionnelle - l&apos;IA s&apos;occupe du classement)</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as DossierCategory)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Expression libre (IA)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOSSIER_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        <span>{cat.emoji} {cat.label}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>L&apos;info / anecdote / dossier *</Label>
+                <Label>L&apos;information / le dossier libre *</Label>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Écris librement ce que tu veux sur ce participant (dossier, habitude, souvenir, vanne...). L'IA s'occupe de tout classer et retenir !"
-                  rows={4}
+                  placeholder="Écris tout ce que tu veux (anecdote, dossier, habitude, souvenir, vanne, secret...). L'IA s'occupe de tout traiter !"
+                  rows={5}
                   required
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-xs text-emerald-400">
+                <div className="flex items-center gap-2">
+                  <span>🤫</span>
+                  <span><strong>100% Anonyme</strong> — Ton nom n&apos;apparaît pas</span>
+                </div>
                 <input
                   type="checkbox"
                   id="anonCheck"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="rounded border-input text-red-600 focus:ring-red-500 w-4 h-4"
+                  className="rounded border-input text-emerald-600 focus:ring-emerald-500 w-4 h-4"
                 />
-                <Label htmlFor="anonCheck" className="text-xs cursor-pointer flex items-center gap-1">
-                  <span>🤫 Poster de façon anonyme</span>
-                </Label>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="ghost" onClick={() => setOpenForm(false)}>
                   Annuler
                 </Button>
-                <Button type="submit" disabled={submitting || !targetId || !content.trim()} className="bg-red-600 hover:bg-red-700 text-white">
+                <Button type="submit" disabled={submitting || !targetId || !content.trim()} className="bg-red-600 hover:bg-red-700 text-white font-semibold">
                   {submitting ? "Envoi..." : "Balancer à Botardèche 💣"}
                 </Button>
               </div>
@@ -294,10 +279,10 @@ export default function DossiersPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-400">
-              <span>✏️</span> Modifier le dossier {isAdmin && <Badge variant="outline" className="text-amber-400 border-amber-400/40 text-[10px]">Admin</Badge>}
+              <span>✏️</span> Modifier l&apos;info {isAdmin && <Badge variant="outline" className="text-amber-400 border-amber-400/40 text-[10px]">Admin</Badge>}
             </DialogTitle>
             <CardDescription>
-              Modifie ou corrige ce dossier. Les modifications mettent à jour la mémoire de Botardèche immédiatement.
+              Modifie ou corrige cette information. La mémoire de Botardèche sera mise à jour instantanément.
             </CardDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4 pt-2">
@@ -321,42 +306,13 @@ export default function DossiersPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Catégorie</Label>
-              <Select value={editCategory} onValueChange={(v) => setEditCategory(v as DossierCategory)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DOSSIER_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      <span>{cat.emoji} {cat.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Contenu du dossier</Label>
+              <Label>Contenu de l&apos;information</Label>
               <Textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={4}
                 required
               />
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="checkbox"
-                id="editAnonCheck"
-                checked={editIsAnonymous}
-                onChange={(e) => setEditIsAnonymous(e.target.checked)}
-                className="rounded border-input text-amber-500 focus:ring-amber-500 w-4 h-4"
-              />
-              <Label htmlFor="editAnonCheck" className="text-xs cursor-pointer">
-                <span>🤫 Poster de façon anonyme</span>
-              </Label>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -419,10 +375,8 @@ export default function DossiersPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {filteredDossiers.map((dos) => {
             const target = dos.target;
-            const author = dos.author;
             const isMyDossier = dos.author_participant_id === currentUserId;
             const canEditOrDelete = isMyDossier || isAdmin;
-            const catObj = DOSSIER_CATEGORIES.find((c) => c.value === dos.category) || DOSSIER_CATEGORIES[0];
 
             return (
               <Card key={dos.id} className="relative overflow-hidden border-border/60 hover:border-red-500/30 transition-colors">
@@ -435,19 +389,12 @@ export default function DossiersPage() {
                         <span className="text-red-400">{target?.pseudo || target?.name || "Inconnu"}</span>
                       </CardTitle>
                       <CardDescription className="text-[11px] flex items-center gap-1 mt-0.5">
-                        <span>Balancé par</span>
-                        <span className="font-semibold text-foreground">
-                          {dos.is_anonymous ? "🤫 Anonyme" : `${author?.emoji_avatar || "👤"} ${author?.pseudo || author?.name || "Un pote"}`}
-                        </span>
+                        <span className="font-semibold text-emerald-400">🤫 100% Anonyme</span>
                       </CardDescription>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Badge variant="secondary" className="text-[10px] gap-1 px-2 py-0.5">
-                      <span>{catObj.emoji}</span>
-                      <span>{catObj.label}</span>
-                    </Badge>
                     {canEditOrDelete && (
                       <div className="flex items-center gap-0.5 ml-1">
                         <button
