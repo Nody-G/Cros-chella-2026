@@ -373,6 +373,22 @@ export async function votePoll(pollId: string, participantId: string, optionInde
     console.error("Error voting:", error);
     return false;
   }
+
+  // Trigger push notification on poll vote
+  try {
+    const { data: poll } = await supabase.from("polls").select("question").eq("id", pollId).single();
+    const { data: voter } = await supabase.from("participants").select("name, pseudo").eq("id", participantId).single();
+    const voterName = voter ? (voter.pseudo || voter.name) : "Quelqu'un";
+    triggerPushNotification(
+      participantId,
+      "Sondage 🗳️",
+      `${voterName} a voté au sondage "${poll?.question || ""}"`,
+      "/sondages"
+    );
+  } catch (e) {
+    console.error("Error triggering poll vote push:", e);
+  }
+
   return true;
 }
 
@@ -726,6 +742,21 @@ export async function addPhotoComment(photoId: string, authorId: string, content
     console.error("Error adding photo comment:", error);
     return false;
   }
+
+  // Trigger push notification for comment
+  try {
+    const { data: commenter } = await supabase.from("participants").select("name, pseudo").eq("id", authorId).single();
+    const commenterName = commenter ? (commenter.pseudo || commenter.name) : "Quelqu'un";
+    triggerPushNotification(
+      authorId,
+      "Galerie 📸",
+      `${commenterName} a commenté une photo : "${content.trim()}"`,
+      "/galerie"
+    );
+  } catch (e) {
+    console.error("Error triggering photo comment push:", e);
+  }
+
   return true;
 }
 
@@ -1039,6 +1070,21 @@ export async function voteProposal(proposalId: string, participantId: string): P
       participant_id: participantId,
     });
     await supabase.rpc("increment_vote_count", { p_id: proposalId });
+
+    // Trigger push notification for proposal vote
+    try {
+      const { data: prop } = await supabase.from("program_proposals").select("title").eq("id", proposalId).single();
+      const { data: voter } = await supabase.from("participants").select("name, pseudo").eq("id", participantId).single();
+      const voterName = voter ? (voter.pseudo || voter.name) : "Quelqu'un";
+      triggerPushNotification(
+        participantId,
+        "Vote Programme 💡",
+        `${voterName} a voté pour la proposition "${prop?.title || "une activité"}" !`,
+        "/programme"
+      );
+    } catch (e) {
+      console.error("Error triggering proposal vote push:", e);
+    }
   }
 
   return true;
@@ -1280,6 +1326,20 @@ export async function togglePhotoLike(photoId: string, participantId: string): P
   } else {
     const { error } = await supabase.from("photo_likes").insert({ photo_id: photoId, participant_id: participantId });
     if (error) { console.error("Error adding photo like:", error); return false; }
+
+    // Trigger push notification on like
+    try {
+      const { data: liker } = await supabase.from("participants").select("name, pseudo").eq("id", participantId).single();
+      const likerName = liker ? (liker.pseudo || liker.name) : "Quelqu'un";
+      triggerPushNotification(
+        participantId,
+        "Galerie 📸",
+        `${likerName} a aimé une photo ❤️`,
+        "/galerie"
+      );
+    } catch (e) {
+      console.error("Error triggering photo like push:", e);
+    }
   }
   return true;
 }
@@ -1422,6 +1482,21 @@ export async function createBillardTournament(name: string, gameType: "8ball" | 
     console.error("Error creating tournament:", error);
     return null;
   }
+
+  // Trigger push notification for new billard tournament
+  try {
+    const { data: admin } = await supabase.from("participants").select("id").eq("is_admin", true).limit(1).single();
+    const adminId = admin?.id || "system";
+    triggerPushNotification(
+      adminId,
+      "Tournoi de Billard 🎱",
+      `Le tournoi "${name}" a été lancé ! Inscriptions et matchs ouverts.`,
+      "/billard"
+    );
+  } catch (e) {
+    console.error("Error triggering billard push:", e);
+  }
+
   return data.id;
 }
 
@@ -1551,6 +1626,22 @@ export async function updateBillardMatchScore(
     console.error("Error updating match:", error);
     return false;
   }
+
+  // Trigger push notification for match result
+  try {
+    const { data: team } = await supabase.from("billard_teams").select("name").eq("id", winnerTeamId).single();
+    const { data: admin } = await supabase.from("participants").select("id").eq("is_admin", true).limit(1).single();
+    const adminId = admin?.id || "system";
+    triggerPushNotification(
+      adminId,
+      "Match de Billard 🎱",
+      `Victoire de l'équipe "${team?.name || ""}" au billard ! 🏆`,
+      "/billard"
+    );
+  } catch (e) {
+    console.error("Error triggering match winner push:", e);
+  }
+
   return true;
 }
 
@@ -1752,10 +1843,27 @@ export async function createFeedback(entry: {
     .insert(entry)
     .select("*, author:participants!feedback_author_id_fkey(id, name, pseudo, emoji_avatar, avatar_url)")
     .single();
+
   if (error) {
     console.error("Error creating feedback:", error);
     return null;
   }
+
+  // Trigger push notification for new feedback
+  try {
+    const { data: author } = await supabase.from("participants").select("name, pseudo").eq("id", entry.author_id).single();
+    const authorName = author ? (author.pseudo || author.name) : "Quelqu'un";
+    const typeLabel = entry.type === "bug" ? "Signalement de bug 🐛" : "Nouvelle idée 💡";
+    triggerPushNotification(
+      entry.author_id,
+      `${typeLabel}`,
+      `${authorName} : "${entry.title}"`,
+      "/admin/feedback"
+    );
+  } catch (e) {
+    console.error("Error triggering feedback push:", e);
+  }
+
   return data as Feedback;
 }
 
