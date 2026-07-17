@@ -246,7 +246,15 @@ export default function SondagesPage() {
                 <Card key={poll.id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-bold text-sm flex-1">{poll.question}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm leading-snug">{poll.question}</h3>
+                        <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                          <span>Proposé par</span>
+                          <span className="font-semibold text-foreground inline-flex items-center gap-1">
+                            {poll.creator?.emoji_avatar || "👤"} {poll.creator?.pseudo || poll.creator?.name || "Quelqu'un"}
+                          </span>
+                        </p>
+                      </div>
                       {isCreator && (
                         <button
                           onClick={() => handleDeletePoll(poll.id)}

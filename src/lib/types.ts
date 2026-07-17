@@ -137,6 +137,7 @@ export interface Poll {
   created_by: string | null;
   is_active: boolean;
   created_at: string;
+  creator?: Participant;
 }
 
 export interface PollVote {

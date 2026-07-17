@@ -341,7 +341,7 @@ export async function getSpots(): Promise<Spot[]> {
 export async function getPolls(): Promise<Poll[]> {
   const { data, error } = await supabase
     .from("polls")
-    .select("*")
+    .select("*, creator:participants(*)")
     .order("created_at", { ascending: false });
 
   if (error) {
