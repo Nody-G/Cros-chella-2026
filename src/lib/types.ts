@@ -252,7 +252,7 @@ export interface ExpenseSplit {
 // BOT DOSSIERS / ANECDOTES
 // ============================================
 
-export type DossierCategory = "anecdote" | "surnom" | "dossier" | "enfance" | "autre";
+export type DossierCategory = "libre" | "anecdote" | "surnom" | "dossier" | "enfance" | "autre";
 
 export interface BotDossier {
   id: string;
@@ -267,6 +267,7 @@ export interface BotDossier {
 }
 
 export const DOSSIER_CATEGORIES: { value: DossierCategory; label: string; emoji: string }[] = [
+  { value: "libre", label: "Expression libre (IA)", emoji: "💬" },
   { value: "dossier", label: "Gros dossier", emoji: "💣" },
   { value: "anecdote", label: "Anecdote drôle", emoji: "📖" },
   { value: "surnom", label: "Surnom gênant", emoji: "🏷️" },

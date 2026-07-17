@@ -24,7 +24,7 @@ export default function DossiersPage() {
   // Form state (create)
   const [openForm, setOpenForm] = useState(false);
   const [targetId, setTargetId] = useState<string>("");
-  const [category, setCategory] = useState<DossierCategory>("dossier");
+  const [category, setCategory] = useState<DossierCategory>("libre");
   const [content, setContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -237,10 +237,10 @@ export default function DossiersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Catégorie</Label>
+                <Label>Catégorie (Optionnelle - l&apos;IA s&apos;occupe du classement)</Label>
                 <Select value={category} onValueChange={(v) => setCategory(v as DossierCategory)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Expression libre (IA)" />
                   </SelectTrigger>
                   <SelectContent>
                     {DOSSIER_CATEGORIES.map((cat) => (
@@ -253,11 +253,11 @@ export default function DossiersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Le dossier / anecdote *</Label>
+                <Label>L&apos;info / anecdote / dossier *</Label>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Ex: En 2018 à la plage, Charly est resté coincé 20min dans une bouée flamant rose..."
+                  placeholder="Écris librement ce que tu veux sur ce participant (dossier, habitude, souvenir, vanne...). L'IA s'occupe de tout classer et retenir !"
                   rows={4}
                   required
                 />
