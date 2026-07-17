@@ -1,5 +1,29 @@
 [
   {
+    "date": "2026-07-17",
+    "tag": "feature",
+    "emoji": "🔔",
+    "title": "Notifications Push sur tout le site",
+    "description": "Toutes les pages (Chat, Programme, Sondages, Galerie, Dépenses, Badges, Billard) envoient des notifications push personnalisées.",
+    "details": "Chaque nouveauté déclenche maintenant une notification push instantanée sur vos téléphones et PC abonnés : nouveaux messages chat, activités ou propositions au planning, votes aux sondages, commentaires et likes de photos dans la galerie, ajouts de dépenses, badges décernés, lancement de tournoi de billard et résultats de matchs !"
+  },
+  {
+    "date": "2026-07-17",
+    "tag": "improvement",
+    "emoji": "📅",
+    "title": "Programme : suppression & formulaire ergonomique",
+    "description": "Tu peux supprimer les activités du programme que tu as créées. Le formulaire de proposition apparaît directement sous le bouton.",
+    "details": "Chaque participant qui ajoute une activité au planning peut désormais la supprimer (l'admin conserve également le droit de tout supprimer). De plus, cliquer sur 'Proposer une activité' ouvre le formulaire directement sous le bouton pour éviter de scroller."
+  },
+  {
+    "date": "2026-07-17",
+    "tag": "feature",
+    "emoji": "🗳️",
+    "title": "Sondages : affichage de l'auteur",
+    "description": "Chaque carte de sondage affiche désormais l'avatar emoji et le pseudo de son créateur.",
+    "details": "Sur la page Sondages, tu peux maintenant voir immédiatement qui a lancé chaque sondage grâce à son avatar emoji et son pseudo affichés sous la question."
+  },
+  {
     "date": "2026-07-16",
     "tag": "feature",
     "emoji": "🔔",
