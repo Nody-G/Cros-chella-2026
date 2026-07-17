@@ -434,7 +434,7 @@ export async function deletePoll(pollId: string): Promise<boolean> {
 // MESSAGES
 // ============================================
 
-export async function getMessages(limit: number = 1000): Promise<Message[]> {
+export async function getMessages(limit: number = 300): Promise<Message[]> {
   const { data, error } = await supabase
     .from("messages")
     .select("*, author:participants(*)")
