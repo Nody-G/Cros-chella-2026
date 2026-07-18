@@ -2,6 +2,22 @@
   {
     "date": "2026-07-18",
     "tag": "feature",
+    "emoji": "🚨",
+    "title": "Avis de tempête : Alertes Flash Pop-up Écran & Roue des Corvées",
+    "description": "Diffusion d'alertes pop-up géantes en direct sur tous les écrans connectés + tirage au sort des corvées et export CSV des dépenses Tricount.",
+    "details": "L'admin peut désormais diffuser une alerte flash visuelle et sonore qui surgit instantanément sur les écrans de tous les potes connectés sur le site (ex: 'L'Apéro est servi !', 'Le Barbecue est chaud !'). Un générateur aléatoire permet également de tirer au sort qui s'occupe des corvées (glaçons, vaisselle, pain) avec publication automatique des résultats dans le chat par Botardèche, sans oublier l'exportation complète du Tricount en fichier CSV."
+  },
+  {
+    "date": "2026-07-18",
+    "tag": "feature",
+    "emoji": "👑",
+    "title": "Nouveau : Le Panneau Administrateur Cros-Chella (/admin)",
+    "description": "Un dashboard de contrôle complet pour l'admin : notifications push, réglages de Botardèche IA, gestion des potes, modération & paramètres du festival.",
+    "details": "Découvrez le nouveau panneau de contrôle '/admin' accessible aux administrateurs ! Il permet de piloter l'ensemble de l'application : gestion des déclencheurs de notifications push par événement, émetteur d'alertes push personnalisées, réinitialisation de mot de passe et édition de profil pour les participants, contrôle en direct de la personnalité et des consignes pour l'IA Botardèche, verrouillage des sondages et paramétrage du festival (mode maintenance, visibilité des modules, compte à rebours)."
+  },
+  {
+    "date": "2026-07-18",
+    "tag": "feature",
     "emoji": "💣",
     "title": "Nouveau : Le Mur des Dossiers Botardèche (100% Anonyme)",
     "description": "Une page dédiée pour balancer librement des anecdotes, casseroles et secrets sur les potes. Botardèche les apprend en direct pour clasher la cible !",
