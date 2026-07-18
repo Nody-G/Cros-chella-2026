@@ -17,7 +17,6 @@ export default function DossiersPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [dossiers, setDossiers] = useState<BotDossier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [filterTarget, setFilterTarget] = useState<string>("all");
 
@@ -36,10 +35,9 @@ export default function DossiersPage() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    // Current user selector from localStorage
+    // Current user id from localStorage if present
     const saved = localStorage.getItem("croschella_user");
     if (saved) {
-      setSelectedParticipant(saved);
       setCurrentUserId(saved);
     }
 
@@ -67,12 +65,6 @@ export default function DossiersPage() {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  const handleSelectUser = (id: string) => {
-    setSelectedParticipant(id);
-    setCurrentUserId(id);
-    localStorage.setItem("croschella_user", id);
-  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,44 +151,21 @@ export default function DossiersPage() {
 
   return (
     <div className="container max-w-4xl mx-auto p-4 py-6 space-y-6 pb-20">
-      {/* Selector if not selected */}
-      {!selectedParticipant && (
-        <Card className="border-amber-500/30 bg-amber-500/10 mb-4">
-          <CardContent className="p-4">
-            <p className="text-sm font-semibold mb-2">Qui es-tu ?</p>
-            <div className="flex flex-wrap gap-2">
-              {participants.map((p) => (
-                <Button
-                  key={p.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSelectUser(p.id)}
-                  className="gap-1"
-                >
-                  <span>{p.emoji_avatar || "👤"}</span>
-                  <span>{p.pseudo || p.name}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-red-950/40 via-background to-amber-950/40 p-5 rounded-2xl border border-red-500/20">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold tracking-tight text-red-400">💣 Le Mur des Dossiers</h1>
             <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 gap-1">
-              <span>🤫 100% Anonyme</span>
+              <span>🤫 100% Anonyme & Secouru</span>
             </Badge>
             <Badge variant="outline" className="border-red-500/40 text-red-400 bg-red-500/10">
               Alimente Botardèche 🤖
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-            Écris librement ce que tu veux sur n&apos;importe quel participant.
-            <span className="font-semibold text-emerald-400"> C&apos;est 100% anonyme !</span> Botardèche traite automatiquement l&apos;information et l&apos;enregistre dans sa mémoire pour clasher la cible dans le chat.
+            Balance librement des dossiers, anecdotes ou casseroles sur n&apos;importe quel participant.
+            <span className="font-semibold text-emerald-400"> C&apos;est 100% anonyme !</span> Aucune identité n&apos;est enregistrée. Botardèche traite l&apos;information et s&apos;en sert pour clasher la cible dans le chat.
           </p>
         </div>
 
