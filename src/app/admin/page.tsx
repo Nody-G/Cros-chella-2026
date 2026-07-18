@@ -16,7 +16,6 @@ import {
   getBotDossiers,
   getLiveAnalytics,
   broadcastFlashAnnouncement,
-  postChatMessageAsBot,
 } from "@/lib/supabase-queries";
 import {
   Participant,
@@ -57,7 +56,6 @@ import {
   Pencil,
   Trash2,
   BarChart3,
-  Dices,
   Radio,
   Download,
   Wine,
@@ -112,11 +110,6 @@ export default function AdminDashboardPage() {
   const [alsoPush, setAlsoPush] = useState(true);
   const [sendingFlash, setSendingFlash] = useState(false);
 
-  // Randomizer / Wheel of Tasks
-  const [randomTask, setRandomTask] = useState("Qui va chercher le pain et les glaçons ? 🥖🧊");
-  const [selectedWinner, setSelectedWinner] = useState<Participant | null>(null);
-  const [spinning, setSpinning] = useState(false);
-  const [postToChat, setPostToChat] = useState(true);
 
   // 2. Bot Config
   const [botConfig, setBotConfig] = useState<BotConfig>({
@@ -343,36 +336,6 @@ export default function AdminDashboardPage() {
     setFlashMessage("");
   };
 
-  // Randomizer / Wheel Handler
-  const handleSpinRandomizer = async () => {
-    if (participants.length === 0) return;
-
-    setSpinning(true);
-    setSelectedWinner(null);
-
-    // Spin animation delay
-    let count = 0;
-    const interval = setInterval(() => {
-      const randomIdx = Math.floor(Math.random() * participants.length);
-      setSelectedWinner(participants[randomIdx]);
-      count++;
-
-      if (count > 15) {
-        clearInterval(interval);
-        setSpinning(false);
-        const winner = participants[Math.floor(Math.random() * participants.length)];
-        setSelectedWinner(winner);
-
-        // Option to post in chat
-        if (postToChat) {
-          postChatMessageAsBot(
-            `🎲 [TIRAGE AU SORT ADMIN]\nConsigne : ${randomTask}\n👉 LE DESTIN A PARLÉ : C'est ${winner.emoji_avatar || "👤"} ${winner.pseudo || winner.name} qui s'y colle ! 😂🎯`
-          );
-        }
-        showSaveToast(`Désigné(e) : ${winner.name} ! 🎉`);
-      }
-    }, 120);
-  };
 
   const handleSendCustomPush = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -744,80 +707,30 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Randomizer / Corvées Wheel */}
+            {/* Exportation & Souvenirs Data */}
             <Card className="border-amber-500/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-400">
-                  <Dices className="w-4 h-4 text-amber-400" />
-                  🎲 Roue des Corvées & Tirage au Sort
+                  <Download className="w-4 h-4 text-amber-400" />
+                  📦 Exportation & Souvenirs du Festival
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Désigne au hasard un pote pour une tâche ou un défi.
+                  Télécharge les comptes Tricount et données de l&apos;événement.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Tâche / Question du Tirage</Label>
-                  <Input
-                    value={randomTask}
-                    onChange={(e) => setRandomTask(e.target.value)}
-                    placeholder="Ex: Qui fait la vaisselle du dîner ?"
-                    className="bg-background text-xs"
-                  />
-                </div>
-
-                {/* Display Selected Winner */}
-                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/40 via-background to-red-950/40 border border-amber-500/40 text-center space-y-1">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Résultat du Destin</p>
-                  {spinning ? (
-                    <div className="text-2xl font-black text-amber-400 animate-pulse py-1">
-                      {selectedWinner ? `${selectedWinner.emoji_avatar || "👤"} ${selectedWinner.name}` : "Tourne..."}
-                    </div>
-                  ) : selectedWinner ? (
-                    <div className="text-2xl font-black text-emerald-400 py-1 animate-in zoom-in-50 duration-300">
-                      🎉 {selectedWinner.emoji_avatar || "👤"} {selectedWinner.pseudo || selectedWinner.name} !
-                    </div>
-                  ) : (
-                    <div className="text-xs text-muted-foreground py-2 italic">
-                      Clique sur le bouton ci-dessous pour lancer le tirage !
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="postToChat"
-                    checked={postToChat}
-                    onChange={(e) => setPostToChat(e.target.checked)}
-                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
-                  />
-                  <Label htmlFor="postToChat" className="text-xs font-normal cursor-pointer">
-                    Publier automatiquement le résultat dans le Chat Général par Botardèche 💬
-                  </Label>
-                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Exporte l&apos;intégralité des dépenses enregistrées sur le Tricount du festival au format CSV pour faire les comptes facilement.
+                </p>
 
                 <Button
-                  onClick={handleSpinRandomizer}
-                  disabled={spinning || participants.length === 0}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 text-xs h-10 shadow-lg shadow-amber-500/20"
+                  variant="outline"
+                  onClick={handleExportTricountData}
+                  className="w-full text-xs font-semibold text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10 gap-2 h-10"
                 >
-                  <Dices className={`w-4 h-4 ${spinning ? "animate-spin" : ""}`} />
-                  {spinning ? "Lancement en cours..." : "🎰 Lancer le Tirage au Sort !"}
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  Exporter le Récapitulatif Tricount (CSV) 📥
                 </Button>
-
-                {/* Export Data Button */}
-                <div className="pt-3 border-t border-border/40">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportTricountData}
-                    className="w-full text-xs text-muted-foreground hover:text-foreground border-border/60 gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5 text-emerald-400" />
-                    Exporter le Récapitulatif Tricount (CSV)
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>

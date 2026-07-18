@@ -3,9 +3,9 @@
     "date": "2026-07-18",
     "tag": "feature",
     "emoji": "🚨",
-    "title": "Avis de tempête : Alertes Flash Pop-up Écran & Roue des Corvées",
-    "description": "Diffusion d'alertes pop-up géantes en direct sur tous les écrans connectés + tirage au sort des corvées et export CSV des dépenses Tricount.",
-    "details": "L'admin peut désormais diffuser une alerte flash visuelle et sonore qui surgit instantanément sur les écrans de tous les potes connectés sur le site (ex: 'L'Apéro est servi !', 'Le Barbecue est chaud !'). Un générateur aléatoire permet également de tirer au sort qui s'occupe des corvées (glaçons, vaisselle, pain) avec publication automatique des résultats dans le chat par Botardèche, sans oublier l'exportation complète du Tricount en fichier CSV."
+    "title": "Avis de tempête : Alertes Flash Pop-up Écran & Export Tricount",
+    "description": "Diffusion d'alertes pop-up géantes en direct sur tous les écrans connectés + export CSV des dépenses Tricount.",
+    "details": "L'admin peut désormais diffuser une alerte flash visuelle et sonore qui surgit instantanément sur les écrans de tous les potes connectés sur le site (ex: 'L'Apéro est servi !', 'Le Barbecue est chaud !'), sans oublier l'exportation complète du Tricount en fichier CSV pour faire les comptes facilement."
   },
   {
     "date": "2026-07-18",
