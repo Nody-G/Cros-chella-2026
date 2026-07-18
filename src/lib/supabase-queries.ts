@@ -2360,3 +2360,77 @@ export async function triggerCustomPushNotification(
     return false;
   }
 }
+
+export async function broadcastFlashAnnouncement(
+  title: string,
+  message: string,
+  emoji: string = "📢"
+): Promise<boolean> {
+  try {
+    const channel = supabase.channel("croschella_live_events", {
+      config: { broadcast: { self: true } },
+    });
+    await channel.subscribe();
+    await channel.send({
+      type: "broadcast",
+      event: "flash_announcement",
+      payload: {
+        id: Date.now().toString(),
+        title,
+        message,
+        emoji,
+        created_at: new Date().toISOString(),
+      },
+    });
+    return true;
+  } catch (err) {
+    console.error("Error broadcasting flash announcement:", err);
+    return false;
+  }
+}
+
+export async function getLiveAnalytics() {
+  const [
+    { count: msgCount },
+    { count: photosCount },
+    { data: expenses },
+    { count: matchesCount },
+    { data: alcohols },
+  ] = await Promise.all([
+    supabase.from("messages").select("*", { count: "exact", head: true }),
+    supabase.from("photos").select("*", { count: "exact", head: true }),
+    supabase.from("expenses").select("amount"),
+    supabase.from("billard_matches").select("*", { count: "exact", head: true }),
+    supabase.from("alcohol_consumptions").select("quantity"),
+  ]);
+
+  const totalExpensesCents = (expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const totalConsoCount = (alcohols || []).reduce((sum, a) => sum + (a.quantity || 1), 0);
+
+  return {
+    totalMessages: msgCount || 0,
+    totalPhotosCount: photosCount || 0,
+    totalExpensesCents,
+    totalBillardMatches: matchesCount || 0,
+    totalConsoCount,
+  };
+}
+
+export async function postChatMessageAsBot(content: string): Promise<boolean> {
+  const { data: admin } = await supabase
+    .from("participants")
+    .select("id")
+    .eq("is_admin", true)
+    .limit(1)
+    .single();
+
+  const authorId = admin?.id;
+  if (!authorId) return false;
+
+  const { error } = await supabase.from("messages").insert({
+    author_id: authorId,
+    content: `🤖 ${content}`,
+  });
+
+  return !error;
+}

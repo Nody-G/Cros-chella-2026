@@ -413,3 +413,20 @@ export interface PinnedChatMessage {
   author_name: string;
   created_at: string;
 }
+
+export interface CocktailConfig {
+  name: string;
+  emoji: string;
+  ingredients: string;
+  description: string;
+}
+
+export interface LiveAnalytics {
+  totalMessages: number;
+  topTalkerName: string;
+  totalConsoCount: number;
+  topDrinkName: string;
+  totalExpensesCents: number;
+  totalPhotosCount: number;
+  totalBillardMatches: number;
+}

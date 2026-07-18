@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGate } from "@/components/layout/auth-gate";
 import { SwRegister } from "@/components/layout/sw-register";
+import { FlashAnnouncementListener } from "@/components/layout/flash-announcement-listener";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <AuthProvider>
           <SwRegister />
+          <FlashAnnouncementListener />
           <AuthGate>{children}</AuthGate>
         </AuthProvider>
       </body>

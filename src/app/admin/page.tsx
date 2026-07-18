@@ -14,6 +14,9 @@ import {
   triggerCustomPushNotification,
   getPolls,
   getBotDossiers,
+  getLiveAnalytics,
+  broadcastFlashAnnouncement,
+  postChatMessageAsBot,
 } from "@/lib/supabase-queries";
 import {
   Participant,
@@ -23,6 +26,7 @@ import {
   ModuleVisibility,
   FestivalConfig,
   PinnedChatMessage,
+  CocktailConfig,
 } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +56,15 @@ import {
   Pin,
   Pencil,
   Trash2,
+  BarChart3,
+  Dices,
+  Radio,
+  Download,
+  Wine,
+  MessageSquare,
+  DollarSign,
+  Camera,
+  Trophy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -63,6 +76,15 @@ export default function AdminDashboardPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>("");
+
+  // Live Analytics
+  const [analytics, setAnalytics] = useState({
+    totalMessages: 0,
+    totalPhotosCount: 0,
+    totalExpensesCents: 0,
+    totalBillardMatches: 0,
+    totalConsoCount: 0,
+  });
 
   // 1. Notifications Config
   const [notifConfig, setNotifConfig] = useState<NotificationConfig>({
@@ -82,6 +104,19 @@ export default function AdminDashboardPage() {
   const [pushBody, setPushBody] = useState("");
   const [pushUrl, setPushUrl] = useState("/");
   const [sendingPush, setSendingPush] = useState(false);
+
+  // Flash Popup Announcement Form
+  const [flashTitle, setFlashTitle] = useState("");
+  const [flashMessage, setFlashMessage] = useState("");
+  const [flashEmoji, setFlashEmoji] = useState("🍻");
+  const [alsoPush, setAlsoPush] = useState(true);
+  const [sendingFlash, setSendingFlash] = useState(false);
+
+  // Randomizer / Wheel of Tasks
+  const [randomTask, setRandomTask] = useState("Qui va chercher le pain et les glaçons ? 🥖🧊");
+  const [selectedWinner, setSelectedWinner] = useState<Participant | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [postToChat, setPostToChat] = useState(true);
 
   // 2. Bot Config
   const [botConfig, setBotConfig] = useState<BotConfig>({
@@ -113,11 +148,18 @@ export default function AdminDashboardPage() {
     dossiers: true,
   });
 
-  // 4. Festival Config
+  // 4. Festival Config & Cocktail
   const [festivalConfig, setFestivalConfig] = useState<FestivalConfig>({
     countdown_date: "2026-07-31T14:00:00.000Z",
     maintenance_mode: false,
     maintenance_message: "Le festival Cros-Chella fait une petite pause technique... 🎪✨",
+  });
+
+  const [cocktailConfig, setCocktailConfig] = useState<CocktailConfig>({
+    name: "Mojito Ardéchois 🔥",
+    emoji: "🍹",
+    ingredients: "Rhum d'Ardèche, Menthe fraîche du jardin, Citron vert, Eau gazeuse",
+    description: "Le remède officiel contre la chaleur du festival !",
   });
 
   // 5. Pinned Chat Message
@@ -147,6 +189,8 @@ export default function AdminDashboardPage() {
         mVis,
         fConfig,
         pMsg,
+        cConfig,
+        liveStatsData,
       ] = await Promise.all([
         getParticipants(),
         getPolls(),
@@ -190,6 +234,13 @@ export default function AdminDashboardPage() {
           author_name: "Admin",
           created_at: "",
         }),
+        getAppSetting<CocktailConfig>("cocktail_of_the_day", {
+          name: "Mojito Ardéchois 🔥",
+          emoji: "🍹",
+          ingredients: "Rhum, Menthe fraîche, Citron vert, Eau gazeuse",
+          description: "Le cocktail signature officiel Cros-Chella !",
+        }),
+        getLiveAnalytics(),
       ]);
 
       setParticipants(parts);
@@ -199,12 +250,13 @@ export default function AdminDashboardPage() {
       setModuleVisibility(mVis);
       setFestivalConfig(fConfig);
       setPinnedMsg(pMsg);
+      setCocktailConfig(cConfig);
+      setAnalytics(liveStatsData);
 
       // Estimate bot context metrics
-      const { count: msgCount } = await supabase.from("messages").select("*", { count: "exact", head: true });
-      const totalCharEst = (msgCount || 0) * 80 + dos.length * 150 + parts.length * 200;
+      const totalCharEst = liveStatsData.totalMessages * 80 + dos.length * 150 + parts.length * 200;
       setContextStats({
-        chatCount: msgCount || 0,
+        chatCount: liveStatsData.totalMessages,
         dossiersCount: dos.length,
         charLength: totalCharEst,
         estimatedTokens: Math.round(totalCharEst / 4),
@@ -248,6 +300,12 @@ export default function AdminDashboardPage() {
     if (ok) showSaveToast("Paramètres du festival enregistrés ! 🎪");
   };
 
+  const handleSaveCocktailConfig = async (updated: CocktailConfig) => {
+    setCocktailConfig(updated);
+    const ok = await saveAppSetting("cocktail_of_the_day", updated);
+    if (ok) showSaveToast("Cocktail du jour mis à jour ! 🍹");
+  };
+
   const handleSavePinnedMessage = async () => {
     const updated = {
       ...pinnedMsg,
@@ -257,6 +315,63 @@ export default function AdminDashboardPage() {
     setPinnedMsg(updated);
     const ok = await saveAppSetting("pinned_chat_message", updated);
     if (ok) showSaveToast("Message épinglé mis à jour dans le chat ! 📌");
+  };
+
+  // Trigger Flash Popup Announcement
+  const handleSendFlashAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flashTitle.trim() || !flashMessage.trim()) return;
+
+    setSendingFlash(true);
+
+    // 1. Broadcast screen popup
+    await broadcastFlashAnnouncement(flashTitle.trim(), flashMessage.trim(), flashEmoji);
+
+    // 2. Optionally trigger push notification
+    if (alsoPush) {
+      await triggerCustomPushNotification(
+        "all",
+        `${flashEmoji} ${flashTitle.trim()}`,
+        flashMessage.trim(),
+        "/"
+      );
+    }
+
+    setSendingFlash(false);
+    showSaveToast("Alerte Flash diffusée en direct sur les écrans ! 🚨");
+    setFlashTitle("");
+    setFlashMessage("");
+  };
+
+  // Randomizer / Wheel Handler
+  const handleSpinRandomizer = async () => {
+    if (participants.length === 0) return;
+
+    setSpinning(true);
+    setSelectedWinner(null);
+
+    // Spin animation delay
+    let count = 0;
+    const interval = setInterval(() => {
+      const randomIdx = Math.floor(Math.random() * participants.length);
+      setSelectedWinner(participants[randomIdx]);
+      count++;
+
+      if (count > 15) {
+        clearInterval(interval);
+        setSpinning(false);
+        const winner = participants[Math.floor(Math.random() * participants.length)];
+        setSelectedWinner(winner);
+
+        // Option to post in chat
+        if (postToChat) {
+          postChatMessageAsBot(
+            `🎲 [TIRAGE AU SORT ADMIN]\nConsigne : ${randomTask}\n👉 LE DESTIN A PARLÉ : C'est ${winner.emoji_avatar || "👤"} ${winner.pseudo || winner.name} qui s'y colle ! 😂🎯`
+          );
+        }
+        showSaveToast(`Désigné(e) : ${winner.name} ! 🎉`);
+      }
+    }, 120);
   };
 
   const handleSendCustomPush = async (e: React.FormEvent) => {
@@ -368,7 +483,7 @@ export default function AdminDashboardPage() {
     const ok = await togglePollCloseStatus(poll.id, nextClosed);
     if (ok) {
       setPolls((prev) => prev.map((item) => (item.id === poll.id ? { ...item, is_closed: nextClosed } : item)));
-      showSaveToast(`Sondage "${poll.title}" ${nextClosed ? "clôturé 🔒" : "rouvert 🔓"} !`);
+      showSaveToast(`Sondage "${poll.question || poll.title}" ${nextClosed ? "clôturé 🔒" : "rouvert 🔓"} !`);
     }
   };
 
@@ -379,6 +494,27 @@ export default function AdminDashboardPage() {
     if (!error) {
       showSaveToast("Mémoire DM de Botardèche purgée avec succès ! 🧹");
     }
+  };
+
+  // Export Data Souvenirs
+  const handleExportTricountData = async () => {
+    const { data: exp } = await supabase.from("expenses").select("*, paid_by_user:participants!paid_by(name, pseudo)");
+    if (!exp || exp.length === 0) {
+      alert("Aucune dépense à exporter.");
+      return;
+    }
+    const lines = ["ID;Titre;Montant(EUR);Payé Par;Date"];
+    exp.forEach((e) => {
+      const payer = e.paid_by_user?.pseudo || e.paid_by_user?.name || e.paid_by;
+      lines.push(`${e.id};"${e.title}";${(e.amount / 100).toFixed(2)};"${payer}";${e.created_at}`);
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Cros-Chella-Tricount-Export-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    showSaveToast("Export Tricount télécharge avec succès ! 📥");
   };
 
   if (authLoading || loading) {
@@ -423,7 +559,7 @@ export default function AdminDashboardPage() {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-            Gestion centrale du festival Cros-Chella : notifications push, participants, IA Botardèche, modération & paramètres du site.
+            Gestion centrale du festival Cros-Chella : alertes flash live, push notifications, tirages au sort, Botardèche IA, participants & réglages.
           </p>
         </div>
 
@@ -442,15 +578,19 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Main Admin Tabs */}
-      <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full bg-muted/40 p-1 rounded-xl h-auto gap-1">
+      <Tabs defaultValue="stats" className="w-full">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full bg-muted/40 p-1 rounded-xl h-auto gap-1">
+          <TabsTrigger value="stats" className="text-xs gap-1.5 py-2">
+            <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+            <span>Stats & Live</span>
+          </TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs gap-1.5 py-2">
             <Bell className="w-3.5 h-3.5" />
             <span>Notifications</span>
           </TabsTrigger>
           <TabsTrigger value="participants" className="text-xs gap-1.5 py-2">
             <Users className="w-3.5 h-3.5" />
-            <span>Participants</span>
+            <span>Potes</span>
           </TabsTrigger>
           <TabsTrigger value="bot" className="text-xs gap-1.5 py-2">
             <Bot className="w-3.5 h-3.5" />
@@ -465,6 +605,223 @@ export default function AdminDashboardPage() {
             <span>Festival</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* TAB 0: LIVE STATS, FLASH ALERTS & RANDOMIZER */}
+        <TabsContent value="stats" className="space-y-6 pt-4">
+          {/* Live Metrics Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Card className="p-3.5 border-border/60 bg-muted/20 text-center">
+              <MessageSquare className="w-5 h-5 mx-auto text-amber-400 mb-1" />
+              <p className="text-[10px] text-muted-foreground">Messages Chat</p>
+              <p className="text-xl font-bold text-foreground">{analytics.totalMessages}</p>
+            </Card>
+            <Card className="p-3.5 border-border/60 bg-muted/20 text-center">
+              <Wine className="w-5 h-5 mx-auto text-red-400 mb-1" />
+              <p className="text-[10px] text-muted-foreground">Verres Consommés</p>
+              <p className="text-xl font-bold text-red-400">{analytics.totalConsoCount}</p>
+            </Card>
+            <Card className="p-3.5 border-border/60 bg-muted/20 text-center">
+              <DollarSign className="w-5 h-5 mx-auto text-emerald-400 mb-1" />
+              <p className="text-[10px] text-muted-foreground">Total Tricount (€)</p>
+              <p className="text-xl font-bold text-emerald-400">{(analytics.totalExpensesCents / 100).toFixed(0)} €</p>
+            </Card>
+            <Card className="p-3.5 border-border/60 bg-muted/20 text-center">
+              <Camera className="w-5 h-5 mx-auto text-sky-400 mb-1" />
+              <p className="text-[10px] text-muted-foreground">Photos Galerie</p>
+              <p className="text-xl font-bold text-foreground">{analytics.totalPhotosCount}</p>
+            </Card>
+            <Card className="p-3.5 border-border/60 bg-muted/20 text-center col-span-2 md:col-span-1">
+              <Trophy className="w-5 h-5 mx-auto text-purple-400 mb-1" />
+              <p className="text-[10px] text-muted-foreground">Matchs Billard</p>
+              <p className="text-xl font-bold text-purple-400">{analytics.totalBillardMatches}</p>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Realtime Screen Flash Announcement Launcher */}
+            <Card className="border-red-500/40 bg-gradient-to-b from-card to-red-950/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-red-400">
+                  <Radio className="w-4 h-4 text-red-400 animate-pulse" />
+                  🚨 Déclencher une Alerte Flash Écran (Temps Réel)
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Fais surgir un bandeau pop-up vibrant sur l&apos;écran de tous les potes connectés.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Presets */}
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Raccourcis d&apos;Alerte Rapides</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { title: "🍻 L'Apéro est Servi !", msg: "Rejoignez le bar, la première tournée est servie !", emoji: "🍻" },
+                      { title: "🥩 Le Barbecue est Prêt !", msg: "À table les potes, les grillades sont chaudes !", emoji: "🥩" },
+                      { title: "🎱 Tournoi de Billard !", msg: "Le prochain match va commencer dans le salon !", emoji: "🎱" },
+                      { title: "🥖 Mission Pain & Glaçons", msg: "Besoin d'un volontaire pour aller au village !", emoji: "🥖" },
+                    ].map((p, idx) => (
+                      <Button
+                        key={idx}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFlashTitle(p.title);
+                          setFlashMessage(p.msg);
+                          setFlashEmoji(p.emoji);
+                        }}
+                        className="text-[11px] h-7 px-2 border-red-500/30 hover:bg-red-500/10"
+                      >
+                        {p.emoji} {p.title.split(" ")[0]}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={handleSendFlashAnnouncement} className="space-y-3">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="col-span-1 space-y-1">
+                      <Label className="text-[11px]">Emoji</Label>
+                      <Input
+                        value={flashEmoji}
+                        onChange={(e) => setFlashEmoji(e.target.value)}
+                        className="bg-background text-center"
+                        maxLength={4}
+                      />
+                    </div>
+                    <div className="col-span-3 space-y-1">
+                      <Label className="text-[11px]">Titre Pop-up *</Label>
+                      <Input
+                        value={flashTitle}
+                        onChange={(e) => setFlashTitle(e.target.value)}
+                        placeholder="Ex: ⚡ L'Apéro est servi !"
+                        className="bg-background"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[11px]">Message de l&apos;Alerte *</Label>
+                    <Textarea
+                      value={flashMessage}
+                      onChange={(e) => setFlashMessage(e.target.value)}
+                      placeholder="Ex: Rendez-vous au bar dans 2 minutes !"
+                      rows={2}
+                      className="bg-background text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="alsoPush"
+                      checked={alsoPush}
+                      onChange={(e) => setAlsoPush(e.target.checked)}
+                      className="w-4 h-4 rounded text-red-600 focus:ring-red-500 cursor-pointer"
+                    />
+                    <Label htmlFor="alsoPush" className="text-xs font-normal cursor-pointer">
+                      Envoyer aussi une notification Push Mobile 📲
+                    </Label>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={sendingFlash || !flashTitle.trim() || !flashMessage.trim()}
+                    className="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-bold gap-2 text-xs h-10 shadow-lg shadow-red-500/20"
+                  >
+                    {sendingFlash ? (
+                      "Diffusion en cours..."
+                    ) : (
+                      <>
+                        <Radio className="w-4 h-4" />
+                        🚀 Diffuser l&apos;Alerte Flash Pop-up en Direct !
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Randomizer / Corvées Wheel */}
+            <Card className="border-amber-500/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-400">
+                  <Dices className="w-4 h-4 text-amber-400" />
+                  🎲 Roue des Corvées & Tirage au Sort
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Désigne au hasard un pote pour une tâche ou un défi.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Tâche / Question du Tirage</Label>
+                  <Input
+                    value={randomTask}
+                    onChange={(e) => setRandomTask(e.target.value)}
+                    placeholder="Ex: Qui fait la vaisselle du dîner ?"
+                    className="bg-background text-xs"
+                  />
+                </div>
+
+                {/* Display Selected Winner */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/40 via-background to-red-950/40 border border-amber-500/40 text-center space-y-1">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Résultat du Destin</p>
+                  {spinning ? (
+                    <div className="text-2xl font-black text-amber-400 animate-pulse py-1">
+                      {selectedWinner ? `${selectedWinner.emoji_avatar || "👤"} ${selectedWinner.name}` : "Tourne..."}
+                    </div>
+                  ) : selectedWinner ? (
+                    <div className="text-2xl font-black text-emerald-400 py-1 animate-in zoom-in-50 duration-300">
+                      🎉 {selectedWinner.emoji_avatar || "👤"} {selectedWinner.pseudo || selectedWinner.name} !
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground py-2 italic">
+                      Clique sur le bouton ci-dessous pour lancer le tirage !
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="postToChat"
+                    checked={postToChat}
+                    onChange={(e) => setPostToChat(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <Label htmlFor="postToChat" className="text-xs font-normal cursor-pointer">
+                    Publier automatiquement le résultat dans le Chat Général par Botardèche 💬
+                  </Label>
+                </div>
+
+                <Button
+                  onClick={handleSpinRandomizer}
+                  disabled={spinning || participants.length === 0}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 text-xs h-10 shadow-lg shadow-amber-500/20"
+                >
+                  <Dices className={`w-4 h-4 ${spinning ? "animate-spin" : ""}`} />
+                  {spinning ? "Lancement en cours..." : "🎰 Lancer le Tirage au Sort !"}
+                </Button>
+
+                {/* Export Data Button */}
+                <div className="pt-3 border-t border-border/40">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportTricountData}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground border-border/60 gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    Exporter le Récapitulatif Tricount (CSV)
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* TAB 1: NOTIFICATIONS PUSH */}
         <TabsContent value="notifications" className="space-y-6 pt-4">
@@ -972,9 +1329,73 @@ export default function AdminDashboardPage() {
           </div>
         </TabsContent>
 
-        {/* TAB 5: FESTIVAL CONFIG */}
+        {/* TAB 5: FESTIVAL CONFIG & COCKTAIL */}
         <TabsContent value="config" className="space-y-6 pt-4">
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Cocktail du Jour Config */}
+            <Card className="border-amber-500/30">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-400">
+                  <Wine className="w-4 h-4 text-amber-400" />
+                  🍹 Cocktail / Boisson Officielle du Jour
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Définit la boisson du jour affichée sur l&apos;accueil du festival.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="col-span-1 space-y-1">
+                    <Label className="text-[11px]">Emoji</Label>
+                    <Input
+                      value={cocktailConfig.emoji}
+                      onChange={(e) => setCocktailConfig({ ...cocktailConfig, emoji: e.target.value })}
+                      className="bg-background text-center text-xs"
+                      maxLength={4}
+                    />
+                  </div>
+                  <div className="col-span-3 space-y-1">
+                    <Label className="text-[11px]">Nom du Cocktail *</Label>
+                    <Input
+                      value={cocktailConfig.name}
+                      onChange={(e) => setCocktailConfig({ ...cocktailConfig, name: e.target.value })}
+                      placeholder="Ex: Mojito Ardéchois 🔥"
+                      className="bg-background text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Ingrédients</Label>
+                  <Input
+                    value={cocktailConfig.ingredients}
+                    onChange={(e) => setCocktailConfig({ ...cocktailConfig, ingredients: e.target.value })}
+                    placeholder="Rhum, Menthe, Citron, Eau gazeuse..."
+                    className="bg-background text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Description / Note Fun</Label>
+                  <Input
+                    value={cocktailConfig.description}
+                    onChange={(e) => setCocktailConfig({ ...cocktailConfig, description: e.target.value })}
+                    placeholder="Ex: À consommer frais autour de la piscine !"
+                    className="bg-background text-xs"
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveCocktailConfig(cocktailConfig)}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs gap-1.5"
+                >
+                  <Wine className="w-3.5 h-3.5" />
+                  Enregistrer le Cocktail du Jour
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Module Visibility */}
             <Card className="border-border/60">
               <CardHeader>
@@ -1029,7 +1450,7 @@ export default function AdminDashboardPage() {
             </Card>
 
             {/* Festival Countdown & Maintenance Mode */}
-            <Card className="border-amber-500/30">
+            <Card className="border-amber-500/30 md:col-span-2">
               <CardHeader>
                 <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-400">
                   <Clock className="w-4 h-4" />
@@ -1056,7 +1477,7 @@ export default function AdminDashboardPage() {
                         countdown_date: new Date(e.target.value).toISOString(),
                       })
                     }
-                    className="bg-background text-xs"
+                    className="bg-background text-xs max-w-sm"
                   />
                 </div>
 
