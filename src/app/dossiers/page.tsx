@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Sparkles, Pencil } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function DossiersPage() {
@@ -18,21 +18,19 @@ export default function DossiersPage() {
   const [dossiers, setDossiers] = useState<BotDossier[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [filterTarget, setFilterTarget] = useState<string>("all");
 
-  // Form state (create)
-  const [openForm, setOpenForm] = useState(false);
+  // Form state
   const [targetId, setTargetId] = useState<string>("");
   const [content, setContent] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-  // Edit state
+  // Edit state (admin)
   const [editingDossier, setEditingDossier] = useState<BotDossier | null>(null);
   const [editTargetId, setEditTargetId] = useState<string>("");
   const [editContent, setEditContent] = useState("");
-  const [editIsAnonymous, setEditIsAnonymous] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [showAdminView, setShowAdminView] = useState(false);
 
   useEffect(() => {
     // Current user id from localStorage if present
@@ -71,18 +69,22 @@ export default function DossiersPage() {
     if (!targetId || !content.trim()) return;
 
     setSubmitting(true);
+    setSubmittedSuccess(false);
+
     const newDos = await createBotDossier(
       targetId,
-      currentUserId || null,
+      null, // Always null author for 100% complete privacy
       content,
       "libre",
-      isAnonymous
+      true // Always anonymous
     );
 
     if (newDos) {
       setDossiers((prev) => [newDos, ...prev]);
       setContent("");
-      setOpenForm(false);
+      setTargetId("");
+      setSubmittedSuccess(true);
+      setTimeout(() => setSubmittedSuccess(false), 6000);
     }
     setSubmitting(false);
   };
@@ -91,7 +93,6 @@ export default function DossiersPage() {
     setEditingDossier(dos);
     setEditTargetId(dos.target_participant_id);
     setEditContent(dos.content);
-    setEditIsAnonymous(dos.is_anonymous);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -103,7 +104,7 @@ export default function DossiersPage() {
       target_participant_id: editTargetId,
       content: editContent,
       category: "libre",
-      is_anonymous: editIsAnonymous,
+      is_anonymous: true,
     });
 
     if (success) {
@@ -115,7 +116,7 @@ export default function DossiersPage() {
                 target_participant_id: editTargetId,
                 content: editContent,
                 category: "libre",
-                is_anonymous: editIsAnonymous,
+                is_anonymous: true,
                 target: participants.find((p) => p.id === editTargetId),
               }
             : d
@@ -137,122 +138,178 @@ export default function DossiersPage() {
   const currentUserObj = participants.find((p) => p.id === currentUserId);
   const isAdmin = currentUserObj?.is_admin || false;
 
-  const filteredDossiers = filterTarget === "all"
-    ? dossiers
-    : dossiers.filter((d) => d.target_participant_id === filterTarget);
-
   if (loading) {
     return (
-      <div className="container max-w-4xl mx-auto p-4 py-8 text-center text-muted-foreground">
-        Chargement du mur des dossiers...
+      <div className="container max-w-2xl mx-auto p-4 py-8 text-center text-muted-foreground">
+        Chargement du coffre à secrets...
       </div>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 py-6 space-y-6 pb-20">
+    <div className="container max-w-2xl mx-auto p-4 py-6 space-y-6 pb-20">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-red-950/40 via-background to-amber-950/40 p-5 rounded-2xl border border-red-500/20">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-red-400">💣 Le Mur des Dossiers</h1>
-            <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 gap-1">
-              <span>🤫 100% Anonyme & Secouru</span>
-            </Badge>
-            <Badge variant="outline" className="border-red-500/40 text-red-400 bg-red-500/10">
-              Alimente Botardèche 🤖
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-            Balance librement des dossiers, anecdotes ou casseroles sur n&apos;importe quel participant.
-            <span className="font-semibold text-emerald-400"> C&apos;est 100% anonyme !</span> Aucune identité n&apos;est enregistrée. Botardèche traite l&apos;information et s&apos;en sert pour clasher la cible dans le chat.
-          </p>
+      <div className="bg-gradient-to-r from-red-950/50 via-background to-amber-950/50 p-6 rounded-2xl border border-red-500/30 text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+          <span>🔒 100% Secret & Anonyme</span>
         </div>
-
-        <Dialog open={openForm} onOpenChange={setOpenForm}>
-          <DialogTrigger asChild>
-            <Button className="bg-red-600 hover:bg-red-700 text-white font-semibold gap-2 shadow-lg shadow-red-600/20">
-              <Plus className="w-4 h-4" />
-              Balancer une info / dossier
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-400">
-                <span>💣</span> Balancer une info (100% Anonyme)
-              </DialogTitle>
-              <CardDescription>
-                Écris librement. L&apos;IA traitera et classera automatiquement ton information dans sa mémoire.
-              </CardDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <Label>Cible (sur qui est cette info ?) *</Label>
-                <Select value={targetId} onValueChange={setTargetId} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionne un participant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {participants.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        <span className="flex items-center gap-2">
-                          <span>{p.emoji_avatar || "👤"}</span>
-                          <span>{p.pseudo || p.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>L&apos;information / le dossier libre *</Label>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Écris tout ce que tu veux (anecdote, dossier, habitude, souvenir, vanne, secret...). L'IA s'occupe de tout traiter !"
-                  rows={5}
-                  required
-                />
-              </div>
-
-              <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-xs text-emerald-400">
-                <div className="flex items-center gap-2">
-                  <span>🤫</span>
-                  <span><strong>100% Anonyme</strong> — Ton nom n&apos;apparaît pas</span>
-                </div>
-                <input
-                  type="checkbox"
-                  id="anonCheck"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="rounded border-input text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setOpenForm(false)}>
-                  Annuler
-                </Button>
-                <Button type="submit" disabled={submitting || !targetId || !content.trim()} className="bg-red-600 hover:bg-red-700 text-white font-semibold">
-                  {submitting ? "Envoi..." : "Balancer à Botardèche 💣"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <h1 className="text-2xl font-bold tracking-tight text-red-400">
+          🤫 La Boîte à Secrets du Botardèche
+        </h1>
+        <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
+          Nourris l&apos;IA en toute confidentialité. Tout ce que tu écris ici est <span className="font-semibold text-emerald-400">strictement secret</span> et directement transmis dans la mémoire de Botardèche pour ses futurs roasts.
+          <br />
+          <span className="text-foreground font-medium">Personne d&apos;autre ne peut voir ce que tu envoies.</span>
+        </p>
       </div>
 
-      {/* Edit Modal (Admin & Author) */}
+      {/* Success Notification Banner */}
+      {submittedSuccess && (
+        <Card className="border-emerald-500/40 bg-emerald-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
+          <CardContent className="p-4 flex items-center gap-3 text-emerald-400 text-xs font-medium">
+            <span className="text-xl">✅</span>
+            <div>
+              <p className="font-bold text-sm">Secret transmis avec succès à Botardèche !</p>
+              <p className="opacity-90">L&apos;info a été enregistrée en toute confidentialité dans sa mémoire. Il s&apos;en servira au meilleur moment dans le chat 😈.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Secret Submission Form */}
+      <Card className="border-red-500/30 shadow-xl bg-gradient-to-b from-card to-red-950/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-bold flex items-center gap-2 text-red-400">
+            <span>💣</span> Transmettre une pépite / dossier
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Sélectionne la personne concernée et écris librement.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Cible (sur qui est ce secret / dossier ?) *</Label>
+              <Select value={targetId} onValueChange={setTargetId} required>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Sélectionne un participant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {participants.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{p.emoji_avatar || "👤"}</span>
+                        <span>{p.pseudo || p.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">L&apos;information / l&apos;anecdote secret *</Label>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Ex: En 2018 à la plage, Charly est resté coincé 20min dans une bouée flamant rose... (Écris tout ce que tu veux, l'IA s'occupe de tout comprendre et retenir !)"
+                rows={5}
+                className="bg-background"
+                required
+              />
+            </div>
+
+            <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-400">
+              <span className="text-lg">🔒</span>
+              <div>
+                <span className="font-bold">Anonymat 100% garanti</span>
+                <p className="text-[11px] opacity-80 mt-0.5">Aucune identité n&apos;est enregistrée ni associée à cet envoi. Seul Botardèche reçoit l&apos;info.</p>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitting || !targetId || !content.trim()}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-11 text-sm shadow-lg shadow-red-600/20 gap-2"
+            >
+              {submitting ? (
+                "Transmission en cours..."
+              ) : (
+                <>
+                  <span>💣</span> Transmettre secrètement à Botardèche
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Admin View (Niels Only) */}
+      {isAdmin && (
+        <div className="pt-6 border-t border-border/40">
+          <div className="flex items-center justify-between mb-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAdminView(!showAdminView)}
+              className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+            >
+              <span>🔒 Vue Admin / Modération</span>
+              <Badge variant="outline" className="text-[10px]">{dossiers.length}</Badge>
+            </Button>
+          </div>
+
+          {showAdminView && (
+            <div className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground italic">
+                (Visible uniquement par toi en tant qu&apos;admin pour la modération)
+              </p>
+              {dossiers.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Aucun dossier dans la base de données.</p>
+              ) : (
+                <div className="grid gap-3">
+                  {dossiers.map((dos) => (
+                    <Card key={dos.id} className="p-3 border-border/60 bg-muted/20">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-red-400">
+                            Cible : {dos.target?.pseudo || dos.target?.name || "Inconnu"}
+                          </p>
+                          <p className="text-xs mt-1 text-foreground font-normal">&quot;{dos.content}&quot;</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openEditModal(dos)}
+                            className="text-muted-foreground hover:text-amber-400 p-1"
+                            title="Modifier"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(dos.id)}
+                            className="text-muted-foreground hover:text-red-400 p-1"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Modal (Admin Only) */}
       <Dialog open={!!editingDossier} onOpenChange={(open) => !open && setEditingDossier(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-400">
-              <span>✏️</span> Modifier l&apos;info {isAdmin && <Badge variant="outline" className="text-amber-400 border-amber-400/40 text-[10px]">Admin</Badge>}
+              <span>✏️</span> Modifier l&apos;info (Admin)
             </DialogTitle>
-            <CardDescription>
-              Modifie ou corrige cette information. La mémoire de Botardèche sera mise à jour instantanément.
-            </CardDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4 pt-2">
             <div className="space-y-1.5">
@@ -295,112 +352,6 @@ export default function DossiersPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Filter Tabs by Target */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <Button
-          size="sm"
-          variant={filterTarget === "all" ? "default" : "outline"}
-          onClick={() => setFilterTarget("all")}
-          className="rounded-full text-xs"
-        >
-          Tous ({dossiers.length})
-        </Button>
-        {participants.map((p) => {
-          const count = dossiers.filter((d) => d.target_participant_id === p.id).length;
-          if (count === 0) return null;
-          return (
-            <Button
-              key={p.id}
-              size="sm"
-              variant={filterTarget === p.id ? "default" : "outline"}
-              onClick={() => setFilterTarget(p.id)}
-              className="rounded-full text-xs gap-1 whitespace-nowrap"
-            >
-              <span>{p.emoji_avatar || "👤"}</span>
-              <span>{p.pseudo || p.name}</span>
-              <span className="opacity-70">({count})</span>
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Feed of Dossiers */}
-      {filteredDossiers.length === 0 ? (
-        <Card className="text-center p-8 bg-muted/20 border-dashed">
-          <CardContent className="space-y-3 p-0">
-            <div className="text-4xl">💣</div>
-            <h3 className="font-semibold">Aucun dossier pour le moment</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Soyez le premier à balancer une casserole ou une anecdote hilarante sur vos potes !
-            </p>
-            <Button onClick={() => setOpenForm(true)} variant="outline" size="sm" className="gap-2">
-              <Plus className="w-3.5 h-3.5" />
-              Ajouter un dossier
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {filteredDossiers.map((dos) => {
-            const target = dos.target;
-            const isMyDossier = dos.author_participant_id === currentUserId;
-            const canEditOrDelete = isMyDossier || isAdmin;
-
-            return (
-              <Card key={dos.id} className="relative overflow-hidden border-border/60 hover:border-red-500/30 transition-colors">
-                <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-2xl">{target?.emoji_avatar || "👤"}</div>
-                    <div>
-                      <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                        <span>Cible :</span>
-                        <span className="text-red-400">{target?.pseudo || target?.name || "Inconnu"}</span>
-                      </CardTitle>
-                      <CardDescription className="text-[11px] flex items-center gap-1 mt-0.5">
-                        <span className="font-semibold text-emerald-400">🤫 100% Anonyme</span>
-                      </CardDescription>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {canEditOrDelete && (
-                      <div className="flex items-center gap-0.5 ml-1">
-                        <button
-                          onClick={() => openEditModal(dos)}
-                          className="text-muted-foreground hover:text-amber-400 p-1 transition-colors"
-                          title={isAdmin ? "Modifier (Admin)" : "Modifier mon dossier"}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(dos.id)}
-                          className="text-muted-foreground hover:text-red-400 p-1 transition-colors"
-                          title={isAdmin ? "Supprimer (Admin)" : "Supprimer mon dossier"}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <p className="text-xs leading-relaxed bg-muted/40 p-3 rounded-xl border border-border/40 font-normal whitespace-pre-wrap">
-                    &quot;{dos.content}&quot;
-                  </p>
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2.5">
-                    <span className="flex items-center gap-1 text-red-400/80">
-                      <Sparkles className="w-3 h-3" />
-                      Mémorisé par Botardèche 🤖
-                    </span>
-                    <span>{new Date(dos.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
