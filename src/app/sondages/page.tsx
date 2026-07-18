@@ -5,8 +5,8 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BarChart3, Loader2, Plus, X, Trash2 } from "lucide-react";
-import { getPolls, getPollVotes, votePoll, createPoll, deletePoll } from "@/lib/supabase-queries";
+import { BarChart3, Loader2, Plus, X, Trash2, Lock, Unlock } from "lucide-react";
+import { getPolls, getPollVotes, votePoll, createPoll, deletePoll, togglePollCloseStatus } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import type { Poll, PollVote } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +15,7 @@ export default function SondagesPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votesMap, setVotesMap] = useState<Record<string, PollVote[]>>({});
   const [loading, setLoading] = useState(true);
-  const { currentParticipant } = useAuth();
+  const { currentParticipant, isAdmin } = useAuth();
   const selectedParticipant = currentParticipant?.id || "";
 
   // Create poll form
@@ -255,16 +255,43 @@ export default function SondagesPage() {
                           </span>
                         </p>
                       </div>
-                      {isCreator && (
-                        <button
-                          onClick={() => handleDeletePoll(poll.id)}
-                          className="text-muted-foreground hover:text-red-400 transition-colors ml-2 p-1"
-                          title="Supprimer ce sondage"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1.5 ml-2">
+                        {isAdmin && (
+                          <button
+                            onClick={async () => {
+                              const nextClosed = !poll.is_closed;
+                              const ok = await togglePollCloseStatus(poll.id, nextClosed);
+                              if (ok) {
+                                setPolls((prev) =>
+                                  prev.map((item) => (item.id === poll.id ? { ...item, is_closed: nextClosed } : item))
+                                );
+                              }
+                            }}
+                            className={`p-1 transition-colors ${
+                              poll.is_closed ? "text-red-400 hover:text-emerald-400" : "text-muted-foreground hover:text-red-400"
+                            }`}
+                            title={poll.is_closed ? "Rouvrir le sondage" : "Clôturer le sondage (Admin)"}
+                          >
+                            {poll.is_closed ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
+                        {(isCreator || isAdmin) && (
+                          <button
+                            onClick={() => handleDeletePoll(poll.id)}
+                            className="text-muted-foreground hover:text-red-400 transition-colors p-1"
+                            title="Supprimer ce sondage"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    {poll.is_closed && (
+                      <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 shrink-0" />
+                        <span>Ce sondage est clôturé. Les votes sont désormais fermés.</span>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       {poll.options.map((option, idx) => {
                         const count = getVoteCount(poll.id, idx);

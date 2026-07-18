@@ -2241,3 +2241,122 @@ export async function updateBotDossier(
   }
   return true;
 }
+
+// ============================================
+// APP SETTINGS & ADMIN CONTROLS
+// ============================================
+
+export async function getAppSetting<T>(key: string, defaultValue: T): Promise<T> {
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", key)
+    .single();
+
+  if (error || !data) {
+    return defaultValue;
+  }
+  return data.value as T;
+}
+
+export async function saveAppSetting<T>(key: string, value: T): Promise<boolean> {
+  const { error } = await supabase
+    .from("app_settings")
+    .upsert({ key, value, updated_at: new Date().toISOString() });
+
+  if (error) {
+    console.error(`Error saving app_setting [${key}]:`, error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateParticipantAdminStatus(id: string, isAdmin: boolean): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ is_admin: isAdmin })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating admin status:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateParticipantPasswordAdmin(id: string, newPassword: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ password: newPassword })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating participant password by admin:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateParticipantArrivalStatus(id: string, arrivalStatus: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update({ arrival_status: arrivalStatus })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating participant arrival status:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function updateParticipantProfile(id: string, updates: { name?: string; pseudo?: string; emoji_avatar?: string }): Promise<boolean> {
+  const { error } = await supabase
+    .from("participants")
+    .update(updates)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating participant profile by admin:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function togglePollCloseStatus(pollId: string, isClosed: boolean): Promise<boolean> {
+  const { error } = await supabase
+    .from("polls")
+    .update({ is_closed: isClosed })
+    .eq("id", pollId);
+
+  if (error) {
+    console.error("Error toggling poll closed status:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function triggerCustomPushNotification(
+  targetParticipantId: string | "all" | "admins",
+  title: string,
+  body: string,
+  url: string = "/"
+): Promise<boolean> {
+  try {
+    const res = await fetch("/api/push-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        senderId: "admin",
+        title,
+        body,
+        url,
+        targetParticipantId,
+      }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Error sending custom push notification:", err);
+    return false;
+  }
+}

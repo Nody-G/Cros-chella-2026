@@ -23,6 +23,7 @@ const MIGRATION_FILES = [
   'supabase/migrations/20260710-badges-billard.sql',
   'supabase/migration-push-subscriptions.sql',
   'supabase/migration-bot-dossiers.sql',
+  'supabase/migration-admin-settings.sql',
 ];
 
 async function run() {

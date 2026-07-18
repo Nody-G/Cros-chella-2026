@@ -438,14 +438,30 @@ export function MobileNav() {
             <div className="mt-2 flex justify-center">
               <FeedbackButton />
             </div>
-            {/* Admin link */}
+            {/* Admin links */}
             {isAdmin && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 p-3.5 rounded-xl border transition-all bg-gradient-to-r from-red-950/40 via-background to-amber-950/40",
+                    pathname === "/admin"
+                      ? "border-red-500 bg-red-500/10 text-red-400"
+                      : "border-red-500/30 hover:border-red-500/60 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="text-2xl">👑</span>
+                  <div>
+                    <span className="text-xs font-bold text-red-400">Panel Admin</span>
+                    <p className="text-[10px] text-muted-foreground">Notifications, Bot IA, Users, Config</p>
+                  </div>
+                </Link>
                 <Link
                   href="/admin/feedback"
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 p-4 rounded-xl border transition-all",
+                    "flex items-center gap-3 p-3.5 rounded-xl border transition-all",
                     pathname === "/admin/feedback"
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-primary/20 hover:border-primary/40 text-muted-foreground hover:text-foreground"

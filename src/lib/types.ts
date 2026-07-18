@@ -34,6 +34,7 @@ export interface Participant {
   favorite_alcohol: string | null;
   smoking_preferences: string[] | null;
   deleted_at: string | null;
+  arrival_status?: string | null;
 }
 
 export interface Game {
@@ -133,9 +134,11 @@ export interface Spot {
 export interface Poll {
   id: string;
   question: string;
+  title?: string;
   options: string[];
   created_by: string | null;
   is_active: boolean;
+  is_closed?: boolean;
   created_at: string;
   creator?: Participant;
 }
@@ -361,4 +364,52 @@ export interface BillardMatch {
   team1?: BillardTeam;
   team2?: BillardTeam;
   winner_team?: BillardTeam;
+}
+
+// ============================================
+// ADMIN APP SETTINGS & CONFIG
+// ============================================
+
+export interface BotConfig {
+  enabled: boolean;
+  mood: "gentil" | "moqueur" | "sauvage";
+  randomness: number; // 0.2 to 1.0 (temperature)
+  custom_instruction: string;
+  target_focus_id: string | null;
+}
+
+export interface NotificationConfig {
+  chat: boolean;
+  program: boolean;
+  polls: boolean;
+  gallery: boolean;
+  expenses: boolean;
+  billard: boolean;
+  badges: boolean;
+  dossiers: boolean;
+}
+
+export interface ModuleVisibility {
+  billard: boolean;
+  alcool: boolean;
+  jeux: boolean;
+  depenses: boolean;
+  spots: boolean;
+  galerie: boolean;
+  spotify: boolean;
+  badges: boolean;
+  dossiers: boolean;
+}
+
+export interface FestivalConfig {
+  countdown_date: string;
+  maintenance_mode: boolean;
+  maintenance_message: string;
+}
+
+export interface PinnedChatMessage {
+  id: string;
+  content: string;
+  author_name: string;
+  created_at: string;
 }

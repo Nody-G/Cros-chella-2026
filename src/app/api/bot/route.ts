@@ -189,7 +189,10 @@ async function buildGlobalContext(): Promise<string> {
 // ============================================
 // System prompt for Botardèche
 // ============================================
-function buildSystemPrompt(globalContext: string): string {
+function buildSystemPrompt(
+  globalContext: string,
+  botConfig: { mood?: string; custom_instruction?: string; target_focus_name?: string } = {}
+): string {
   // Format the personal knowledge into a readable section
   const knowledgeParts: string[] = [];
   for (const [, person] of Object.entries(botKnowledge.participants)) {
@@ -221,12 +224,31 @@ function buildSystemPrompt(globalContext: string): string {
   }
   const personalKnowledge = knowledgeParts.join("\n\n");
 
+  let moodDescription = "Tu es taquin, piquant et très sarcastique. Tu roasts avec second degré et humour.";
+  if (botConfig.mood === "gentil") {
+    moodDescription = "Tu es particulièrement chaleureux, bienveillant et amical, tout en gardant une touche d'humour taquine.";
+  } else if (botConfig.mood === "sauvage") {
+    moodDescription = "Tu es ULTRA CASH, percutant et sans aucune pitié. Tu sors les gros dossiers et roasts les plus saignants !";
+  }
+
+  let customPrompt = "";
+  if (botConfig.custom_instruction) {
+    customPrompt = `\nINSTRUCTION SPÉCIALE EN DIRECT DE L'ADMIN NIELS (OBLIGATOIRE) :\n${botConfig.custom_instruction}\n`;
+  }
+
+  if (botConfig.target_focus_name) {
+    customPrompt += `\nCIBLE PRIORITAIRE FIXÉE PAR L'ADMIN : Oriente tes piques et vannes en priorité sur ${botConfig.target_focus_name} !\n`;
+  }
+
   return `Tu es Botardèche 🤖, le bot du groupe de potes du festival Cros-Chella (31 juillet - 2 août 2026, Moulin du Cros, Ardèche).
+
+HUMEUR ET STYLE DU MOMENT :
+${moodDescription}
+${customPrompt}
 
 RÈGLE ABSOLUE N°1 : TU RÉPONDS À CE QU'ON TE DIT
 - Lis le contexte du chat avant de parler. Si quelqu'un dit quelque chose, tu RÉPONDS à ça.
 - Ne balance JAMAIS des infos random sur des gens si personne n'en a parlé.
-- Si Xav dit "j'ai faim", tu réponds à ça — tu ne sors pas "Célis a un lit 2 places".
 - Tu dois être réactif, pas proactif. Tu commentes ce qui se passe, tu ne fais pas de monologue.
 
 RÈGLE N°2 : TU ES UN ROASTEUR ACERBE ET SARCASTIQUE
@@ -331,6 +353,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch dynamic bot_config from app_settings
+    const { data: configData } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "bot_config")
+      .single();
+
+    const botConfig = configData?.value || {
+      enabled: true,
+      mood: "sauvage",
+      randomness: 0.8,
+      custom_instruction: "",
+      target_focus_id: null,
+    };
+
+    if (botConfig.enabled === false) {
+      return NextResponse.json({
+        reply: "🤖 Botardèche est actuellement en pause café / sieste programmée par l'Admin Niels ! Reviens plus tard 😴☕",
+        remaining: rateCheck.remaining,
+      });
+    }
+
+    let targetFocusName = "";
+    if (botConfig.target_focus_id) {
+      const { data: targetPerson } = await supabase
+        .from("participants")
+        .select("name, pseudo")
+        .eq("id", botConfig.target_focus_id)
+        .single();
+      targetFocusName = targetPerson?.pseudo || targetPerson?.name || "";
+    }
+
     // Save user message to DB
     await supabase.from("bot_conversations").insert({
       participant_id: participantId,
@@ -367,12 +421,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Build messages array for Mimo
+    const systemPrompt = buildSystemPrompt(globalContext, {
+      mood: botConfig.mood,
+      custom_instruction: botConfig.custom_instruction,
+      target_focus_name: targetFocusName,
+    });
+
     const messages = [
-      { role: "system", content: buildSystemPrompt(globalContext) },
+      { role: "system", content: systemPrompt },
       ...conversationHistory,
     ];
 
     // Call Mimo API
+    const tempValue = typeof botConfig.randomness === "number" ? botConfig.randomness : 0.8;
     const mimoRes = await fetch(MIMO_ENDPOINT, {
       method: "POST",
       headers: {
@@ -383,7 +444,7 @@ export async function POST(req: NextRequest) {
         model: MIMO_MODEL,
         messages,
         max_completion_tokens: 1024,
-        temperature: 0.9,
+        temperature: Math.min(Math.max(tempValue, 0.2), 1.0),
         top_p: 0.95,
       }),
     });
