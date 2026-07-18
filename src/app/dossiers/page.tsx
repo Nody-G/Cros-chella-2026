@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, ShieldAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DossiersPage() {
+  const { currentParticipant, isAdmin } = useAuth();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [dossiers, setDossiers] = useState<BotDossier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,6 @@ export default function DossiersPage() {
   const [editTargetId, setEditTargetId] = useState<string>("");
   const [editContent, setEditContent] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [showAdminView, setShowAdminView] = useState(false);
 
   useEffect(() => {
     // Current user id from localStorage if present
@@ -136,7 +137,7 @@ export default function DossiersPage() {
   };
 
   const currentUserObj = participants.find((p) => p.id === currentUserId);
-  const isAdmin = currentUserObj?.is_admin || false;
+  const isUserAdmin = isAdmin || currentParticipant?.is_admin || currentUserObj?.is_admin || false;
 
   if (loading) {
     return (
@@ -244,63 +245,67 @@ export default function DossiersPage() {
         </CardContent>
       </Card>
 
-      {/* Admin View (Niels Only) */}
-      {isAdmin && (
-        <div className="pt-6 border-t border-border/40">
-          <div className="flex items-center justify-between mb-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdminView(!showAdminView)}
-              className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
-            >
-              <span>🔒 Vue Admin / Modération</span>
-              <Badge variant="outline" className="text-[10px]">{dossiers.length}</Badge>
-            </Button>
-          </div>
-
-          {showAdminView && (
-            <div className="space-y-3 pt-2">
-              <p className="text-[11px] text-muted-foreground italic">
-                (Visible uniquement par toi en tant qu&apos;admin pour la modération)
-              </p>
-              {dossiers.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Aucun dossier dans la base de données.</p>
-              ) : (
-                <div className="grid gap-3">
-                  {dossiers.map((dos) => (
-                    <Card key={dos.id} className="p-3 border-border/60 bg-muted/20">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-red-400">
-                            Cible : {dos.target?.pseudo || dos.target?.name || "Inconnu"}
-                          </p>
-                          <p className="text-xs mt-1 text-foreground font-normal">&quot;{dos.content}&quot;</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => openEditModal(dos)}
-                            className="text-muted-foreground hover:text-amber-400 p-1"
-                            title="Modifier"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(dos.id)}
-                            className="text-muted-foreground hover:text-red-400 p-1"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+      {/* Secret Admin Moderation Panel (Visible ONLY to Niels / Admin) */}
+      {isUserAdmin && (
+        <Card className="border-amber-500/40 bg-amber-500/5 mt-8">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              <CardTitle className="text-sm font-bold text-amber-400">
+                🔒 Espace Modération Admin ({dossiers.length})
+              </CardTitle>
             </div>
-          )}
-        </div>
+            <Badge variant="outline" className="border-amber-400/40 text-amber-400 text-[10px]">
+              Invisible pour les participants
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-2">
+            <p className="text-[11px] text-muted-foreground">
+              Voici toutes les informations transmises secrètement par les participants pour Botardèche. Tu peux les relire, les modifier (✏️) ou les supprimer (🗑️) si besoin.
+            </p>
+            {dossiers.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Aucune information enregistrée pour le moment.</p>
+            ) : (
+              <div className="grid gap-3">
+                {dossiers.map((dos) => (
+                  <Card key={dos.id} className="p-3 border-border/60 bg-background/80">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-red-400">
+                            Cible : {dos.target?.emoji_avatar || "👤"} {dos.target?.pseudo || dos.target?.name || "Inconnu"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            ({new Date(dos.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})
+                          </span>
+                        </div>
+                        <p className="text-xs text-foreground font-normal leading-relaxed">
+                          &quot;{dos.content}&quot;
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => openEditModal(dos)}
+                          className="text-muted-foreground hover:text-amber-400 p-1.5 transition-colors"
+                          title="Modifier cette info"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(dos.id)}
+                          className="text-muted-foreground hover:text-red-400 p-1.5 transition-colors"
+                          title="Supprimer cette info"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Edit Modal (Admin Only) */}
