@@ -1,5 +1,13 @@
 [
   {
+    "date": "2026-07-19",
+    "tag": "feature",
+    "emoji": "📊",
+    "title": "Sondages : Affichage instantané des votants d'un coup d'œil",
+    "description": "Visualisez immédiatement qui a voté pour quelle option sur tous les sondages du festival.",
+    "details": "Sur la page Sondages, chaque option affiche désormais les badges avatars et pseudos des potes qui ont voté pour elle. Plus besoin d'attendre ou de deviner : l'affichage des résultats et des votants est instantané et mis à jour en direct !"
+  },
+  {
     "date": "2026-07-18",
     "tag": "feature",
     "emoji": "🚨",

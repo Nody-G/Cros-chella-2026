@@ -15,7 +15,7 @@ export default function SondagesPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votesMap, setVotesMap] = useState<Record<string, PollVote[]>>({});
   const [loading, setLoading] = useState(true);
-  const { currentParticipant, isAdmin } = useAuth();
+  const { currentParticipant, participants, isAdmin } = useAuth();
   const selectedParticipant = currentParticipant?.id || "";
 
   // Create poll form
@@ -298,6 +298,12 @@ export default function SondagesPage() {
                         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                         const myVote = (votesMap[poll.id] || []).find((v) => v.participant_id === selectedParticipant);
                         const isSelected = myVote?.option_index === idx;
+
+                        const optionVotes = (votesMap[poll.id] || []).filter((v) => v.option_index === idx);
+                        const optionVoters = optionVotes
+                          .map((v) => participants.find((p) => p.id === v.participant_id))
+                          .filter((p): p is typeof participants[0] => Boolean(p));
+
                         return (
                           <button
                             key={idx}
@@ -317,13 +323,29 @@ export default function SondagesPage() {
                                 style={{ width: `${pct}%` }}
                               />
                               <div className="relative flex items-center justify-between">
-                                <span className="text-sm">
+                                <span className="text-sm font-semibold">
                                   {isSelected && "✓ "}{option}
                                 </span>
-                                <span className="text-xs text-muted-foreground font-medium">
+                                <span className="text-xs text-muted-foreground font-medium shrink-0 ml-2">
                                   {count} vote{count !== 1 ? "s" : ""} ({pct}%)
                                 </span>
                               </div>
+
+                              {/* Voters List at a glance */}
+                              {optionVoters.length > 0 && (
+                                <div className="relative mt-2 pt-2 border-t border-border/30 flex flex-wrap items-center gap-1.5">
+                                  {optionVoters.map((voter) => (
+                                    <span
+                                      key={voter.id}
+                                      className="inline-flex items-center gap-1 bg-background/80 hover:bg-background border border-border/50 text-foreground text-[10px] px-2 py-0.5 rounded-full shadow-sm"
+                                      title={voter.pseudo || voter.name}
+                                    >
+                                      <span className="text-xs">{voter.emoji_avatar || "👤"}</span>
+                                      <span className="font-semibold">{voter.pseudo || voter.name}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </button>
                         );
