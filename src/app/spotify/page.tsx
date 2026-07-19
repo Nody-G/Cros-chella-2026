@@ -1,6 +1,5 @@
 "use client";
 
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Music } from "lucide-react";
 
 const SPOTIFY_PLAYLIST_ID = "2DqmhZTuP8dhiZqCrx0D8f";
@@ -43,8 +42,6 @@ export default function SpotifyPage() {
           <span className="text-muted-foreground text-xs">↗</span>
         </a>
       </div>
-
-      <MobileNav />
     </main>
   );
 }

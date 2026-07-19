@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Crown, Bed, Loader2, X, Wine, Zap, Target, Skull, Quote, Music, Sparkles, Cigarette, ChevronDown, UserPlus, Trash2 } from "lucide-react";
@@ -751,8 +750,6 @@ export default function ParticipantsPage() {
           onClose={() => setSelectedParticipant(null)}
         />
       )}
-
-      <MobileNav />
     </main>
   );
 }

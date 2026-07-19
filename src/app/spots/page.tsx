@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Droplets, Loader2, ExternalLink, Shield, ShieldAlert, ShieldCheck, Skull } from "lucide-react";
@@ -107,7 +106,6 @@ export default function SpotsPage() {
           </a>
         </div>
       </div>
-      <MobileNav />
     </main>
   );
 }

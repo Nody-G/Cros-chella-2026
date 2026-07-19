@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Megaphone, ChevronDown, ChevronUp, Sparkles, Bug, Wrench, Rocket } from "lucide-react";
 import updates from "@/data/updates.json";
 
@@ -163,8 +162,6 @@ export default function UpdatesPage() {
           <p>🎪 Cros-Chella — {updates.length} mises à jour au total</p>
         </div>
       </div>
-
-      <MobileNav />
     </main>
   );
 }

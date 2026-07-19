@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus } from "lucide-react";
@@ -32,7 +31,7 @@ export default function ChatPage() {
   const [galleryCaptionModal, setGalleryCaptionModal] = useState<{ imageUrl: string } | null>(null);
   const [galleryCaption, setGalleryCaption] = useState("");
   const [savingToGallery, setSavingToGallery] = useState(false);
-  const { currentParticipant, isAdmin } = useAuth();
+  const { currentParticipant, participants, isAdmin } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -478,20 +477,54 @@ export default function ChatPage() {
                           const voterList = voters as string[];
                           if (voterList.length === 0) return null;
                           const iReacted = voterList.includes(currentUserId);
+                          const voterObjects = voterList
+                            .map((id) => participants.find((p) => p.id === id))
+                            .filter((p): p is typeof participants[0] => Boolean(p));
+
+                          const votersTooltip = voterObjects
+                            .map((p) => `${p.emoji_avatar || "👤"} ${p.pseudo || p.name}`)
+                            .join("\n");
+
                           return (
-                            <button
-                              key={emoji}
-                              onClick={() => handleReaction(msg.id, emoji)}
-                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border transition-all ${
-                                iReacted
-                                  ? "bg-primary/20 border-primary/40 text-primary"
-                                  : "bg-muted border-border text-muted-foreground hover:border-primary/30"
-                              }`}
-                              title={`${voterList.length} réaction${voterList.length > 1 ? "s" : ""}`}
-                            >
-                              <span>{emoji}</span>
-                              <span className="text-[10px]">{voterList.length}</span>
-                            </button>
+                            <div key={emoji} className="relative group/react">
+                              <button
+                                onClick={() => handleReaction(msg.id, emoji)}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
+                                  iReacted
+                                    ? "bg-primary/20 border-primary/50 text-primary font-semibold shadow-sm"
+                                    : "bg-muted/80 border-border/70 text-foreground hover:border-primary/40"
+                                }`}
+                                title={`Réagi par :\n${votersTooltip}`}
+                              >
+                                <span>{emoji}</span>
+                                <div className="flex items-center gap-0.5">
+                                  {voterObjects.slice(0, 3).map((v) => (
+                                    <span key={v.id} className="text-[11px]" title={v.pseudo || v.name}>
+                                      {v.emoji_avatar || "👤"}
+                                    </span>
+                                  ))}
+                                  {voterObjects.length > 3 && (
+                                    <span className="text-[10px] font-bold text-muted-foreground ml-0.5">
+                                      +{voterObjects.length - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              </button>
+
+                              {/* Popover on hover/touch */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/react:flex flex-col gap-1 bg-popover/95 backdrop-blur-md border border-border text-popover-foreground text-[11px] p-2 rounded-xl shadow-2xl whitespace-nowrap z-50 pointer-events-none animate-in fade-in zoom-in-95 min-w-[120px]">
+                                <div className="flex items-center justify-between border-b border-border/40 pb-1 font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+                                  <span>{emoji} Réactions</span>
+                                  <span>({voterObjects.length})</span>
+                                </div>
+                                {voterObjects.map((v) => (
+                                  <div key={v.id} className="flex items-center gap-1.5">
+                                    <span className="text-xs">{v.emoji_avatar || "👤"}</span>
+                                    <span className="font-semibold text-foreground">{v.pseudo || v.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -650,8 +683,6 @@ export default function ChatPage() {
           </div>
         </div>
       )}
-
-      <MobileNav />
     </main>
   );
 }

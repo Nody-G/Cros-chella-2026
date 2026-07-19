@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, Loader2, Camera, Upload, Trash2, X, Pencil, Send, ChevronLeft, ChevronRight, Heart } from "lucide-react";
@@ -569,8 +568,6 @@ export default function GaleriePage() {
           </div>
         </div>
       )}
-
-      <MobileNav />
     </main>
   );
 }

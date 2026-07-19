@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { HeroSection } from "@/components/landing/hero-section";
 import { AttendanceSection } from "@/components/landing/attendance-section";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -84,7 +83,6 @@ export default function Home() {
 
       <HeroSection />
       <AttendanceSection />
-      <MobileNav />
     </main>
   );
 }

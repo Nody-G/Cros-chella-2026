@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -403,7 +402,6 @@ export default function JeuxPage() {
           </>
         )}
       </div>
-      <MobileNav />
     </main>
   );
 }

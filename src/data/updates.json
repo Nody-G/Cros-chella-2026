@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-07-19",
+    "tag": "improvement",
+    "emoji": "😊",
+    "title": "Chat : Badges & détails des réactions + Barre de navigation universelle",
+    "description": "Visualisez instantanément qui a réagi dans le chat + barre de navigation disponible 100% partout.",
+    "details": "Chaque réaction sous un message du chat affiche désormais les avatars emojis des potes ayant réagi, avec un popover au survol/clic listant leurs noms. De plus, la barre de navigation du bas est désormais rendue de manière globale et reste visible sur 100% des pages (y compris le panneau admin et les dossiers secret)."
+  },
+  {
+    "date": "2026-07-19",
     "tag": "feature",
     "emoji": "📊",
     "title": "Sondages : Affichage instantané des votants d'un coup d'œil",

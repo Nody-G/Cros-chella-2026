@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +78,6 @@ export default function AdminFeedbackPage() {
           <span className="text-4xl block mb-3">🔒</span>
           <p className="text-muted-foreground">Accès réservé à l&apos;admin</p>
         </div>
-        <MobileNav />
       </main>
     );
   }
@@ -236,8 +234,6 @@ export default function AdminFeedbackPage() {
           </div>
         )}
       </div>
-
-      <MobileNav />
     </main>
   );
 }

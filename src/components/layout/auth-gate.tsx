@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { LoginScreen } from "@/components/layout/login-screen";
 import { Loader2 } from "lucide-react";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { currentParticipant, loading } = useAuth();
@@ -19,5 +20,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <LoginScreen />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <MobileNav />
+    </>
+  );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wine, Loader2, Users, Star, Heart, Sparkles, ChevronDown, ChevronUp, Cigarette } from "lucide-react";
@@ -654,8 +653,6 @@ export default function AlcoolPage() {
           </div>
         )}
       </div>
-
-      <MobileNav />
     </main>
   );
 }
