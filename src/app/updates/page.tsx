@@ -62,7 +62,7 @@ export default function UpdatesPage() {
           <h1 className="text-2xl font-bold">Mises à jour 📢</h1>
         </div>
         <p className="text-muted-foreground text-sm mb-6">
-          Ce qui a changé dans l&apos;app. Clique sur une mise à jour pour voir les détails.
+          Ce qui a changé dans l&apos;app. Clique sur une mise à jour pour déplier tous les détails.
         </p>
 
         {/* Timeline */}
@@ -87,7 +87,7 @@ export default function UpdatesPage() {
                       {group.items.length} mise{group.items.length > 1 ? "s" : ""} à jour
                     </span>
                     <span className="text-muted-foreground">
-                      {expandedGroup[gi] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      {expandedGroup[gi] !== false ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </span>
                   </div>
                 </div>
@@ -95,57 +95,57 @@ export default function UpdatesPage() {
 
               {/* Items */}
               {expandedGroup[gi] !== false && (
-                <div className="ml-[18px] pl-7 border-l-0 space-y-2">
+                <div className="ml-[18px] pl-7 border-l-0 space-y-3">
                   {group.items.map((item, ii) => {
                     const tag = TAG_CONFIG[item.tag as UpdateTag] || TAG_CONFIG.feature;
                     const TagIcon = tag.icon;
                     const itemKey = `${gi}-${ii}`;
                     const isItemExpanded = expandedItem[itemKey] || false;
+                    const hasDetails = Boolean(item.details && item.details.trim() !== item.description.trim());
 
                     return (
-                      <div key={ii}>
+                      <div key={ii} className="space-y-1">
                         <button
-                          onClick={() => toggleItem(itemKey)}
-                          className="w-full text-left"
+                          onClick={() => hasDetails && toggleItem(itemKey)}
+                          className={`w-full text-left ${hasDetails ? "cursor-pointer" : "cursor-default"}`}
                         >
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-card/50 border border-border hover:border-primary/30 transition-all">
+                          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-card/60 border border-border/80 hover:border-primary/40 transition-all shadow-sm">
                             <span className="text-xl mt-0.5 shrink-0">{item.emoji}</span>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium text-sm">{item.title}</span>
+                                <span className="font-semibold text-sm text-foreground">{item.title}</span>
                                 <span
-                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${tag.bg} ${tag.color}`}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tag.bg} ${tag.color}`}
                                 >
                                   <TagIcon className="w-2.5 h-2.5" />
                                   {tag.label}
                                 </span>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {/* Untruncated full description */}
+                              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
                                 {item.description}
                               </p>
                             </div>
-                            <span className="text-muted-foreground shrink-0 mt-1">
-                              {isItemExpanded ? (
-                                <ChevronUp className="w-4 h-4" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4" />
-                              )}
-                            </span>
+                            {hasDetails && (
+                              <span className="text-muted-foreground shrink-0 mt-1">
+                                {isItemExpanded ? (
+                                  <ChevronUp className="w-4 h-4 text-primary" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4" />
+                                )}
+                              </span>
+                            )}
                           </div>
                         </button>
 
-                        {/* Expanded details */}
-                        {isItemExpanded && item.details && (
-                          <div className="ml-3 mr-1 mt-1 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-in slide-in-from-top-1 duration-200">
-                            <div className="flex items-start gap-2">
-                              <span className="text-lg shrink-0">{item.emoji}</span>
-                              <div>
-                                <h4 className="font-semibold text-sm mb-2">{item.title}</h4>
-                                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                                  {item.details}
-                                </p>
-                              </div>
-                            </div>
+                        {/* Expanded details drawer */}
+                        {isItemExpanded && hasDetails && (
+                          <div className="ml-2 mr-1 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground/90 leading-relaxed whitespace-pre-line animate-in fade-in duration-200 shadow-inner">
+                            <span className="font-bold text-primary flex items-center gap-1.5 mb-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-primary" />
+                              Détails complets :
+                            </span>
+                            {item.details}
                           </div>
                         )}
                       </div>
