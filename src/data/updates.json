@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-07-20",
+    "tag": "feature",
+    "emoji": "📸",
+    "title": "GitHub : README HTML Stylé & Screenshots",
+    "description": "14 screenshots capturés automatiquement (toutes les pages + desktop), README HTML avec animations, glassmorphism et lightbox, description GitHub enrichie.",
+    "details": "Création d'un script Puppeteer pour capturer automatiquement des screenshots de toutes les pages de l'app (landing, participants, programme, chat, galerie, dépenses, jeux, billard, badges, profil, alcool, sondages + vue desktop). Un README HTML autonome de 43KB avec dark theme festival, animations CSS (étoiles scintillantes, fade-up au scroll), glassmorphism, lightbox au clic, stats animées, et grille responsive. Le README.md classique est enrichi avec badges shields.io et tableau de screenshots. Ajout d'un fichier GITHUB_DESCRIPTION.md pour la section About du repo."
+  },
+  {
+    "date": "2026-07-20",
     "tag": "improvement",
     "emoji": "⚙️",
     "title": "Botardèche : Synchronisation 100% Automatique",
