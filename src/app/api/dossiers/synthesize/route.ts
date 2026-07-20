@@ -78,6 +78,32 @@ async function commitBotKnowledgeToGithub(knowledgeContainer: KnowledgeContainer
       if (getRes.ok) {
         const fileData = await getRes.json();
         sha = fileData.sha;
+
+        // Safely merge existing remote GitHub file content to prevent overwriting online changes
+        if (fileData.content) {
+          try {
+            const rawRemoteJson = Buffer.from(fileData.content, "base64").toString("utf-8");
+            const remoteContainer = JSON.parse(rawRemoteJson) as KnowledgeContainer;
+            if (remoteContainer.participants) {
+              for (const [k, remoteP] of Object.entries(remoteContainer.participants)) {
+                if (!knowledgeContainer.participants[k]) {
+                  knowledgeContainer.participants[k] = remoteP;
+                } else {
+                  const localP = knowledgeContainer.participants[k];
+                  knowledgeContainer.participants[k] = {
+                    ...remoteP,
+                    ...localP,
+                    infos: Array.from(new Set([...(remoteP.infos || []), ...(localP.infos || [])])),
+                    fun_facts: Array.from(new Set([...(remoteP.fun_facts || []), ...(localP.fun_facts || [])])),
+                    anecdotes: Array.from(new Set([...(remoteP.anecdotes || []), ...(localP.anecdotes || [])])),
+                  };
+                }
+              }
+            }
+          } catch (mergeErr) {
+            console.warn("Error merging remote GitHub bot_knowledge content:", mergeErr);
+          }
+        }
       }
 
       const contentString = JSON.stringify(knowledgeContainer, null, 2);
@@ -105,8 +131,13 @@ async function commitBotKnowledgeToGithub(knowledgeContainer: KnowledgeContainer
     }
   }
 
-  // 3. Fallback: Local Git CLI execution
+  // 3. Fallback: Local Git CLI execution (pull rebase first to avoid conflicts)
   try {
+    try {
+      execSync("git pull --rebase origin main", { cwd, stdio: "ignore" });
+    } catch {
+      // Ignore if no upstream changes or working tree clean
+    }
     execSync("git add src/data/bot-knowledge.json", { cwd, stdio: "ignore" });
     execSync('git commit -m "chore(bot-knowledge): auto-update bot_knowledge with Mimo synthesized dossiers 🤖"', { cwd, stdio: "ignore" });
     execSync("git push origin main", { cwd, stdio: "ignore" });
