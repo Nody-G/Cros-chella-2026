@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus } from "lucide-react";
+import { MessageCircle, Loader2, Send, Camera, Upload, X, ImagePlus, Pencil, Trash2, Check, XCircle, SmilePlus, ArrowDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getMessages, sendMessage, uploadChatImage, editMessage, deleteMessage, adminDeleteMessage, toggleMessageReaction, saveChatImageToGallery } from "@/lib/supabase-queries";
 import type { Message } from "@/lib/types";
@@ -25,6 +25,9 @@ export default function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null);
+  const [firstUnreadMsgId, setFirstUnreadMsgId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isScrolledUp, setIsScrolledUp] = useState<boolean>(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   // Galerie caption modal (après envoi image chat)
@@ -34,6 +37,7 @@ export default function ChatPage() {
   const { currentParticipant, participants, isAdmin } = useAuth();
   const currentUserId = currentParticipant?.id || "";
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +46,35 @@ export default function ChatPage() {
       const data = await getMessages();
       setMessages(data);
       setLoading(false);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+
+      if (data.length > 0) {
+        const lastReadKey = currentUserId ? `croschella_last_read_msg_${currentUserId}` : "croschella_last_read_msg";
+        const savedLastReadId = localStorage.getItem(lastReadKey);
+
+        if (savedLastReadId) {
+          const lastReadIndex = data.findIndex((m) => m.id === savedLastReadId);
+          if (lastReadIndex !== -1 && lastReadIndex < data.length - 1) {
+            // Unread messages found! Position scroll at last seen / unread divider
+            const unreadMsgs = data.slice(lastReadIndex + 1);
+            setFirstUnreadMsgId(unreadMsgs[0].id);
+            setUnreadCount(unreadMsgs.length);
+
+            setTimeout(() => {
+              const el = document.getElementById("unread-divider");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+              } else {
+                bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 200);
+            return;
+          }
+        }
+
+        // All read or no saved position
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+        localStorage.setItem(lastReadKey, data[data.length - 1].id);
+      }
     }
     fetch();
 
@@ -255,6 +287,19 @@ export default function ChatPage() {
     setActiveMenu(null);
   };
 
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 60;
+    setIsScrolledUp(!isAtBottom);
+
+    if (isAtBottom && messages.length > 0) {
+      const lastMsgId = messages[messages.length - 1].id;
+      const lastReadKey = currentUserId ? `croschella_last_read_msg_${currentUserId}` : "croschella_last_read_msg";
+      localStorage.setItem(lastReadKey, lastMsgId);
+    }
+  };
+
   const REACTION_EMOJIS = ["❤️", "😂", "🔥", "👍", "👎", "😮", "😢", "🎉", "💀", "🤡"];
 
   const handleReaction = async (messageId: string, emoji: string) => {
@@ -297,7 +342,7 @@ export default function ChatPage() {
 
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -313,12 +358,23 @@ export default function ChatPage() {
               const isDeleted = !!msg.deleted_at;
               const isEdited = !!msg.edited_at && !isDeleted;
               const isEditing = editingId === msg.id;
+              const isFirstUnread = firstUnreadMsgId === msg.id;
 
               // Masquer complètement les messages supprimés (admin delete sans trace)
               if (isDeleted) return null;
 
               return (
-                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                <div key={msg.id} className="space-y-3">
+                  {isFirstUnread && (
+                    <div
+                      id="unread-divider"
+                      className="my-4 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-bold shadow-md animate-in fade-in"
+                    >
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-ping" />
+                      <span>🔴 Nouveaux messages ({unreadCount})</span>
+                    </div>
+                  )}
+                  <div className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs overflow-hidden ${isMe ? "bg-primary/20" : ""}`}>
                     {msg.author?.avatar_url ? (
                       <img src={msg.author.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -557,8 +613,9 @@ export default function ChatPage() {
                     )}
                   </div>
                 </div>
-              );
-            })
+              </div>
+            );
+          })
           )}
           <div ref={bottomRef} />
         </div>
@@ -682,6 +739,30 @@ export default function ChatPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Scroll to bottom button */}
+      {isScrolledUp && (
+        <button
+          onClick={() => {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            if (messages.length > 0) {
+              const lastMsgId = messages[messages.length - 1].id;
+              const lastReadKey = currentUserId ? `croschella_last_read_msg_${currentUserId}` : "croschella_last_read_msg";
+              localStorage.setItem(lastReadKey, lastMsgId);
+            }
+            setIsScrolledUp(false);
+          }}
+          className="fixed bottom-20 right-4 z-40 bg-primary/95 text-primary-foreground hover:bg-primary px-3 py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-bold transition-all animate-in fade-in zoom-in-95 border border-primary-foreground/20"
+        >
+          <span>Aller en bas</span>
+          <ArrowDown className="w-4 h-4" />
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+              {unreadCount}
+            </span>
+          )}
+        </button>
       )}
     </main>
   );

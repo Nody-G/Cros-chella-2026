@@ -1,5 +1,13 @@
 [
   {
+    "date": "2026-07-20",
+    "tag": "feature",
+    "emoji": "🧠",
+    "title": "Chat : Reprise au dernier message vu & Synthèse Mimo des Dossiers Bot",
+    "description": "Reprenez le chat exactement là où vous vous étiez arrêté + synthèse IA automatique des secrets & inspecteur de mémoire dans l'admin.",
+    "details": "Le chat se souvient désormais du dernier message que vous avez vu avec un repère visuel '🔴 Nouveaux messages' et un bouton flottant 'Aller en bas ⬇️'. Sur la page Dossiers Bot, chaque secret est analysé et synthétisé par l'API Xiaomi Mimo pour enrichir dynamiquement la mémoire de Botardèche, avec prévisualisation des pépites extraites et inspecteur complet du savoir bot_knowledge dans le panneau admin."
+  },
+  {
     "date": "2026-07-19",
     "tag": "improvement",
     "emoji": "😊",

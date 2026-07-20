@@ -265,6 +265,8 @@ export interface BotDossier {
   category: DossierCategory;
   content: string;
   created_at: string;
+  synthesized_facts?: string[] | null;
+  synthesized_at?: string | null;
   target?: Participant;
   author?: Participant;
 }

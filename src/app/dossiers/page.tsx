@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Pencil, ShieldAlert } from "lucide-react";
+import { Trash2, Pencil, ShieldAlert, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -32,6 +32,8 @@ export default function DossiersPage() {
   const [editTargetId, setEditTargetId] = useState<string>("");
   const [editContent, setEditContent] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [synthesizingId, setSynthesizingId] = useState<string | null>(null);
+  const [synthesizedNotice, setSynthesizedNotice] = useState<string | null>(null);
 
   useEffect(() => {
     // Current user id from localStorage if present
@@ -65,6 +67,29 @@ export default function DossiersPage() {
     };
   }, []);
 
+  const triggerMimoSynthesis = async (dossierId: string) => {
+    try {
+      setSynthesizingId(dossierId);
+      const res = await fetch("/api/dossiers/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const facts = (data.synthesized_facts || data.synthesizedFacts || []).join(" / ");
+        setSynthesizedNotice(`Mimo API a synthétisé : "${facts}" et mis à jour la mémoire de Botardèche ! 🤖✨`);
+        setTimeout(() => setSynthesizedNotice(null), 8000);
+      } else {
+        console.warn("Synthèse Mimo warning:", data.error);
+      }
+    } catch (err) {
+      console.error("Error triggering Mimo synthesis:", err);
+    } finally {
+      setSynthesizingId(null);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetId || !content.trim()) return;
@@ -86,6 +111,9 @@ export default function DossiersPage() {
       setTargetId("");
       setSubmittedSuccess(true);
       setTimeout(() => setSubmittedSuccess(false), 6000);
+
+      // Trigger automatic Mimo API synthesis into bot_knowledge
+      triggerMimoSynthesis(newDos.id);
     }
     setSubmitting(false);
   };
@@ -123,6 +151,7 @@ export default function DossiersPage() {
             : d
         )
       );
+      triggerMimoSynthesis(editingDossier.id);
       setEditingDossier(null);
     }
     setUpdating(false);
@@ -158,9 +187,9 @@ export default function DossiersPage() {
           🤫 La Boîte à Secrets du Botardèche
         </h1>
         <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
-          Nourris l&apos;IA en toute confidentialité. Tout ce que tu écris ici est <span className="font-semibold text-emerald-400">strictement secret</span> et directement transmis dans la mémoire de Botardèche pour ses futurs roasts.
+          Nourris l&apos;IA en toute confidentialité. Tout ce que tu écris ici est <span className="font-semibold text-emerald-400">confidentiel</span> et transmis à Botardèche pour alimenter sa mémoire.
           <br />
-          <span className="text-foreground font-medium">Personne d&apos;autre ne peut voir ce que tu envoies.</span>
+          <span className="text-foreground font-medium text-[11px] opacity-90">🔒 Afin de garantir la bienveillance et le bon fonctionnement de l&apos;IA, l&apos;administrateur dispose d&apos;un accès de modération sur la lecture et le traitement des données.</span>
         </p>
       </div>
 
@@ -171,7 +200,7 @@ export default function DossiersPage() {
             <span className="text-xl">✅</span>
             <div>
               <p className="font-bold text-sm">Secret transmis avec succès à Botardèche !</p>
-              <p className="opacity-90">L&apos;info a été enregistrée en toute confidentialité dans sa mémoire. Il s&apos;en servira au meilleur moment dans le chat 😈.</p>
+              <p className="opacity-90">L&apos;info a été enregistrée dans sa mémoire. Il s&apos;en servira au meilleur moment dans le chat 😈.</p>
             </div>
           </CardContent>
         </Card>
@@ -223,8 +252,8 @@ export default function DossiersPage() {
             <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-400">
               <span className="text-lg">🔒</span>
               <div>
-                <span className="font-bold">Anonymat 100% garanti</span>
-                <p className="text-[11px] opacity-80 mt-0.5">Aucune identité n&apos;est enregistrée ni associée à cet envoi. Seul Botardèche reçoit l&apos;info.</p>
+                <span className="font-bold">Confidentialité & Supervision Éthique</span>
+                <p className="text-[11px] opacity-80 mt-0.5">Aucune identité n&apos;est affichée dans le chat. L&apos;administrateur a un droit de regard sur le traitement et la mémoire générée pour la sécurité du groupe.</p>
               </div>
             </div>
 
@@ -245,6 +274,19 @@ export default function DossiersPage() {
         </CardContent>
       </Card>
 
+      {/* Mimo Synthesis Notice Banner */}
+      {synthesizedNotice && (
+        <Card className="border-purple-500/40 bg-purple-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
+          <CardContent className="p-4 flex items-center gap-3 text-purple-300 text-xs font-medium">
+            <Sparkles className="w-5 h-5 text-purple-400 shrink-0" />
+            <div>
+              <p className="font-bold text-sm text-purple-200">Synthèse Mimo API terminée !</p>
+              <p className="opacity-90">{synthesizedNotice}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Secret Admin Moderation Panel (Visible ONLY to Niels / Admin) */}
       {isUserAdmin && (
         <Card className="border-amber-500/40 bg-amber-500/5 mt-8">
@@ -261,29 +303,63 @@ export default function DossiersPage() {
           </CardHeader>
           <CardContent className="space-y-3 pt-2">
             <p className="text-[11px] text-muted-foreground">
-              Voici toutes les informations transmises secrètement par les participants pour Botardèche. Tu peux les relire, les modifier (✏️) ou les supprimer (🗑️) si besoin.
+              Voici toutes les informations transmises secrètement par les participants pour Botardèche. Tu peux les relire, les synthétiser avec Mimo (✨), les modifier (✏️) ou les supprimer (🗑️).
             </p>
             {dossiers.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">Aucune information enregistrée pour le moment.</p>
             ) : (
               <div className="grid gap-3">
                 {dossiers.map((dos) => (
-                  <Card key={dos.id} className="p-3 border-border/60 bg-background/80">
+                  <Card key={dos.id} className="p-3.5 border-border/60 bg-background/80">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center flex-wrap gap-2">
                           <span className="text-xs font-bold text-red-400">
                             Cible : {dos.target?.emoji_avatar || "👤"} {dos.target?.pseudo || dos.target?.name || "Inconnu"}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
                             ({new Date(dos.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})
                           </span>
+                          {dos.synthesized_at ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-0.5 rounded-full">
+                              <Sparkles className="w-3 h-3 text-purple-400" /> Synthétisé par Mimo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40">
+                              ⏳ Non synthétisé
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-foreground font-normal leading-relaxed">
+                        <p className="text-xs text-foreground font-normal leading-relaxed italic">
                           &quot;{dos.content}&quot;
                         </p>
+                        {Array.isArray(dos.synthesized_facts) && dos.synthesized_facts.length > 0 && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[11px] space-y-1">
+                            <p className="font-bold flex items-center gap-1.5 text-purple-200">
+                              <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                              Fait(s) synthétisé(s) & mémorisé(s) par Botardèche :
+                            </p>
+                            <ul className="list-disc list-inside space-y-0.5 pl-1 opacity-95">
+                              {dos.synthesized_facts.map((fact, idx) => (
+                                <li key={idx} className="leading-snug">{fact}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => triggerMimoSynthesis(dos.id)}
+                          disabled={synthesizingId === dos.id}
+                          className="text-purple-400 hover:text-purple-300 p-1.5 transition-colors disabled:opacity-50"
+                          title="Synthétiser avec Mimo API pour Botardèche"
+                        >
+                          {synthesizingId === dos.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4" />
+                          )}
+                        </button>
                         <button
                           onClick={() => openEditModal(dos)}
                           className="text-muted-foreground hover:text-amber-400 p-1.5 transition-colors"

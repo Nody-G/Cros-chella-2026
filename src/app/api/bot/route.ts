@@ -187,15 +187,50 @@ async function buildGlobalContext(): Promise<string> {
 }
 
 // ============================================
+interface ParticipantKnowledge {
+  prenom: string;
+  pseudo?: string;
+  relation?: string;
+  infos?: string[];
+  famille?: Record<string, string | string[]>;
+  fun_facts?: string[];
+  anecdotes?: string[];
+}
+
+interface DynamicKnowledge {
+  participants?: Record<string, ParticipantKnowledge>;
+}
+
+// ============================================
 // System prompt for Botardèche
 // ============================================
 function buildSystemPrompt(
   globalContext: string,
-  botConfig: { mood?: string; custom_instruction?: string; target_focus_name?: string } = {}
+  botConfig: { mood?: string; custom_instruction?: string; target_focus_name?: string } = {},
+  dynamicKnowledge?: DynamicKnowledge
 ): string {
+  // Merge static bot-knowledge.json with dynamic knowledge from Supabase if available
+  const participantsMap: Record<string, ParticipantKnowledge> = { ...(botKnowledge.participants as Record<string, ParticipantKnowledge> || {}) };
+  if (dynamicKnowledge?.participants) {
+    for (const [k, v] of Object.entries(dynamicKnowledge.participants)) {
+      if (!participantsMap[k]) {
+        participantsMap[k] = v;
+      } else {
+        const p = participantsMap[k];
+        const dp = v;
+        participantsMap[k] = {
+          ...p,
+          infos: Array.from(new Set([...(p.infos || []), ...(dp.infos || [])])),
+          fun_facts: Array.from(new Set([...(p.fun_facts || []), ...(dp.fun_facts || [])])),
+          anecdotes: Array.from(new Set([...(p.anecdotes || []), ...(dp.anecdotes || [])])),
+        };
+      }
+    }
+  }
+
   // Format the personal knowledge into a readable section
   const knowledgeParts: string[] = [];
-  for (const [, person] of Object.entries(botKnowledge.participants)) {
+  for (const [, person] of Object.entries(participantsMap)) {
     const p = person as {
       prenom: string;
       pseudo?: string;
@@ -420,12 +455,23 @@ export async function POST(req: NextRequest) {
       conversationHistory = (history || []).map((h) => ({ role: h.role as "user" | "assistant", content: h.content }));
     }
 
+    // Fetch dynamic bot_knowledge from app_settings
+    const { data: knowledgeData } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "bot_knowledge")
+      .single();
+
     // Build messages array for Mimo
-    const systemPrompt = buildSystemPrompt(globalContext, {
-      mood: botConfig.mood,
-      custom_instruction: botConfig.custom_instruction,
-      target_focus_name: targetFocusName,
-    });
+    const systemPrompt = buildSystemPrompt(
+      globalContext,
+      {
+        mood: botConfig.mood,
+        custom_instruction: botConfig.custom_instruction,
+        target_focus_name: targetFocusName,
+      },
+      knowledgeData?.value
+    );
 
     const messages = [
       { role: "system", content: systemPrompt },

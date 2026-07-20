@@ -63,6 +63,9 @@ import {
   DollarSign,
   Camera,
   Trophy,
+  Sparkles,
+  Code,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -120,13 +123,33 @@ export default function AdminDashboardPage() {
     target_focus_id: null,
   });
 
-  // Bot Context Stats
+  // Bot Context Stats & Full Knowledge Inspection
   const [contextStats, setContextStats] = useState({
     chatCount: 0,
     dossiersCount: 0,
     estimatedTokens: 0,
     charLength: 0,
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [botKnowledgeData, setBotKnowledgeData] = useState<any>(null);
+  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+  const [showRawKnowledgeJson, setShowRawKnowledgeJson] = useState(false);
+  const [copiedNotice, setCopiedNotice] = useState(false);
+
+  const fetchBotKnowledge = async () => {
+    setLoadingKnowledge(true);
+    try {
+      const res = await fetch("/api/bot/knowledge");
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBotKnowledgeData(data.mergedKnowledge || data.staticKnowledge);
+      }
+    } catch (err) {
+      console.error("Error fetching bot knowledge:", err);
+    } finally {
+      setLoadingKnowledge(false);
+    }
+  };
 
   // 3. Module Visibility
   const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>({
@@ -254,6 +277,8 @@ export default function AdminDashboardPage() {
         charLength: totalCharEst,
         estimatedTokens: Math.round(totalCharEst / 4),
       });
+
+      fetchBotKnowledge();
 
       setLoading(false);
     }
@@ -1136,6 +1161,130 @@ export default function AdminDashboardPage() {
                     Purger la mémoire des conversations privées (DM)
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* FULL BOT KNOWLEDGE INSPECTOR & VIEWER */}
+            <Card className="border-purple-500/40 bg-purple-500/5 md:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="text-base font-bold flex items-center gap-2 text-purple-400">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    Contenu Exact de la Mémoire Bot (`bot_knowledge`)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Fiches personnelles complètes et anecdotes synthétisées par Mimo API pour nourrir Botardèche.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={fetchBotKnowledge}
+                    disabled={loadingKnowledge}
+                    className="text-xs border-purple-500/40 text-purple-300 hover:bg-purple-500/20 gap-1.5"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    {loadingKnowledge ? "Rechargement..." : "Actualiser"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowRawKnowledgeJson(!showRawKnowledgeJson)}
+                    className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  >
+                    <Code className="w-3.5 h-3.5" />
+                    {showRawKnowledgeJson ? "Vue Fiches" : "Vue JSON Brut"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {copiedNotice && (
+                  <p className="text-xs text-emerald-400 font-medium">✅ JSON copié dans le presse-papier !</p>
+                )}
+
+                {showRawKnowledgeJson ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(botKnowledgeData, null, 2));
+                          setCopiedNotice(true);
+                          setTimeout(() => setCopiedNotice(false), 3000);
+                        }}
+                        className="text-xs gap-1.5"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        Copier JSON Brut
+                      </Button>
+                    </div>
+                    <pre className="p-4 rounded-xl bg-black/80 border border-border/60 text-[11px] text-emerald-400 overflow-x-auto max-h-96 font-mono leading-relaxed">
+                      {JSON.stringify(botKnowledgeData || {}, null, 2)}
+                    </pre>
+                  </div>
+                ) : !botKnowledgeData?.participants ? (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">
+                    Chargement de la mémoire Botardèche...
+                  </p>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {Object.entries(botKnowledgeData.participants as Record<string, { prenom: string; pseudo?: string; infos?: string[]; fun_facts?: string[]; anecdotes?: string[] }>).map(([key, p]) => (
+                      <Card key={key} className="p-3.5 border-border/60 bg-background/80 flex flex-col justify-between space-y-2">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                            <span className="font-bold text-sm text-foreground">
+                              {p.prenom} {p.pseudo ? `(${p.pseudo})` : ""}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-300">
+                              {key}
+                            </Badge>
+                          </div>
+
+                          {/* Infos */}
+                          {Array.isArray(p.infos) && p.infos.length > 0 && (
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-semibold text-amber-400">Infos générales :</p>
+                              <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-0.5 pl-1">
+                                {p.infos.map((info: string, idx: number) => (
+                                  <li key={idx} className="leading-tight">{info}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Fun facts */}
+                          {Array.isArray(p.fun_facts) && p.fun_facts.length > 0 && (
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-semibold text-amber-300">💡 Fun Facts :</p>
+                              <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-0.5 pl-1">
+                                {p.fun_facts.map((fact: string, idx: number) => (
+                                  <li key={idx} className="leading-tight">{fact}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Anecdotes & Mimo Dossiers */}
+                          {Array.isArray(p.anecdotes) && p.anecdotes.length > 0 && (
+                            <div className="space-y-1 bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
+                              <p className="text-[11px] font-semibold text-purple-300 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-purple-400" />
+                                📖 Anecdotes & Synthèses Mimo :
+                              </p>
+                              <ul className="list-disc list-inside text-[11px] text-purple-200/90 space-y-0.5 pl-1">
+                                {p.anecdotes.map((anec: string, idx: number) => (
+                                  <li key={idx} className="leading-tight">{anec}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

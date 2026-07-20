@@ -24,6 +24,7 @@ const MIGRATION_FILES = [
   'supabase/migration-push-subscriptions.sql',
   'supabase/migration-bot-dossiers.sql',
   'supabase/migration-admin-settings.sql',
+  'supabase/migration-dossiers-synthesis.sql',
 ];
 
 async function run() {
