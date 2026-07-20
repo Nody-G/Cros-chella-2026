@@ -2194,13 +2194,13 @@ export async function createBotDossier(
     return null;
   }
 
-  // Trigger Push Notification to all participants
+  // Trigger Push Notification to all participants & Auto-synthesize with Mimo API
   try {
     const { data: targetPerson } = await supabase
       .from("participants")
       .select("name, pseudo")
       .eq("id", targetParticipantId)
-      .single();
+      .maybeSingle();
 
     const targetName = targetPerson?.pseudo || targetPerson?.name || "un participant";
     const authorName = isAnonymous ? "Un inconnu" : "Quelqu'un";
@@ -2210,8 +2210,17 @@ export async function createBotDossier(
       `${authorName} vient de balancer un dossier sur ${targetName} ! Botardèche est déjà au courant... 🤖`,
       "/dossiers"
     );
+
+    // Auto-synthesize immediately via Mimo API
+    if (data?.id) {
+      fetch("/api/dossiers/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId: data.id }),
+      }).catch((synthErr) => console.error("Auto Mimo synthesis notice:", synthErr));
+    }
   } catch (err) {
-    console.error("Error sending push notification for bot dossier:", err);
+    console.error("Error sending push notification or auto synthesis for bot dossier:", err);
   }
 
   return data as BotDossier;
@@ -2251,7 +2260,7 @@ export async function getAppSetting<T>(key: string, defaultValue: T): Promise<T>
     .from("app_settings")
     .select("value")
     .eq("key", key)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
     return defaultValue;

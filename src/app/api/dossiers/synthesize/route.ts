@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       .from("app_settings")
       .select("value")
       .eq("key", "bot_knowledge")
-      .single();
+      .maybeSingle();
 
     const dynamicKnowledge: KnowledgeContainer = dbSetting?.value || JSON.parse(JSON.stringify(botKnowledgeStatic));
     if (!dynamicKnowledge.participants) dynamicKnowledge.participants = {};
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
           .from("bot_dossiers")
           .select("*, target:participants!target_participant_id(name, pseudo)")
           .eq("id", dossierId)
-          .single();
+          .maybeSingle();
 
         if (error || !dossier) {
           return NextResponse.json({ error: "Dossier introuvable" }, { status: 404 });

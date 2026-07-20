@@ -29,7 +29,7 @@ export async function GET() {
       .from("app_settings")
       .select("value, updated_at")
       .eq("key", "bot_knowledge")
-      .single();
+      .maybeSingle();
 
     let dynamicKnowledge: KnowledgeContainer = dbSetting?.value;
 
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       .from("app_settings")
       .select("value")
       .eq("key", "bot_knowledge")
-      .single();
+      .maybeSingle();
 
     const currentDynamic: KnowledgeContainer = dbSetting?.value || JSON.parse(JSON.stringify(staticBotKnowledge));
     if (!currentDynamic.participants) currentDynamic.participants = {};

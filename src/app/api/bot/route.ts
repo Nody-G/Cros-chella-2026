@@ -393,7 +393,7 @@ export async function POST(req: NextRequest) {
       .from("app_settings")
       .select("value")
       .eq("key", "bot_config")
-      .single();
+      .maybeSingle();
 
     const botConfig = configData?.value || {
       enabled: true,
@@ -416,7 +416,7 @@ export async function POST(req: NextRequest) {
         .from("participants")
         .select("name, pseudo")
         .eq("id", botConfig.target_focus_id)
-        .single();
+        .maybeSingle();
       targetFocusName = targetPerson?.pseudo || targetPerson?.name || "";
     }
 
@@ -460,7 +460,7 @@ export async function POST(req: NextRequest) {
       .from("app_settings")
       .select("value")
       .eq("key", "bot_knowledge")
-      .single();
+      .maybeSingle();
 
     // Build messages array for Mimo
     const systemPrompt = buildSystemPrompt(
