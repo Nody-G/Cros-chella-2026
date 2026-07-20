@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎪 Cros-Chella 2026 — Un week-end entre potes en Ardèche</title>
+  <style>
+    /* ============================================
+       🎪 CROS-CHELLA — README HTML STYLÉ
+       Dark festival theme • Glassmorphism • Glow
+       ============================================ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg-deep: #0a0014;
+      --bg-dark: #110022;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --glass: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --gold: #f5c542;
+      --gold-light: #ffe08a;
+      --violet: #a855f7;
+      --violet-light: #c084fc;
+      --violet-dark: #7c3aed;
+      --pink: #ec4899;
+      --pink-light: #f472b6;
+      --cyan: #22d3ee;
+      --green: #34d399;
+      --text: #f0e6ff;
+      --text-muted: rgba(240, 230, 255, 0.6);
+      --text-dim: rgba(240, 230, 255, 0.35);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ---- ANIMATED BACKGROUND ---- */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 800px 600px at 20% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 600px 800px at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 400px 400px at 50% 50%, rgba(245, 197, 66, 0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ---- STARS ---- */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--dur) ease-in-out infinite alternate;
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.1; transform: scale(1); }
+      100% { opacity: 0.8; transform: scale(1.5); }
+    }
+
+    /* ---- CONTAINER ---- */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ---- HERO ---- */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+      position: relative;
+    }
+    .hero-logo {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(245, 197, 66, 0.4);
+      box-shadow:
+        0 0 40px rgba(245, 197, 66, 0.2),
+        0 0 80px rgba(168, 85, 247, 0.15),
+        0 0 120px rgba(236, 72, 153, 0.1);
+      animation: logo-glow 4s ease-in-out infinite alternate;
+      margin-bottom: 32px;
+    }
+    @keyframes logo-glow {
+      0% { box-shadow: 0 0 40px rgba(245, 197, 66, 0.2), 0 0 80px rgba(168, 85, 247, 0.15); }
+      100% { box-shadow: 0 0 60px rgba(245, 197, 66, 0.35), 0 0 100px rgba(168, 85, 247, 0.25); }
+    }
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--pink-light), var(--violet-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+    .hero .subtitle {
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      margin-bottom: 12px;
+    }
+    .hero .tagline {
+      display: inline-block;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      padding: 8px 24px;
+      border-radius: 100px;
+      font-size: 0.95rem;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* ---- BADGES ROW ---- */
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 32px 0 48px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .badge-pill:hover {
+      border-color: var(--violet);
+      color: var(--text);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+    }
+    .badge-pill .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .badge-pill .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .badge-pill .dot.violet { background: var(--violet); box-shadow: 0 0 6px var(--violet); }
+    .badge-pill .dot.gold { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+
+    /* ---- SECTION ---- */
+    section {
+      margin-bottom: 80px;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .section-header h2 .emoji { font-size: 2rem; }
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ---- GLASS CARD ---- */
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+    .glass-card:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      box-shadow: 0 8px 40px rgba(168, 85, 247, 0.08);
+      transform: translateY(-2px);
+    }
+
+    /* ---- FEATURES GRID ---- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--violet), var(--pink), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card:hover {
+      border-color: rgba(168, 85, 247, 0.25);
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.08);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* ---- SCREENSHOTS SHOWCASE ---- */
+    .screenshots-section {
+      margin: 60px 0 80px;
+    }
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+    .screenshot-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.4s;
+      cursor: pointer;
+    }
+    .screenshot-card:hover {
+      border-color: rgba(245, 197, 66, 0.3);
+      box-shadow: 0 12px 48px rgba(168, 85, 247, 0.12);
+      transform: translateY(-4px) scale(1.02);
+    }
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.4s;
+    }
+    .screenshot-card:hover img {
+      transform: scale(1.03);
+    }
+    .screenshot-card .caption {
+      padding: 14px 16px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .screenshot-card .caption .emoji {
+      margin-right: 6px;
+    }
+
+    /* ---- DESKTOP SCREENSHOT ---- */
+    .desktop-preview {
+      max-width: 900px;
+      margin: 40px auto 0;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .desktop-preview .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .browser-bar .dot-r { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+    .browser-bar .dot-y { width: 10px; height: 10px; border-radius: 50%; background: #febc2e; }
+    .browser-bar .dot-g { width: 10px; height: 10px; border-radius: 50%; background: #28c840; }
+    .browser-bar .url-bar {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-left: 8px;
+    }
+    .desktop-preview img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ---- TECH STACK ---- */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .tech-item {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .tech-item:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      transform: translateY(-2px);
+    }
+    .tech-item .tech-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .tech-item .tech-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .tech-item .tech-desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ---- TIMELINE ---- */
+    .timeline {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-left: 40px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 16px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--violet), var(--gold), var(--pink));
+      border-radius: 2px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -28px; top: 6px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--violet);
+      border: 2px solid var(--bg-deep);
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+    }
+    .timeline-item .date {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      color: var(--gold);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .timeline-item .event {
+      font-size: 1.05rem;
+      color: var(--text);
+      margin-top: 4px;
+    }
+    .timeline-item .desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ---- STATS ---- */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+      margin: 40px 0;
+    }
+    .stat-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold), var(--violet-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ---- PARTICIPANTS TABLE ---- */
+    .participants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .participant-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      transition: all 0.3s;
+    }
+    .participant-chip:hover {
+      border-color: rgba(245, 197, 66, 0.3);
+      background: rgba(255,255,255,0.06);
+    }
+    .participant-chip .p-emoji {
+      font-size: 1.6rem;
+    }
+    .participant-chip .p-info .p-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .participant-chip .p-info .p-pseudo {
+      font-size: 0.78rem;
+      color: var(--violet-light);
+    }
+
+    /* ---- INSTALL BLOCK ---- */
+    .install-block {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.88rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      position: relative;
+    }
+    .install-block .comment { color: var(--text-dim); }
+    .install-block .cmd { color: var(--green); }
+    .install-block .str { color: var(--gold); }
+
+    /* ---- TABLE STRUCTURE ---- */
+    .structure-block {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: var(--text-muted);
+    }
+    .structure-block .folder { color: var(--gold); font-weight: 600; }
+    .structure-block .file { color: var(--violet-light); }
+    .structure-block .desc { color: var(--text-dim); }
+
+    /* ---- CTA ---- */
+    .cta-section {
+      text-align: center;
+      padding: 60px 0 80px;
+    }
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--violet-dark), var(--pink));
+      color: white;
+      text-decoration: none;
+      padding: 14px 36px;
+      border-radius: 100px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 24px rgba(168, 85, 247, 0.3);
+    }
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4);
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--glass-border);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+    footer a {
+      color: var(--violet-light);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* ---- DIVIDER ---- */
+    .glow-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--violet), var(--gold), var(--pink), transparent);
+      margin: 60px 0;
+      opacity: 0.3;
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .hero .subtitle { font-size: 1.1rem; }
+      .hero-logo { width: 160px; height: 160px; }
+      .section-header h2 { font-size: 1.7rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .screenshots-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .tech-grid { grid-template-columns: repeat(3, 1fr); }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .participants-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .screenshots-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .tech-grid { grid-template-columns: repeat(2, 1fr); }
+      .container { padding: 0 16px; }
+    }
+
+    /* ---- LIGHTBOX ---- */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      cursor: zoom-out;
+      padding: 40px;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .lightbox .close-btn {
+      position: absolute;
+      top: 20px; right: 24px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .lightbox .close-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* ---- ANIMATIONS ---- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .animate-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STARS BACKGROUND -->
+  <div class="stars" id="stars"></div>
+
+  <!-- HERO -->
+  <div class="container">
+    <header class="hero">
+      <img src="screenshots/logo.png" alt="Cros-Chella Logo" class="hero-logo" />
+      <h1>Cros-Chella</h1>
+      <p class="subtitle">Un week-end entre potes en Ardèche, version festival 🎪</p>
+      <span class="tagline">📍 31 juillet — 2 août 2026 • Le Moulin du Cros</span>
+    </header>
+
+    <!-- TECH BADGES -->
+    <div class="badges-row">
+      <span class="badge-pill"><span class="dot green"></span> Next.js 14</span>
+      <span class="badge-pill"><span class="dot violet"></span> Supabase</span>
+      <span class="badge-pill"><span class="dot gold"></span> Tailwind CSS</span>
+      <span class="badge-pill"><span class="dot green"></span> Realtime</span>
+      <span class="badge-pill"><span class="dot violet"></span> PWA</span>
+      <span class="badge-pill"><span class="dot gold"></span> Mobile-first</span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row animate-in">
+      <div class="stat-card">
+        <div class="stat-number">29</div>
+        <div class="stat-label">Pages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">21+</div>
+        <div class="stat-label">Tables DB</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Features</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">10</div>
+        <div class="stat-label">Participants</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">3</div>
+        <div class="stat-label">Jours de fête</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Souvenirs</div>
+      </div>
+    </div>
+
+    <div class="glow-divider"></div>
+
+    <!-- ✨ FEATURES -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">✨</span> Fonctionnalités</h2>
+        <p>Tout ce qu'il faut pour un week-end mémorable — et même ce qu'on n'a pas demandé.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">👤</span>
+          <h3>Participants & Profils</h3>
+          <p>Profils personnalisés avec emoji avatar, pseudo, bio, rôle de festival, spécialité, super-pouvoir, faiblesse et phrase fétiche. Badges de compatibilité alcool/fume entre potes.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📋</span>
+          <h3>Programme</h3>
+          <p>Planning du week-end (jeudi → dimanche) avec timeline visuelle. CRUD admin, propositions par les participants, votes, commentaires et photos sur chaque activité.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎮</span>
+          <h3>Jeux Mystères</h3>
+          <p>Soumission secrète de jeux par chacun (Quiz, Défi physique, Défi alcool, Dégoûtant, Culture, Créatif). Révélés par l'admin au bon moment. Teasers avant la révélation.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💬</span>
+          <h3>Chat Temps Réel</h3>
+          <p>Mur de discussion avec réactions emoji, modification/suppression (appui long mobile), images avec overlay edit/delete, vibration sur nouveaux messages, horodatage intelligent.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📸</span>
+          <h3>Galerie Photos</h3>
+          <p>Upload avec compression, commentaires, viewer plein écran avec swipe tactile gauche/droite, likes, CRUD complet, lien Google Drive pour photos/vidéos HD.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💰</span>
+          <h3>Dépenses Partagées</h3>
+          <p>Tricount intégré — suivi des frais partagés, catégories, répartition automatique, calcul des balances et règlements optimaux entre participants.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎱</span>
+          <h3>Tournoi de Billard</h3>
+          <p>Tournoi par équipes avec bracket automatique, suivi des scores et classement en temps réel.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🏅</span>
+          <h3>Badges Custom</h3>
+          <p>Badges décernés par l'admin (emoji + titre + description). Visibles sous chaque participant, cliquables sur mobile.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Sondages</h3>
+          <p>Votes en temps réel avec barres de résultats animées et compteur pulse. Décisions collectives instantanées.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🍺</span>
+          <h3>Alcool & Inventaire</h3>
+          <p>Page dédiée avec préférences de chacun et inventaire absurde "Botardèche". Parce que les priorités, c'est important.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔔</span>
+          <h3>Notifications Push</h3>
+          <p>Pastilles rouges en temps réel + Notifications Push natives (PWA) en tâche de fond. Ne ratez aucun message du chat.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🐛</span>
+          <h3>Feedback</h3>
+          <p>"Signaler un bug ou proposer une idée" — feedback anonyme avec statuts persistants pour l'admin. L'amélioration continue, version festival.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 📱 SCREENSHOTS -->
+    <section class="screenshots-section animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">📱</span> Screenshots</h2>
+        <p>Un aperçu de l'app en conditions réelles — dark theme festival, glassmorphism et ambiance nuit.</p>
+      </div>
+
+      <div class="screenshots-grid">
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/landing.png" alt="Landing Page" loading="lazy" />
+          <div class="caption"><span class="emoji">🏠</span> Landing Page</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/participants.png" alt="Participants" loading="lazy" />
+          <div class="caption"><span class="emoji">👥</span> Participants</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/programme.png" alt="Programme" loading="lazy" />
+          <div class="caption"><span class="emoji">📋</span> Programme</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/chat.png" alt="Chat" loading="lazy" />
+          <div class="caption"><span class="emoji">💬</span> Chat</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/galerie.png" alt="Galerie" loading="lazy" />
+          <div class="caption"><span class="emoji">📸</span> Galerie</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/depenses.png" alt="Dépenses" loading="lazy" />
+          <div class="caption"><span class="emoji">💰</span> Dépenses</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/jeux.png" alt="Jeux" loading="lazy" />
+          <div class="caption"><span class="emoji">🎮</span> Jeux</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/billard.png" alt="Billard" loading="lazy" />
+          <div class="caption"><span class="emoji">🎱</span> Billard</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/badges.png" alt="Badges" loading="lazy" />
+          <div class="caption"><span class="emoji">🏅</span> Badges</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/profil.png" alt="Profil" loading="lazy" />
+          <div class="caption"><span class="emoji">👤</span> Profil</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/alcool.png" alt="Alcool" loading="lazy" />
+          <div class="caption"><span class="emoji">🍺</span> Alcool</div>
+        </div>
+        <div class="screenshot-card" onclick="openLightbox(this)">
+          <img src="screenshots/sondages.png" alt="Sondages" loading="lazy" />
+          <div class="caption"><span class="emoji">📊</span> Sondages</div>
+        </div>
+      </div>
+
+      <!-- Desktop Preview -->
+      <div class="desktop-preview" style="margin-top: 48px;">
+        <div class="browser-bar">
+          <span class="dot-r"></span>
+          <span class="dot-y"></span>
+          <span class="dot-g"></span>
+          <span class="url-bar">🔒 cros-chella.vercel.app</span>
+        </div>
+        <img src="screenshots/landing-desktop.png" alt="Cros-Chella Desktop" loading="lazy" />
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 🛠️ TECH STACK -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">🛠️</span> Stack Technique</h2>
+        <p>Les technologies derrière la magie.</p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-item">
+          <span class="tech-icon">⚡</span>
+          <div class="tech-name">Next.js 14</div>
+          <div class="tech-desc">App Router</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">🎨</span>
+          <div class="tech-name">Tailwind CSS</div>
+          <div class="tech-desc">Styling</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">🧩</span>
+          <div class="tech-name">shadcn/ui</div>
+          <div class="tech-desc">Components</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">🗄️</span>
+          <div class="tech-name">Supabase</div>
+          <div class="tech-desc">PostgreSQL + Auth</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">⚡</span>
+          <div class="tech-name">Realtime</div>
+          <div class="tech-desc">Chat & Badges</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">🚀</span>
+          <div class="tech-name">Vercel</div>
+          <div class="tech-desc">Hosting</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">📱</span>
+          <div class="tech-name">PWA</div>
+          <div class="tech-desc">Push Notifications</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-icon">🖼️</span>
+          <div class="tech-name">Image Utils</div>
+          <div class="tech-desc">Compression</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 👥 PARTICIPANTS -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">👥</span> Les Participants</h2>
+        <p>La fine équipe du Cros-Chella 2026.</p>
+      </div>
+
+      <div class="participants-grid">
+        <div class="participant-chip">
+          <span class="p-emoji">👑</span>
+          <div class="p-info"><div class="p-name">Niels</div><div class="p-pseudo">Maître · Admin</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">💃</span>
+          <div class="p-info"><div class="p-name">Nelly</div><div class="p-pseudo">Nellfest</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">🧙</span>
+          <div class="p-info"><div class="p-name">Alva</div><div class="p-pseudo">Alvathor</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">🥷</span>
+          <div class="p-info"><div class="p-name">Célis</div><div class="p-pseudo">l'homme de l'ombre</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">🍫</span>
+          <div class="p-info"><div class="p-name">Charly</div><div class="p-pseudo">Chocolatine</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">🌭</span>
+          <div class="p-info"><div class="p-name">Ludo</div><div class="p-pseudo">Rosette</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">💪</span>
+          <div class="p-info"><div class="p-name">Xav</div><div class="p-pseudo">El hombre calvo</div></div>
+        </div>
+        <div class="participant-chip">
+          <span class="p-emoji">🏝️</span>
+          <div class="p-info"><div class="p-name">Bber</div><div class="p-pseudo">Punch des îles</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 📅 TIMELINE -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">📅</span> Programme du Week-end</h2>
+        <p>3 jours de festivités au Moulin du Cros, Ardèche.</p>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="date">🌙 Jeudi 30 juillet</div>
+          <div class="event">Arrivée anticipée</div>
+          <div class="desc">Pour les motivés — installation et premières bières</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">🎉 Vendredi 31 juillet</div>
+          <div class="event">Début officiel du festival</div>
+          <div class="desc">Ouverture des portes, premiers jeux, ambiance festival</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">☀️ Samedi 1 août</div>
+          <div class="event">Journée complète de festivités</div>
+          <div class="desc">Baignade, jeux, BBQ, soirée DJ — la totale</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">🌊 Dimanche 2 août</div>
+          <div class="event">Dernier jour & départ</div>
+          <div class="desc">Brunch, dernière baignade, on se fait la bise</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 🏠 LE LIEU -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">🏠</span> Le Lieu</h2>
+        <p>Le Moulin du Cros — au cœur de l'Ardèche.</p>
+      </div>
+
+      <div class="glass-card" style="text-align: center; max-width: 600px; margin: 0 auto;">
+        <p style="font-size: 1.3rem; font-weight: 600; margin-bottom: 8px;">🏡 Le Moulin du Cros</p>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">670 le Cros, 07240, Ardèche</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left; margin: 20px 0;">
+          <div>🛏️ <strong>5 chambres</strong> (~16-17 places)</div>
+          <div>🏊 <strong>Spots de baignade</strong> à proximité</div>
+          <div>🛋️ <strong>Canapé-lit</strong> dans le salon</div>
+          <div>🛏️ <strong>Matelas</strong> supplémentaires</div>
+        </div>
+        <a href="https://maps.app.goo.gl/Mzno5hxobVQbWubr8" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; background: var(--glass); border: 1px solid var(--glass-border); padding: 10px 24px; border-radius: 100px; color: var(--gold); text-decoration: none; font-weight: 500; transition: all 0.3s;">
+          📍 Voir sur Google Maps
+        </a>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 🚀 INSTALLATION -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">🚀</span> Installation</h2>
+        <p>Lancer le projet en local.</p>
+      </div>
+
+      <div class="install-block">
+        <span class="comment"># Cloner le repo</span><br>
+        <span class="cmd">git clone</span> <span class="str">https://github.com/Nody-G/Cros-chella-2026.git</span><br>
+        <span class="cmd">cd</span> Cros-chella-2026<br><br>
+        <span class="comment"># Installer les dépendances</span><br>
+        <span class="cmd">npm install</span><br><br>
+        <span class="comment"># Configurer les variables d'environnement</span><br>
+        <span class="cmd">cp</span> .env.example .env.local<br>
+        <span class="comment"># Remplir SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_DB_URL</span><br><br>
+        <span class="comment"># Lancer en dev</span><br>
+        <span class="cmd">npm run dev</span>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 📂 STRUCTURE -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">📂</span> Structure du Projet</h2>
+      </div>
+
+      <div class="structure-block">
+<span class="folder">src/</span>
+├── <span class="folder">app/</span>                          <span class="desc"># Pages Next.js (App Router)</span>
+│   ├── <span class="file">page.tsx</span>                  <span class="desc"># Landing page + compte à rebours</span>
+│   ├── <span class="folder">participants/</span>             <span class="desc"># Liste des participants + profils</span>
+│   ├── <span class="folder">programme/</span>                <span class="desc"># Planning + propositions</span>
+│   ├── <span class="folder">chat/</span>                     <span class="desc"># Chat temps réel</span>
+│   ├── <span class="folder">galerie/</span>                  <span class="desc"># Galerie photos</span>
+│   ├── <span class="folder">depenses/</span>                 <span class="desc"># Tricount / frais partagés</span>
+│   ├── <span class="folder">jeux/</span>                     <span class="desc"># Jeux mystères</span>
+│   ├── <span class="folder">billard/</span>                  <span class="desc"># Tournoi de billard</span>
+│   ├── <span class="folder">badges/</span>                   <span class="desc"># Badges custom</span>
+│   ├── <span class="folder">alcool/</span>                   <span class="desc"># Préférences alcool</span>
+│   ├── <span class="folder">profil/</span>                   <span class="desc"># Édition du profil</span>
+│   └── <span class="folder">admin/</span>                    <span class="desc"># Panel admin</span>
+├── <span class="folder">components/</span>
+│   ├── <span class="folder">layout/</span>                   <span class="desc"># Bottom nav, menu "Plus"</span>
+│   └── <span class="folder">ui/</span>                       <span class="desc"># Composants shadcn/ui</span>
+├── <span class="folder">lib/</span>
+│   ├── <span class="file">supabase.ts</span>               <span class="desc"># Client Supabase</span>
+│   ├── <span class="file">supabase-queries.ts</span>       <span class="desc"># Toutes les requêtes DB</span>
+│   ├── <span class="file">types.ts</span>                  <span class="desc"># Types TypeScript</span>
+│   └── <span class="file">image-utils.ts</span>            <span class="desc"># Compression d'images</span>
+└── <span class="folder">data/</span>
+    ├── <span class="file">alcohol-data.ts</span>           <span class="desc"># Données alcool</span>
+    └── <span class="file">updates.json</span>              <span class="desc"># Journal des mises à jour</span>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 🗄️ DATABASE -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">🗄️</span> Base de Données</h2>
+        <p>21+ tables Supabase avec Realtime activé — les migrations sont idempotentes.</p>
+      </div>
+
+      <div class="glass-card" style="max-width: 700px; margin: 0 auto;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+          <span class="badge-pill">participants</span>
+          <span class="badge-pill">games</span>
+          <span class="badge-pill">messages</span>
+          <span class="badge-pill">photos</span>
+          <span class="badge-pill">photo_comments</span>
+          <span class="badge-pill">photo_likes</span>
+          <span class="badge-pill">polls</span>
+          <span class="badge-pill">poll_votes</span>
+          <span class="badge-pill">program</span>
+          <span class="badge-pill">program_comments</span>
+          <span class="badge-pill">program_proposals</span>
+          <span class="badge-pill">proposal_comments</span>
+          <span class="badge-pill">spots</span>
+          <span class="badge-pill">expenses</span>
+          <span class="badge-pill">expense_splits</span>
+          <span class="badge-pill">settlements</span>
+          <span class="badge-pill">billard_tournaments</span>
+          <span class="badge-pill">billard_teams</span>
+          <span class="badge-pill">billard_matches</span>
+          <span class="badge-pill">custom_badges</span>
+          <span class="badge-pill">participant_badges</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="glow-divider"></div>
+
+    <!-- 🎨 DESIGN -->
+    <section class="animate-in">
+      <div class="section-header">
+        <h2><span class="emoji">🎨</span> Design System</h2>
+      </div>
+
+      <div class="features-grid" style="max-width: 700px; margin: 0 auto;">
+        <div class="feature-card" style="text-align: center;">
+          <span class="feature-icon">🌙</span>
+          <h3>Dark Theme</h3>
+          <p>Fond violet-nuit avec accents or/doré — ambiance festival garantie</p>
+        </div>
+        <div class="feature-card" style="text-align: center;">
+          <span class="feature-icon">🪟</span>
+          <h3>Glassmorphism</h3>
+          <p>Glass morphism, glow cards, gradients et animations stagger</p>
+        </div>
+        <div class="feature-card" style="text-align: center;">
+          <span class="feature-icon">📱</span>
+          <h3>Mobile-First</h3>
+          <p>Optimisé pour téléphone — parce que tout le monde est sur son portable</p>
+        </div>
+        <div class="feature-card" style="text-align: center;">
+          <span class="feature-icon">😂</span>
+          <h3>Humour Border</h3>
+          <p>Second degré, emojis partout, ton décalé — on est là pour s'amuser</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-section animate-in">
+      <a href="https://cros-chella-2026.vercel.app" target="_blank" rel="noopener" class="cta-button">
+        🎪 Découvrir Cros-Chella
+      </a>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>🎪 Cros-Chella 2026 — Fait avec ❤️ pour un week-end entre potes en Ardèche</p>
+      <p style="margin-top: 8px;">
+        <a href="https://github.com/Nody-G/Cros-chella-2026">GitHub</a>
+        · <a href="https://cros-chella-2026.vercel.app">Vercel</a>
+        · <a href="https://open.spotify.com/playlist/2DqmhZTuP8dhiZqCrx0D8f">Playlist Spotify</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="close-btn" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <script>
+    // ---- Stars ----
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+      star.style.animationDelay = Math.random() * 4 + 's';
+      star.style.width = (1 + Math.random() * 2) + 'px';
+      star.style.height = star.style.width;
+      starsContainer.appendChild(star);
+    }
+
+    // ---- Scroll animations ----
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+    // ---- Lightbox ----
+    function openLightbox(card) {
+      const img = card.querySelector('img');
+      const lb = document.getElementById('lightbox');
+      document.getElementById('lightbox-img').src = img.src;
+      lb.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+</body>
+</html>

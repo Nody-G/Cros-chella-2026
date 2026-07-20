@@ -4,6 +4,47 @@
 
 Web app mobile-first pour organiser, s'amuser et garder les souvenirs du **Cros-Chella** — un week-end festif du **31 juillet au 2 août 2026** au Moulin du Cros, en Ardèche.
 
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38BDF8?style=flat-square&logo=tailwindcss)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000?style=flat-square&logo=vercel)
+![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=flat-square)
+
+</div>
+
+---
+
+## 📱 Screenshots
+
+<div align="center">
+
+| Landing | Participants | Programme | Chat |
+|:---:|:---:|:---:|:---:|
+| ![Landing](screenshots/landing.png) | ![Participants](screenshots/participants.png) | ![Programme](screenshots/programme.png) | ![Chat](screenshots/chat.png) |
+
+| Galerie | Dépenses | Jeux | Billard |
+|:---:|:---:|:---:|:---:|
+| ![Galerie](screenshots/galerie.png) | ![Dépenses](screenshots/depenses.png) | ![Jeux](screenshots/jeux.png) | ![Billard](screenshots/billard.png) |
+
+| Badges | Profil | Alcool | Sondages |
+|:---:|:---:|:---:|:---:|
+| ![Badges](screenshots/badges.png) | ![Profil](screenshots/profil.png) | ![Alcool](screenshots/alcool.png) | ![Sondages](screenshots/sondages.png) |
+
+</div>
+
+### 🖥️ Vue Desktop
+
+<div align="center">
+
+![Cros-Chella Desktop](screenshots/landing-desktop.png)
+
+</div>
+
+> 🎨 **README HTML stylé** disponible dans [`README.html`](README.html) — avec animations, lightbox, glassmorphism et le full festival vibe.
+
 ---
 
 ## ✨ Fonctionnalités
