@@ -297,6 +297,9 @@ export default function ChatPage() {
       const lastMsgId = messages[messages.length - 1].id;
       const lastReadKey = currentUserId ? `croschella_last_read_msg_${currentUserId}` : "croschella_last_read_msg";
       localStorage.setItem(lastReadKey, lastMsgId);
+      // Dismiss the unread divider once user has scrolled to the bottom
+      setFirstUnreadMsgId(null);
+      setUnreadCount(0);
     }
   };
 
@@ -752,6 +755,8 @@ export default function ChatPage() {
               localStorage.setItem(lastReadKey, lastMsgId);
             }
             setIsScrolledUp(false);
+            setFirstUnreadMsgId(null);
+            setUnreadCount(0);
           }}
           className="fixed bottom-20 right-4 z-40 bg-primary/95 text-primary-foreground hover:bg-primary px-3 py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-bold transition-all animate-in fade-in zoom-in-95 border border-primary-foreground/20"
         >
