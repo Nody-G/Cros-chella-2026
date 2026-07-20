@@ -50,6 +50,27 @@ export default function DossiersPage() {
       setParticipants(parts);
       setDossiers(dos);
       setLoading(false);
+
+      // Auto-trigger background Mimo synthesis for any pending/unsynthesized dossiers
+      const hasUnsynthesized = dos.some(
+        (d) => !d.synthesized_at || !Array.isArray(d.synthesized_facts) || d.synthesized_facts.length === 0
+      );
+
+      if (hasUnsynthesized) {
+        fetch("/api/dossiers/synthesize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ processPending: true }),
+        })
+          .then((res) => res.json())
+          .then(async (data) => {
+            if (data.success && data.totalProcessed > 0) {
+              const fresh = await getBotDossiers();
+              setDossiers(fresh);
+            }
+          })
+          .catch((err) => console.warn("Auto-synthesis error:", err));
+      }
     }
     loadData();
 
@@ -80,11 +101,16 @@ export default function DossiersPage() {
         const facts = (data.synthesized_facts || data.synthesizedFacts || []).join(" / ");
         setSynthesizedNotice(`Mimo API a synthétisé : "${facts}" et mis à jour la mémoire de Botardèche ! 🤖✨`);
         setTimeout(() => setSynthesizedNotice(null), 8000);
+        // Refresh local state immediately to display updated badge and facts
+        const fresh = await getBotDossiers();
+        setDossiers(fresh);
       } else {
         console.warn("Synthèse Mimo warning:", data.error);
+        alert(`Erreur synthèse Mimo : ${data.error || "Impossible de synthétiser le dossier"}`);
       }
     } catch (err) {
       console.error("Error triggering Mimo synthesis:", err);
+      alert("Erreur réseau lors du déclenchement de la synthèse.");
     } finally {
       setSynthesizingId(null);
     }

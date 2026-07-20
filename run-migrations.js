@@ -25,6 +25,7 @@ const MIGRATION_FILES = [
   'supabase/migration-bot-dossiers.sql',
   'supabase/migration-admin-settings.sql',
   'supabase/migration-dossiers-synthesis.sql',
+  'supabase/migration-dossiers-rls-update.sql',
 ];
 
 async function run() {

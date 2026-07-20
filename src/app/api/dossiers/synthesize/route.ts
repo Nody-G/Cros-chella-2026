@@ -5,7 +5,7 @@ import path from "path";
 import { execSync } from "child_process";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const MIMO_API_KEY = process.env.MIMO_API_KEY || process.env.NEXT_PUBLIC_MIMO_API_KEY;
@@ -362,6 +362,7 @@ export async function POST(req: NextRequest) {
       success: true,
       totalProcessed,
       allSynthesized,
+      synthesized_facts: allSynthesized[0]?.facts || [],
       githubUpdated: githubResult.success,
       githubMethod: githubResult.method,
     });
