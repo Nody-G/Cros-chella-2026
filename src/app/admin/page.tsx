@@ -64,7 +64,6 @@ import {
   Camera,
   Trophy,
   Sparkles,
-  Code,
   Copy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -132,8 +131,10 @@ export default function AdminDashboardPage() {
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [botKnowledgeData, setBotKnowledgeData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawDbKnowledgeData, setRawDbKnowledgeData] = useState<any>(null);
+  const [knowledgeViewMode, setKnowledgeViewMode] = useState<"cards" | "mergedJson" | "rawDbJson">("cards");
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
-  const [showRawKnowledgeJson, setShowRawKnowledgeJson] = useState(false);
   const [copiedNotice, setCopiedNotice] = useState(false);
   const [batchSynthesizing, setBatchSynthesizing] = useState(false);
   const [batchNotice, setBatchNotice] = useState<string | null>(null);
@@ -145,6 +146,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setBotKnowledgeData(data.mergedKnowledge || data.staticKnowledge);
+        setRawDbKnowledgeData(data.dynamicKnowledge || null);
       }
     } catch (err) {
       console.error("Error fetching bot knowledge:", err);
@@ -1224,15 +1226,29 @@ export default function AdminDashboardPage() {
                     <Zap className="w-3.5 h-3.5" />
                     {loadingKnowledge ? "Rechargement..." : "Actualiser"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowRawKnowledgeJson(!showRawKnowledgeJson)}
-                    className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
-                  >
-                    <Code className="w-3.5 h-3.5" />
-                    {showRawKnowledgeJson ? "Vue Fiches" : "Vue JSON Brut"}
-                  </Button>
+                  <div className="flex items-center rounded-lg bg-muted/40 p-0.5 border border-border/40 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setKnowledgeViewMode("cards")}
+                      className={`px-2 py-1 rounded-md transition-colors ${knowledgeViewMode === "cards" ? "bg-purple-600 text-white font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      📇 Fiches
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setKnowledgeViewMode("mergedJson")}
+                      className={`px-2 py-1 rounded-md transition-colors ${knowledgeViewMode === "mergedJson" ? "bg-purple-600 text-white font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      🧠 JSON Fusionné
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setKnowledgeViewMode("rawDbJson")}
+                      className={`px-2 py-1 rounded-md transition-colors ${knowledgeViewMode === "rawDbJson" ? "bg-purple-600 text-white font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      🗄️ JSON Brut Supabase
+                    </button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1245,9 +1261,10 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-emerald-400 font-medium">✅ JSON copié dans le presse-papier !</p>
                 )}
 
-                {showRawKnowledgeJson ? (
+                {knowledgeViewMode === "mergedJson" ? (
                   <div className="space-y-2">
-                    <div className="flex justify-end">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground font-mono">Savoir global fusionné (Fiches de base + Supabase)</p>
                       <Button
                         size="sm"
                         variant="secondary"
@@ -1259,11 +1276,33 @@ export default function AdminDashboardPage() {
                         className="text-xs gap-1.5"
                       >
                         <Copy className="w-3.5 h-3.5" />
-                        Copier JSON Brut
+                        Copier JSON Fusionné
                       </Button>
                     </div>
                     <pre className="p-4 rounded-xl bg-black/80 border border-border/60 text-[11px] text-emerald-400 overflow-x-auto max-h-96 font-mono leading-relaxed">
                       {JSON.stringify(botKnowledgeData || {}, null, 2)}
+                    </pre>
+                  </div>
+                ) : knowledgeViewMode === "rawDbJson" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-purple-300 font-mono">Contenu brut en base Supabase (`app_settings` key: bot_knowledge)</p>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(rawDbKnowledgeData, null, 2));
+                          setCopiedNotice(true);
+                          setTimeout(() => setCopiedNotice(false), 3000);
+                        }}
+                        className="text-xs gap-1.5 border-purple-500/40 text-purple-200"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        Copier JSON Brut Supabase
+                      </Button>
+                    </div>
+                    <pre className="p-4 rounded-xl bg-purple-950/40 border border-purple-500/30 text-[11px] text-purple-300 overflow-x-auto max-h-96 font-mono leading-relaxed">
+                      {JSON.stringify(rawDbKnowledgeData || {}, null, 2)}
                     </pre>
                   </div>
                 ) : !botKnowledgeData?.participants ? (
@@ -1272,59 +1311,41 @@ export default function AdminDashboardPage() {
                   </p>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(botKnowledgeData.participants as Record<string, { prenom: string; pseudo?: string; infos?: string[]; fun_facts?: string[]; anecdotes?: string[] }>).map(([key, p]) => (
-                      <Card key={key} className="p-3.5 border-border/60 bg-background/80 flex flex-col justify-between space-y-2">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                            <span className="font-bold text-sm text-foreground">
-                              {p.prenom} {p.pseudo ? `(${p.pseudo})` : ""}
-                            </span>
-                            <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-300">
-                              {key}
-                            </Badge>
+                    {Object.entries(botKnowledgeData.participants as Record<string, { prenom: string; pseudo?: string; infos?: string[]; fun_facts?: string[]; anecdotes?: string[] }>).map(([key, p]) => {
+                      const allItems = Array.from(
+                        new Set([
+                          ...(p.infos || []),
+                          ...(p.fun_facts || []),
+                          ...(p.anecdotes || []),
+                        ])
+                      );
+
+                      return (
+                        <Card key={key} className="p-3.5 border-border/60 bg-background/80 flex flex-col justify-between space-y-2">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                              <span className="font-bold text-sm text-foreground">
+                                {p.prenom} {p.pseudo ? `(${p.pseudo})` : ""}
+                              </span>
+                              <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-300">
+                                {key}
+                              </Badge>
+                            </div>
+
+                            {/* Unified knowledge items list */}
+                            {allItems.length === 0 ? (
+                              <p className="text-[11px] text-muted-foreground italic">Aucune information enregistrée</p>
+                            ) : (
+                              <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-1 pl-1 leading-relaxed">
+                                {allItems.map((item: string, idx: number) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
-
-                          {/* Infos */}
-                          {Array.isArray(p.infos) && p.infos.length > 0 && (
-                            <div className="space-y-1">
-                              <p className="text-[11px] font-semibold text-amber-400">Infos générales :</p>
-                              <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-0.5 pl-1">
-                                {p.infos.map((info: string, idx: number) => (
-                                  <li key={idx} className="leading-tight">{info}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Fun facts */}
-                          {Array.isArray(p.fun_facts) && p.fun_facts.length > 0 && (
-                            <div className="space-y-1">
-                              <p className="text-[11px] font-semibold text-amber-300">💡 Fun Facts :</p>
-                              <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-0.5 pl-1">
-                                {p.fun_facts.map((fact: string, idx: number) => (
-                                  <li key={idx} className="leading-tight">{fact}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Anecdotes & Mimo Dossiers */}
-                          {Array.isArray(p.anecdotes) && p.anecdotes.length > 0 && (
-                            <div className="space-y-1 bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
-                              <p className="text-[11px] font-semibold text-purple-300 flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-purple-400" />
-                                📖 Anecdotes & Synthèses Mimo :
-                              </p>
-                              <ul className="list-disc list-inside text-[11px] text-purple-200/90 space-y-0.5 pl-1">
-                                {p.anecdotes.map((anec: string, idx: number) => (
-                                  <li key={idx} className="leading-tight">{anec}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

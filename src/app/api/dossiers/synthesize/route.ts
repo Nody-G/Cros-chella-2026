@@ -25,12 +25,17 @@ interface KnowledgeContainer {
   participants: Record<string, KnowledgeParticipant>;
 }
 
-// Helper to normalize participant name/pseudo to bot-knowledge key
-function findParticipantKey(nameOrPseudo: string, participantsObj: Record<string, KnowledgeParticipant>): string | null {
+function findParticipantKey(nameOrPseudo: string, participantsObj: Record<string, KnowledgeParticipant>): string {
   const target = (nameOrPseudo || "").toLowerCase().trim();
-  if (!target) return null;
-
-  if (participantsObj[target]) return target;
+  if (target === "xav" || target === "xavier" || target.includes("xav") || target.includes("xavier")) return "xav";
+  if (target === "niels" || target === "maitre" || target === "maître") return "niels";
+  if (target === "charly" || target === "chocolatine") return "charly";
+  if (target === "ludo" || target === "rosette") return "ludo";
+  if (target === "nelly" || target === "nellfest") return "nelly";
+  if (target === "celis" || target === "célis" || target.includes("ombre")) return "celis";
+  if (target === "alva" || target === "alvathor") return "alva";
+  if (target === "herve" || target === "hervé") return "herve";
+  if (target === "bber" || target.includes("punch")) return "bber";
 
   for (const [key, p] of Object.entries(participantsObj)) {
     const prenom = (p.prenom || "").toLowerCase().trim();
@@ -39,7 +44,7 @@ function findParticipantKey(nameOrPseudo: string, participantsObj: Record<string
       return key;
     }
   }
-  return null;
+  return target.replace(/\s+/g, "");
 }
 
 // Fallback facts extractor in case Mimo API returns 401 or is unreachable

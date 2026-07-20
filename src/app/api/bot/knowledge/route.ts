@@ -22,12 +22,34 @@ interface KnowledgeContainer {
   participants: Record<string, ParticipantKnowledge>;
 }
 
-// GET: Fetch static + dynamic merged bot_knowledge
+// Helper to normalize participant aliases to canonical keys
+function normalizeParticipantKey(rawKey: string): string {
+  const k = (rawKey || "").toLowerCase().trim();
+  if (k === "xav" || k === "xavier" || k.includes("xav") || k.includes("xavier")) return "xav";
+  if (k === "niels" || k === "maitre" || k === "maître") return "niels";
+  if (k === "charly" || k === "chocolatine") return "charly";
+  if (k === "ludo" || k === "rosette") return "ludo";
+  if (k === "nelly" || k === "nellfest") return "nelly";
+  if (k === "celis" || k === "célis" || k.includes("ombre")) return "celis";
+  if (k === "alva" || k === "alvathor") return "alva";
+  if (k === "herve" || k === "hervé") return "herve";
+  if (k === "bber" || k.includes("punch")) return "bber";
+  return k.replace(/\s+/g, "");
+}
+
+// GET: Fetch static + dynamic merged bot_knowledge with canonical key normalization
 export async function GET() {
   try {
     const staticData: KnowledgeContainer = JSON.parse(JSON.stringify(staticBotKnowledge));
-    const mergedParticipants: Record<string, ParticipantKnowledge> = { ...(staticData.participants || {}) };
+    const mergedParticipants: Record<string, ParticipantKnowledge> = {};
 
+    // First load all static baseline participants
+    for (const [key, part] of Object.entries(staticData.participants || {})) {
+      const normKey = normalizeParticipantKey(key);
+      mergedParticipants[normKey] = { ...part };
+    }
+
+    // Fetch dynamic knowledge from Supabase app_settings
     const { data: dbSetting } = await supabase
       .from("app_settings")
       .select("value, updated_at")
@@ -36,15 +58,20 @@ export async function GET() {
 
     const dynamicKnowledge: KnowledgeContainer = dbSetting?.value || { participants: {} };
 
+    // Deep merge dynamic knowledge onto canonical participant keys
     if (dynamicKnowledge.participants) {
       for (const [key, dynPart] of Object.entries(dynamicKnowledge.participants)) {
-        if (!mergedParticipants[key]) {
-          mergedParticipants[key] = dynPart;
+        const normKey = normalizeParticipantKey(key);
+        if (!mergedParticipants[normKey]) {
+          mergedParticipants[normKey] = dynPart;
         } else {
-          const staticPart = mergedParticipants[key];
-          mergedParticipants[key] = {
+          const staticPart = mergedParticipants[normKey];
+          mergedParticipants[normKey] = {
             ...staticPart,
             ...dynPart,
+            prenom: staticPart.prenom || dynPart.prenom,
+            pseudo: staticPart.pseudo || dynPart.pseudo,
+            relation: staticPart.relation || dynPart.relation,
             infos: Array.from(new Set([...(staticPart.infos || []), ...(dynPart.infos || [])])),
             fun_facts: Array.from(new Set([...(staticPart.fun_facts || []), ...(dynPart.fun_facts || [])])),
             anecdotes: Array.from(new Set([...(staticPart.anecdotes || []), ...(dynPart.anecdotes || [])])),
@@ -82,18 +109,25 @@ export async function POST(req: NextRequest) {
       .eq("key", "bot_knowledge")
       .maybeSingle();
 
-    const currentDynamic: KnowledgeContainer = dbSetting?.value || JSON.parse(JSON.stringify(staticBotKnowledge));
+    const currentDynamic: KnowledgeContainer = dbSetting?.value || { participants: {} };
     if (!currentDynamic.participants) currentDynamic.participants = {};
 
     if (participants && typeof participants === "object") {
-      currentDynamic.participants = participants;
+      // Normalize keys
+      const normParticipants: Record<string, ParticipantKnowledge> = {};
+      for (const [k, v] of Object.entries(participants as Record<string, ParticipantKnowledge>)) {
+        const normKey = normalizeParticipantKey(k);
+        normParticipants[normKey] = v;
+      }
+      currentDynamic.participants = normParticipants;
     } else if (participantKey && updates && typeof updates === "object") {
-      currentDynamic.participants[participantKey] = {
-        ...(currentDynamic.participants[participantKey] || {}),
+      const normKey = normalizeParticipantKey(participantKey);
+      currentDynamic.participants[normKey] = {
+        ...(currentDynamic.participants[normKey] || {}),
         ...updates,
       };
     } else {
-      return NextResponse.json({ error: "Paramètres invalides (participants ou participantKey + updates requis)" }, { status: 400 });
+      return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
     }
 
     const { error: dbError } = await supabase.from("app_settings").upsert({
