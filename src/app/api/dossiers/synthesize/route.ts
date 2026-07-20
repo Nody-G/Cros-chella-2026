@@ -42,12 +42,30 @@ function findParticipantKey(nameOrPseudo: string, participantsObj: Record<string
   return null;
 }
 
-// Single dossier synthesis function using Mimo API
+// Fallback facts extractor in case Mimo API returns 401 or is unreachable
+function fallbackExtractFacts(content: string): string[] {
+  const sentences = content
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 5);
+
+  if (sentences.length > 0) {
+    return sentences.slice(0, 2);
+  }
+  return [content.substring(0, 120)];
+}
+
+// Single dossier synthesis function using Mimo API with resilient fallback
 async function synthesizeSingleDossier(
   targetName: string,
   dossierContent: string,
   category: string
 ): Promise<string[]> {
+  if (!MIMO_API_KEY) {
+    console.warn("MIMO_API_KEY missing, using fallback extraction.");
+    return fallbackExtractFacts(dossierContent);
+  }
+
   const systemPrompt = `Tu es un assistant d'analyse d'information pour un bot nommé Botardèche.
 On vient de te transmettre une anecdote ou un dossier concernant le participant "${targetName}".
 Extrais et synthétise les points clés de cette anecdote sous forme de 1 à 2 phrases/faits concis (max 20 mots par fait, style direct et pertinent en français).
@@ -59,63 +77,63 @@ Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma 
 
   const userPrompt = `Dossier (${category}) sur ${targetName} : "${dossierContent}"`;
 
-  const mimoRes = await fetch(MIMO_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": MIMO_API_KEY!,
-    },
-    body: JSON.stringify({
-      model: MIMO_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 300,
-    }),
-  });
-
-  if (!mimoRes.ok) {
-    const errText = await mimoRes.text();
-    throw new Error(`Erreur API Mimo (${mimoRes.status}): ${errText}`);
-  }
-
-  const mimoData = await mimoRes.json();
-  const rawReply = mimoData.choices?.[0]?.message?.content || "";
-
-  let synthesizedFacts: string[] = [];
   try {
-    const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed.synthesized_facts)) {
-      synthesizedFacts = parsed.synthesized_facts;
+    const mimoRes = await fetch(MIMO_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": MIMO_API_KEY,
+        "Authorization": `Bearer ${MIMO_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MIMO_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!mimoRes.ok) {
+      const errText = await mimoRes.text();
+      console.warn(`Mimo API status ${mimoRes.status}: ${errText}. Using smart fallback extraction.`);
+      return fallbackExtractFacts(dossierContent);
     }
-  } catch {
-    synthesizedFacts = rawReply
-      .split("\n")
-      .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
-      .filter((l: string) => l.length > 0);
-  }
 
-  if (synthesizedFacts.length === 0) {
-    synthesizedFacts = [dossierContent.substring(0, 100)];
-  }
+    const mimoData = await mimoRes.json();
+    const rawReply = mimoData.choices?.[0]?.message?.content || "";
 
-  return synthesizedFacts;
+    let synthesizedFacts: string[] = [];
+    try {
+      const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed.synthesized_facts)) {
+        synthesizedFacts = parsed.synthesized_facts;
+      }
+    } catch {
+      synthesizedFacts = rawReply
+        .split("\n")
+        .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
+        .filter((l: string) => l.length > 0);
+    }
+
+    if (synthesizedFacts.length === 0) {
+      synthesizedFacts = fallbackExtractFacts(dossierContent);
+    }
+
+    return synthesizedFacts;
+  } catch (err) {
+    console.warn("Mimo API fetch exception:", err);
+    return fallbackExtractFacts(dossierContent);
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const { dossierId, processPending, content: directContent, targetName: directTargetName } = body;
-
-    if (!MIMO_API_KEY) {
-      return NextResponse.json(
-        { error: "Clé API Mimo non configurée (MIMO_API_KEY manquant)" },
-        { status: 500 }
-      );
-    }
 
     // Load dynamic knowledge from Supabase app_settings (or seed from static JSON if empty)
     const { data: dbSetting } = await supabase
