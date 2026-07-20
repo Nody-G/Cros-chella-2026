@@ -62,7 +62,7 @@ export default function UpdatesPage() {
           <h1 className="text-2xl font-bold">Mises à jour 📢</h1>
         </div>
         <p className="text-muted-foreground text-sm mb-6">
-          Ce qui a changé dans l&apos;app. Clique sur une mise à jour pour déplier tous les détails.
+          Ce qui a changé dans l&apos;app. Clique sur une mise à jour pour déplier les détails.
         </p>
 
         {/* Timeline */}
@@ -86,7 +86,7 @@ export default function UpdatesPage() {
                     <span className="text-xs text-muted-foreground">
                       {group.items.length} mise{group.items.length > 1 ? "s" : ""} à jour
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-muted-foreground transition-transform duration-200">
                       {expandedGroup[gi] !== false ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </span>
                   </div>
@@ -104,7 +104,7 @@ export default function UpdatesPage() {
                     const hasDetails = Boolean(item.details && item.details.trim() !== item.description.trim());
 
                     return (
-                      <div key={ii} className="space-y-1">
+                      <div key={ii}>
                         <button
                           onClick={() => hasDetails && toggleItem(itemKey)}
                           className={`w-full text-left ${hasDetails ? "cursor-pointer" : "cursor-default"}`}
@@ -127,7 +127,7 @@ export default function UpdatesPage() {
                               </p>
                             </div>
                             {hasDetails && (
-                              <span className="text-muted-foreground shrink-0 mt-1">
+                              <span className="text-muted-foreground shrink-0 mt-1 transition-transform duration-300">
                                 {isItemExpanded ? (
                                   <ChevronUp className="w-4 h-4 text-primary" />
                                 ) : (
@@ -138,16 +138,20 @@ export default function UpdatesPage() {
                           </div>
                         </button>
 
-                        {/* Expanded details drawer */}
-                        {isItemExpanded && hasDetails && (
-                          <div className="ml-2 mr-1 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground/90 leading-relaxed whitespace-pre-line animate-in fade-in duration-200 shadow-inner">
-                            <span className="font-bold text-primary flex items-center gap-1.5 mb-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-primary" />
-                              Détails complets :
-                            </span>
-                            {item.details}
+                        {/* Smooth fluid accordion drawer */}
+                        <div
+                          className={`grid transition-all duration-300 ease-in-out ${
+                            isItemExpanded && hasDetails
+                              ? "grid-rows-[1fr] opacity-100 mt-2"
+                              : "grid-rows-[0fr] opacity-0 mt-0"
+                          }`}
+                        >
+                          <div className="overflow-hidden">
+                            <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground/90 leading-relaxed whitespace-pre-line shadow-inner">
+                              {item.details}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}
