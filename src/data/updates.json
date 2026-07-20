@@ -2,6 +2,14 @@
   {
     "date": "2026-07-20",
     "tag": "improvement",
+    "emoji": "✨",
+    "title": "Botardèche : Allègement des Fiches & Suppression des Noms Répétés",
+    "description": "Purge des préfixes redondants dans la base Supabase et synthèse Mimo ultra-concise.",
+    "details": "Optimisation majeure du stockage de la mémoire Botardèche : suppression systématique des préfixes de noms et pseudos répétés au début de chaque fait ('Charly a...', 'Xav (NoHairNoFear) est...'). La base Supabase et l'inspecteur admin affichent désormais des listes directes et épurées ('A le nez fragile', 'A travaillé à Lyon'), réduisant la taille du JSON et le nombre de tokens consommés par l'IA."
+  },
+  {
+    "date": "2026-07-20",
+    "tag": "improvement",
     "emoji": "🧹",
     "title": "Admin & Botardèche : Nettoyage Supabase, Fusion des Doublons & Liste Unifiée",
     "description": "Purge des fausses règles d'injection, fusion canonique de Xav et inspecteur JSON Brut Supabase dans l'admin.",

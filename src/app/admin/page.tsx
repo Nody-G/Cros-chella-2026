@@ -1312,13 +1312,23 @@ export default function AdminDashboardPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {Object.entries(botKnowledgeData.participants as Record<string, { prenom: string; pseudo?: string; infos?: string[]; fun_facts?: string[]; anecdotes?: string[] }>).map(([key, p]) => {
+                      const stripNamePrefix = (text: string) => {
+                        if (!text) return "";
+                        let s = text.trim();
+                        const p1 = /^(?:Xavier|Xav|NoHairNoFear|Chocolatine|Charly|Maître|Maitre|Niels|Rosette|Ludo|Nellfest|Nelly|Célis|Celis|Alvathor|Alva|Hervé|Herve|Punch des îles|Punch|Bber|Bichette|Max)\s*\([^)]+\)\s*(?:a|est|était|avait|fait|va|utilise|:|-|—)?\s*/i;
+                        const p2 = /^(?:Xavier|Xav|NoHairNoFear|Chocolatine|Charly|Maître|Maitre|Niels|Rosette|Ludo|Nellfest|Nelly|Célis|Celis|Alvathor|Alva|Hervé|Herve|Punch des îles|Punch|Bber|Bichette|Max)\s*(?:a|est|était|avait|fait|va|utilise|:|-|—)?\s*/i;
+                        s = s.replace(p1, "").replace(p2, "").trim();
+                        if (/^Ier\s+/i.test(s)) s = s.replace(/^Ier\s+/i, "");
+                        return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : text;
+                      };
+
                       const allItems = Array.from(
                         new Set([
                           ...(p.infos || []),
                           ...(p.fun_facts || []),
                           ...(p.anecdotes || []),
                         ])
-                      );
+                      ).map(stripNamePrefix).filter(Boolean);
 
                       return (
                         <Card key={key} className="p-3.5 border-border/60 bg-background/80 flex flex-col justify-between space-y-2">
