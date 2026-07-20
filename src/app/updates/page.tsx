@@ -28,16 +28,14 @@ function formatDate(dateStr: string) {
 }
 
 function groupByDate(items: UpdateItem[]) {
-  const groups: { date: string; items: UpdateItem[] }[] = [];
-  let current = "";
+  const map = new Map<string, UpdateItem[]>();
   for (const item of items) {
-    if (item.date !== current) {
-      current = item.date;
-      groups.push({ date: current, items: [] });
-    }
-    groups[groups.length - 1].items.push(item);
+    if (!map.has(item.date)) map.set(item.date, []);
+    map.get(item.date)!.push(item);
   }
-  return groups;
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, items]) => ({ date, items }));
 }
 
 export default function UpdatesPage() {
