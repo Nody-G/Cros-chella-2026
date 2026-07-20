@@ -136,8 +136,7 @@ export default function AdminDashboardPage() {
   const [knowledgeViewMode, setKnowledgeViewMode] = useState<"cards" | "mergedJson" | "rawDbJson">("cards");
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [copiedNotice, setCopiedNotice] = useState(false);
-  const [batchSynthesizing, setBatchSynthesizing] = useState(false);
-  const [batchNotice, setBatchNotice] = useState<string | null>(null);
+
 
   const fetchBotKnowledge = async () => {
     setLoadingKnowledge(true);
@@ -155,31 +154,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleBatchSynthesize = async () => {
-    setBatchSynthesizing(true);
-    setBatchNotice(null);
-    try {
-      const res = await fetch("/api/dossiers/synthesize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ processPending: true }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const ghMsg = data.githubUpdated ? " et mis à jour sur GitHub !" : " (mis à jour en local/Supabase)";
-        setBatchNotice(`✅ ${data.totalProcessed} dossier(s) synthétisé(s) par Mimo API${ghMsg}`);
-        fetchBotKnowledge();
-        setTimeout(() => setBatchNotice(null), 8000);
-      } else {
-        setBatchNotice(`⚠️ Erreur : ${data.error || "Échec de la synthèse"}`);
-      }
-    } catch (err) {
-      console.error("Error batch synthesizing:", err);
-      setBatchNotice("⚠️ Erreur lors du déclenchement de la synthèse.");
-    } finally {
-      setBatchSynthesizing(false);
-    }
-  };
+
 
   // 3. Module Visibility
   const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>({
@@ -309,6 +284,26 @@ export default function AdminDashboardPage() {
       });
 
       fetchBotKnowledge();
+
+      // Auto-sync: synthesize any pending dossiers in background (no manual action required)
+      const hasUnsynthesized = dos.some(
+        (d) =>
+          !d.synthesized_at || !Array.isArray(d.synthesized_facts) || d.synthesized_facts.length === 0
+      );
+      if (hasUnsynthesized) {
+        fetch("/api/dossiers/synthesize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ processPending: true }),
+        })
+          .then((r) => r.json())
+          .then(async (data) => {
+            if (data.success && data.totalProcessed > 0) {
+              fetchBotKnowledge();
+            }
+          })
+          .catch((err) => console.warn("Auto-synthesis (admin) error:", err));
+      }
 
       setLoading(false);
     }
@@ -1209,15 +1204,6 @@ export default function AdminDashboardPage() {
                 <div className="flex items-center flex-wrap gap-2">
                   <Button
                     size="sm"
-                    onClick={handleBatchSynthesize}
-                    disabled={batchSynthesizing}
-                    className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5 shadow-md shadow-purple-600/20"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    {batchSynthesizing ? "Synthèse Mimo en cours..." : "🚀 Synthétiser les dossiers en attente"}
-                  </Button>
-                  <Button
-                    size="sm"
                     variant="outline"
                     onClick={fetchBotKnowledge}
                     disabled={loadingKnowledge}
@@ -1252,11 +1238,6 @@ export default function AdminDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {batchNotice && (
-                  <div className="p-3 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-200 text-xs font-semibold animate-in fade-in">
-                    {batchNotice}
-                  </div>
-                )}
                 {copiedNotice && (
                   <p className="text-xs text-emerald-400 font-medium">✅ JSON copié dans le presse-papier !</p>
                 )}

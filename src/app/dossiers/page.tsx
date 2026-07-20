@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Pencil, ShieldAlert, Sparkles, Loader2 } from "lucide-react";
+import { Trash2, Pencil, ShieldAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -32,8 +32,7 @@ export default function DossiersPage() {
   const [editTargetId, setEditTargetId] = useState<string>("");
   const [editContent, setEditContent] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [synthesizingId, setSynthesizingId] = useState<string | null>(null);
-  const [synthesizedNotice, setSynthesizedNotice] = useState<string | null>(null);
+
 
   useEffect(() => {
     // Current user id from localStorage if present
@@ -88,33 +87,7 @@ export default function DossiersPage() {
     };
   }, []);
 
-  const triggerMimoSynthesis = async (dossierId: string) => {
-    try {
-      setSynthesizingId(dossierId);
-      const res = await fetch("/api/dossiers/synthesize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const facts = (data.synthesized_facts || data.synthesizedFacts || []).join(" / ");
-        setSynthesizedNotice(`Mimo API a synthétisé : "${facts}" et mis à jour la mémoire de Botardèche ! 🤖✨`);
-        setTimeout(() => setSynthesizedNotice(null), 8000);
-        // Refresh local state immediately to display updated badge and facts
-        const fresh = await getBotDossiers();
-        setDossiers(fresh);
-      } else {
-        console.warn("Synthèse Mimo warning:", data.error);
-        alert(`Erreur synthèse Mimo : ${data.error || "Impossible de synthétiser le dossier"}`);
-      }
-    } catch (err) {
-      console.error("Error triggering Mimo synthesis:", err);
-      alert("Erreur réseau lors du déclenchement de la synthèse.");
-    } finally {
-      setSynthesizingId(null);
-    }
-  };
+
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,8 +111,20 @@ export default function DossiersPage() {
       setSubmittedSuccess(true);
       setTimeout(() => setSubmittedSuccess(false), 6000);
 
-      // Trigger automatic Mimo API synthesis into bot_knowledge
-      triggerMimoSynthesis(newDos.id);
+      // Automatic Mimo synthesis — fire & forget, no manual action required
+      fetch("/api/dossiers/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId: newDos.id }),
+      })
+        .then((r) => r.json())
+        .then(async (data) => {
+          if (data.success) {
+            const fresh = await getBotDossiers();
+            setDossiers(fresh);
+          }
+        })
+        .catch((err) => console.warn("Auto-synthesis error:", err));
     }
     setSubmitting(false);
   };
@@ -177,7 +162,15 @@ export default function DossiersPage() {
             : d
         )
       );
-      triggerMimoSynthesis(editingDossier.id);
+      // Auto re-synthesize after edit — fire & forget
+      fetch("/api/dossiers/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId: editingDossier.id }),
+      })
+        .then((r) => r.json())
+        .then(async (data) => { if (data.success) { const fresh = await getBotDossiers(); setDossiers(fresh); } })
+        .catch((err) => console.warn("Auto re-synthesize error:", err));
       setEditingDossier(null);
     }
     setUpdating(false);
@@ -300,19 +293,6 @@ export default function DossiersPage() {
         </CardContent>
       </Card>
 
-      {/* Mimo Synthesis Notice Banner */}
-      {synthesizedNotice && (
-        <Card className="border-purple-500/40 bg-purple-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
-          <CardContent className="p-4 flex items-center gap-3 text-purple-300 text-xs font-medium">
-            <Sparkles className="w-5 h-5 text-purple-400 shrink-0" />
-            <div>
-              <p className="font-bold text-sm text-purple-200">Synthèse Mimo API terminée !</p>
-              <p className="opacity-90">{synthesizedNotice}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Secret Admin Moderation Panel (Visible ONLY to Niels / Admin) */}
       {isUserAdmin && (
         <Card className="border-amber-500/40 bg-amber-500/5 mt-8">
@@ -348,7 +328,7 @@ export default function DossiersPage() {
                           </span>
                           {dos.synthesized_at ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-0.5 rounded-full">
-                              <Sparkles className="w-3 h-3 text-purple-400" /> Synthétisé par Mimo
+                              ✨ Synthétisé par Mimo
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40">
@@ -362,7 +342,7 @@ export default function DossiersPage() {
                         {Array.isArray(dos.synthesized_facts) && dos.synthesized_facts.length > 0 && (
                           <div className="mt-2 p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[11px] space-y-1">
                             <p className="font-bold flex items-center gap-1.5 text-purple-200">
-                              <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                              ✨
                               Fait(s) synthétisé(s) & mémorisé(s) par Botardèche :
                             </p>
                             <ul className="list-disc list-inside space-y-0.5 pl-1 opacity-95">
@@ -374,18 +354,6 @@ export default function DossiersPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => triggerMimoSynthesis(dos.id)}
-                          disabled={synthesizingId === dos.id}
-                          className="text-purple-400 hover:text-purple-300 p-1.5 transition-colors disabled:opacity-50"
-                          title="Synthétiser avec Mimo API pour Botardèche"
-                        >
-                          {synthesizingId === dos.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="w-4 h-4" />
-                          )}
-                        </button>
                         <button
                           onClick={() => openEditModal(dos)}
                           className="text-muted-foreground hover:text-amber-400 p-1.5 transition-colors"

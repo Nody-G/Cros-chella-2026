@@ -2,6 +2,14 @@
   {
     "date": "2026-07-20",
     "tag": "improvement",
+    "emoji": "⚙️",
+    "title": "Botardèche : Synchronisation 100% Automatique",
+    "description": "Plus aucun bouton manuel à cliquer. Chaque dossier est synthétisé par Mimo dès son dépôt, et la mémoire se met à jour en temps réel.",
+    "details": "Suppression complète de tous les boutons de synchronisation manuelle (✨ individuel, 🚀 batch). Désormais : 1) Chaque nouveau dossier est analysé par Mimo immédiatement après soumission (fire & forget). 2) La page Dossiers et le panel Admin déclenchent automatiquement la synthèse de tous les dossiers en attente au chargement. 3) La déduplication sémantique s'exécute à chaque synthèse pour éliminer les doublons. Aucune action manuelle requise."
+  },
+  {
+    "date": "2026-07-20",
+    "tag": "improvement",
     "emoji": "🧠",
     "title": "Botardèche : Déduplication Sémantique & Synthèse Instantanée",
     "description": "Chaque nouveau secret est analysé immédiatement par Mimo. Les doublons (même info formulée différemment) sont automatiquement détectés et éliminés.",
