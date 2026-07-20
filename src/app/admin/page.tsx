@@ -1212,7 +1212,7 @@ export default function AdminDashboardPage() {
                     className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5 shadow-md shadow-purple-600/20"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    {batchSynthesizing ? "Synthèse Mimo & Push GitHub..." : "🚀 Synthétiser dossiers & Pousser GitHub"}
+                    {batchSynthesizing ? "Synthèse Mimo en cours..." : "🚀 Synthétiser les dossiers en attente"}
                   </Button>
                   <Button
                     size="sm"
