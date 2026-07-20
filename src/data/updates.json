@@ -2,6 +2,14 @@
   {
     "date": "2026-07-20",
     "tag": "improvement",
+    "emoji": "🧠",
+    "title": "Botardèche : Déduplication Sémantique & Synthèse Instantanée",
+    "description": "Chaque nouveau secret est analysé immédiatement par Mimo. Les doublons (même info formulée différemment) sont automatiquement détectés et éliminés.",
+    "details": "Refonte complète du moteur de mémoire de Botardèche : lors de chaque dépôt de dossier, l'API Mimo reçoit simultanément les faits synthétisés ET les faits déjà en base, puis compare sémantiquement pour détecter les informations redondantes (ex: 'A le nez fragile' et 'Le nez très fragile au moindre coup' = même info). Seuls les faits réellement nouveaux et originaux sont ajoutés. La base reste propre, compacte et précise, quel que soit le nombre de dossiers soumis."
+  },
+  {
+    "date": "2026-07-20",
+    "tag": "improvement",
     "emoji": "✨",
     "title": "Botardèche : Allègement des Fiches & Suppression des Noms Répétés",
     "description": "Purge des préfixes redondants dans la base Supabase et synthèse Mimo ultra-concise.",

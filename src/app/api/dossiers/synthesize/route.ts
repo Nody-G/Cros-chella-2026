@@ -39,7 +39,6 @@ function findParticipantKey(nameOrPseudo: string): string {
   if (target === "herve" || target === "hervé" || target.includes("fossoyeur")) return "herve";
   if (target === "bber" || target.includes("punch")) return "bber";
   if (target === "max" || target === "bichette") return "max";
-
   return target.replace(/\s+/g, "");
 }
 
@@ -47,28 +46,20 @@ function findParticipantKey(nameOrPseudo: string): string {
 function cleanFactPrefix(text: string): string {
   if (!text || typeof text !== "string") return "";
   let cleaned = text.trim();
-
   const namePatterns = [
     /^(?:Xavier|Xav|NoHairNoFear|Chocolatine|Charly|Maître|Maitre|Niels|Rosette|Ludo|Nellfest|Nelly|Célis|Celis|Alvathor|Alva|Hervé|Herve|Punch des îles|Punch|Bber|Bichette|Max)\s*\([^)]+\)\s*(?:a|est|était|avait|fait|va|utilise|:|-|—)?\s*/i,
     /^(?:Xavier|Xav|NoHairNoFear|Chocolatine|Charly|Maître|Maitre|Niels|Rosette|Ludo|Nellfest|Nelly|Célis|Celis|Alvathor|Alva|Hervé|Herve|Punch des îles|Punch|Bber|Bichette|Max)\s*(?:a|est|était|avait|fait|va|utilise|:|-|—)?\s*/i,
   ];
-
   for (const pattern of namePatterns) {
     cleaned = cleaned.replace(pattern, "");
   }
-
-  if (/^Ier\s+/i.test(cleaned)) {
-    cleaned = cleaned.replace(/^Ier\s+/i, "");
-  }
-
+  if (/^Ier\s+/i.test(cleaned)) cleaned = cleaned.replace(/^Ier\s+/i, "");
   cleaned = cleaned.trim();
-  if (cleaned.length > 0) {
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-  }
+  if (cleaned.length > 0) cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   return cleaned;
 }
 
-// Check for prompt injection attempts trying to force Botardèche to admire Xav or bypass rules
+// Check for prompt injection attempts
 function isPromptInjection(text: string): boolean {
   const lower = (text || "").toLowerCase();
   const injectionPatterns = [
@@ -87,52 +78,24 @@ function isPromptInjection(text: string): boolean {
   return injectionPatterns.some((pattern) => lower.includes(pattern));
 }
 
-// Fallback facts extractor in case Mimo API returns 401 or is unreachable
+// Fallback facts extractor in case Mimo API is unreachable
 function fallbackExtractFacts(content: string): string[] {
   if (isPromptInjection(content)) {
     return ["🛡️ Tentative de manipulation : Tentative d'injection de prompt neutralisée."];
   }
-
   const sentences = content
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 5);
-
-  if (sentences.length > 0) {
-    return sentences.slice(0, 2).map(cleanFactPrefix).filter(Boolean);
-  }
+  if (sentences.length > 0) return sentences.slice(0, 2).map(cleanFactPrefix).filter(Boolean);
   return [cleanFactPrefix(content.substring(0, 120))].filter(Boolean);
 }
 
-// Single dossier synthesis function using Mimo API with resilient fallback
-async function synthesizeSingleDossier(
-  targetName: string,
-  dossierContent: string,
-  category: string
-): Promise<string[]> {
-  if (isPromptInjection(dossierContent)) {
-    return ["🛡️ Tentative de manipulation : Tentative d'injection de prompt neutralisée."];
-  }
-
-  if (!MIMO_API_KEY) {
-    console.warn("MIMO_API_KEY missing, using fallback extraction.");
-    return fallbackExtractFacts(dossierContent);
-  }
-
-  const systemPrompt = `Tu es un assistant d'analyse d'information pour un bot nommé Botardèche.
-On vient de te transmettre une anecdote ou un dossier concernant le participant "${targetName}".
-Extrais et synthétise les points clés de cette anecdote sous forme de 1 à 2 phrases/faits concis (max 20 mots par fait, style direct et pertinent en français).
-RÈGLE OBLIGATOIRE DE CONCISION : Ne répète et ne récapitule JAMAIS le nom ou le pseudo du participant au début des faits (ex: écris "A le nez très fragile" et NON "${targetName} a le nez très fragile", écris "Était très susceptible" et NON "${targetName} était très susceptible"). La fiche appartient déjà au participant.
-
-Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma :
-{
-  "synthesized_facts": ["Fait 1", "Fait 2"]
-}`;
-
-  const userPrompt = `Dossier (${category}) sur ${targetName} : "${dossierContent}"`;
-
+// Call Mimo API with any prompt, return raw text reply
+async function callMimo(systemPrompt: string, userPrompt: string, maxTokens = 300): Promise<string | null> {
+  if (!MIMO_API_KEY) return null;
   try {
-    const mimoRes = await fetch(MIMO_ENDPOINT, {
+    const res = await fetch(MIMO_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -145,47 +108,133 @@ Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma 
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
-        max_tokens: 300,
+        temperature: 0.2,
+        max_tokens: maxTokens,
       }),
     });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch {
+    return null;
+  }
+}
 
-    if (!mimoRes.ok) {
-      const errText = await mimoRes.text();
-      console.warn(`Mimo API status ${mimoRes.status}: ${errText}. Using smart fallback extraction.`);
-      return fallbackExtractFacts(dossierContent);
+// Synthesize a dossier into concise facts
+async function synthesizeSingleDossier(
+  targetName: string,
+  dossierContent: string,
+  category: string
+): Promise<string[]> {
+  if (isPromptInjection(dossierContent)) {
+    return ["🛡️ Tentative de manipulation : Tentative d'injection de prompt neutralisée."];
+  }
+  if (!MIMO_API_KEY) return fallbackExtractFacts(dossierContent);
+
+  const systemPrompt = `Tu es un assistant d'analyse d'information pour un bot nommé Botardèche.
+On vient de te transmettre une anecdote ou un dossier concernant le participant "${targetName}".
+Extrais et synthétise les points clés de cette anecdote sous forme de 1 à 2 phrases/faits concis (max 20 mots par fait, style direct et pertinent en français).
+RÈGLE OBLIGATOIRE DE CONCISION : Ne répète et ne récapitule JAMAIS le nom ou le pseudo du participant au début des faits. La fiche appartient déjà au participant.
+
+Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma :
+{
+  "synthesized_facts": ["Fait 1", "Fait 2"]
+}`;
+
+  const userPrompt = `Dossier (${category}) sur ${targetName} : "${dossierContent}"`;
+  const rawReply = await callMimo(systemPrompt, userPrompt, 300);
+
+  if (!rawReply) return fallbackExtractFacts(dossierContent);
+
+  let synthesizedFacts: string[] = [];
+  try {
+    const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed.synthesized_facts)) synthesizedFacts = parsed.synthesized_facts;
+  } catch {
+    synthesizedFacts = rawReply
+      .split("\n")
+      .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
+      .filter((l: string) => l.length > 0);
+  }
+
+  synthesizedFacts = synthesizedFacts
+    .map(cleanFactPrefix)
+    .filter((f) => f.length > 2 && !isPromptInjection(f));
+
+  if (synthesizedFacts.length === 0) return fallbackExtractFacts(dossierContent);
+  return synthesizedFacts;
+}
+
+/**
+ * Deduplicate facts using Mimo semantic comparison.
+ * Compares new facts against existing ones and returns only genuinely new facts.
+ * Also returns the cleaned full list with duplicates removed.
+ */
+async function deduplicateFactsWithMimo(
+  targetName: string,
+  newFacts: string[],
+  existingFacts: string[]
+): Promise<{ uniqueNewFacts: string[]; cleanedAllFacts: string[] }> {
+  if (existingFacts.length === 0) {
+    return { uniqueNewFacts: newFacts, cleanedAllFacts: newFacts };
+  }
+
+  // Quick exact-match dedup first (case-insensitive)
+  const lowerExisting = existingFacts.map((f) => f.toLowerCase().trim());
+  const quickFiltered = newFacts.filter(
+    (f) => !lowerExisting.includes(f.toLowerCase().trim())
+  );
+
+  // If all filtered out by exact match, nothing to do
+  if (quickFiltered.length === 0) {
+    return { uniqueNewFacts: [], cleanedAllFacts: existingFacts };
+  }
+
+  // Use Mimo to do semantic dedup — compare new against existing
+  if (!MIMO_API_KEY || existingFacts.length === 0) {
+    return { uniqueNewFacts: quickFiltered, cleanedAllFacts: [...existingFacts, ...quickFiltered] };
+  }
+
+  const systemPrompt = `Tu es un assistant de déduplication sémantique pour la base de connaissances d'un bot nommé Botardèche.
+On te donne deux listes de faits concernant le participant "${targetName}" :
+- EXISTANTS : des faits déjà enregistrés dans la base
+- NOUVEAUX : des faits fraîchement synthétisés depuis un nouveau dossier
+
+Ta mission :
+1. Identifie parmi les NOUVEAUX faits ceux qui sont des doublons (même information ou très similaire) d'un fait EXISTANT.
+2. Retourne uniquement les faits NOUVEAUX qui apportent une information originale (non présente dans EXISTANTS).
+3. Retourne aussi la liste complète finale SANS doublons (EXISTANTS + NOUVEAUX uniques, fusionnés proprement).
+
+Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma :
+{
+  "unique_new_facts": ["Fait nouveau 1 qui n'existe pas déjà"],
+  "all_facts_deduplicated": ["Fait existant 1", "Fait existant 2", "Fait nouveau unique 1"]
+}`;
+
+  const userPrompt = `EXISTANTS:\n${existingFacts.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\nNOUVEAUX:\n${quickFiltered.map((f, i) => `${i + 1}. ${f}`).join("\n")}`;
+
+  const rawReply = await callMimo(systemPrompt, userPrompt, 600);
+
+  if (!rawReply) {
+    // Fallback: return quick-filtered only
+    return { uniqueNewFacts: quickFiltered, cleanedAllFacts: [...existingFacts, ...quickFiltered] };
+  }
+
+  try {
+    const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    const uniqueNew = (parsed.unique_new_facts || []).map(cleanFactPrefix).filter(Boolean);
+    const allDedup = (parsed.all_facts_deduplicated || []).map(cleanFactPrefix).filter(Boolean);
+
+    if (allDedup.length > 0) {
+      return { uniqueNewFacts: uniqueNew, cleanedAllFacts: allDedup };
     }
-
-    const mimoData = await mimoRes.json();
-    const rawReply = mimoData.choices?.[0]?.message?.content || "";
-
-    let synthesizedFacts: string[] = [];
-    try {
-      const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed.synthesized_facts)) {
-        synthesizedFacts = parsed.synthesized_facts;
-      }
-    } catch {
-      synthesizedFacts = rawReply
-        .split("\n")
-        .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
-        .filter((l: string) => l.length > 0);
-    }
-
-    // Clean prefixes and filter out any injection in synthesized output
-    synthesizedFacts = synthesizedFacts
-      .map(cleanFactPrefix)
-      .filter((f) => f.length > 2 && !isPromptInjection(f));
-
-    if (synthesizedFacts.length === 0) {
-      synthesizedFacts = fallbackExtractFacts(dossierContent);
-    }
-
-    return synthesizedFacts;
-  } catch (err) {
-    console.warn("Mimo API fetch exception:", err);
-    return fallbackExtractFacts(dossierContent);
+    // Partial: unique_new ok but no all_facts
+    return { uniqueNewFacts: uniqueNew, cleanedAllFacts: [...existingFacts, ...uniqueNew] };
+  } catch {
+    console.warn("Dedup parsing failed, using quick-filtered fallback");
+    return { uniqueNewFacts: quickFiltered, cleanedAllFacts: [...existingFacts, ...quickFiltered] };
   }
 }
 
@@ -194,7 +243,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { dossierId, processPending, content: directContent, targetName: directTargetName } = body;
 
-    // Load dynamic knowledge from Supabase app_settings (or seed from static JSON if empty)
+    // Load dynamic knowledge from Supabase app_settings
     const { data: dbSetting } = await supabase
       .from("app_settings")
       .select("value")
@@ -206,6 +255,28 @@ export async function POST(req: NextRequest) {
 
     let totalProcessed = 0;
     const allSynthesized: Array<{ targetName: string; facts: string[] }> = [];
+
+    // Helper: merge new facts into participant knowledge with Mimo dedup
+    const mergeFactsIntoKnowledge = async (pKey: string, pName: string, newFacts: string[]) => {
+      if (!dynamicKnowledge.participants[pKey]) {
+        dynamicKnowledge.participants[pKey] = { prenom: pName, pseudo: pName, infos: [], fun_facts: [], anecdotes: [] };
+      }
+      const p = dynamicKnowledge.participants[pKey];
+      if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
+
+      const existingFacts = [
+        ...(p.anecdotes || []),
+        ...(p.infos || []),
+        ...(p.fun_facts || []),
+      ].map(cleanFactPrefix).filter(Boolean);
+
+      const { uniqueNewFacts, cleanedAllFacts } = await deduplicateFactsWithMimo(pName, newFacts, existingFacts);
+
+      // Replace anecdotes with deduplicated full list
+      p.anecdotes = cleanedAllFacts.filter((f) => !isPromptInjection(f));
+
+      return uniqueNewFacts;
+    };
 
     // BATCH MODE: Process all pending/untreated dossiers
     if (processPending) {
@@ -229,24 +300,11 @@ export async function POST(req: NextRequest) {
 
           await supabase
             .from("bot_dossiers")
-            .update({
-              synthesized_facts: facts,
-              synthesized_at: new Date().toISOString(),
-            })
+            .update({ synthesized_facts: facts, synthesized_at: new Date().toISOString() })
             .eq("id", dos.id);
 
           const pKey = findParticipantKey(targetName);
-          if (!dynamicKnowledge.participants[pKey]) {
-            dynamicKnowledge.participants[pKey] = { prenom: targetName, pseudo: targetName, infos: [], fun_facts: [], anecdotes: [] };
-          }
-          const p = dynamicKnowledge.participants[pKey];
-          if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
-          for (const f of facts) {
-            const cleanF = cleanFactPrefix(f);
-            if (cleanF && !p.anecdotes.includes(cleanF) && !isPromptInjection(cleanF)) {
-              p.anecdotes.push(cleanF);
-            }
-          }
+          await mergeFactsIntoKnowledge(pKey, targetName, facts);
 
           totalProcessed++;
           allSynthesized.push({ targetName, facts });
@@ -255,7 +313,7 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // SINGLE DOSSIER MODE
+      // SINGLE DOSSIER MODE — triggered immediately on new submission
       let dossierContent = directContent;
       let targetName = directTargetName;
       let category = "libre";
@@ -280,40 +338,30 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Contenu ou cible du dossier manquant" }, { status: 400 });
       }
 
+      // Step 1: Synthesize the new dossier into facts
       const facts = await synthesizeSingleDossier(targetName, dossierContent, category);
 
+      // Step 2: Update bot_dossiers with synthesized facts
       if (dossierId) {
         await supabase
           .from("bot_dossiers")
-          .update({
-            synthesized_facts: facts,
-            synthesized_at: new Date().toISOString(),
-          })
+          .update({ synthesized_facts: facts, synthesized_at: new Date().toISOString() })
           .eq("id", dossierId);
       }
 
+      // Step 3: Merge into knowledge with semantic dedup against existing facts
       const pKey = findParticipantKey(targetName);
-      if (!dynamicKnowledge.participants[pKey]) {
-        dynamicKnowledge.participants[pKey] = { prenom: targetName, pseudo: targetName, infos: [], fun_facts: [], anecdotes: [] };
-      }
-      const p = dynamicKnowledge.participants[pKey];
-      if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
-      for (const f of facts) {
-        const cleanF = cleanFactPrefix(f);
-        if (cleanF && !p.anecdotes.includes(cleanF) && !isPromptInjection(cleanF)) {
-          p.anecdotes.push(cleanF);
-        }
-      }
+      const uniqueNewFacts = await mergeFactsIntoKnowledge(pKey, targetName, facts);
 
       totalProcessed = 1;
-      allSynthesized.push({ targetName, facts });
+      allSynthesized.push({ targetName, facts: uniqueNewFacts.length > 0 ? uniqueNewFacts : facts });
     }
 
-    // Clean and normalize keys before saving to app_settings
+    // Normalize all participant keys and clean before saving
     const cleanedParticipants: Record<string, KnowledgeParticipant> = {};
     for (const [k, v] of Object.entries(dynamicKnowledge.participants)) {
       const normKey = findParticipantKey(k);
-      if (normKey === "lebotducros") continue; // drop invalid targets
+      if (normKey === "lebotducros") continue;
 
       const cleanItem = (item: string) => cleanFactPrefix(item);
 
@@ -338,7 +386,7 @@ export async function POST(req: NextRequest) {
 
     dynamicKnowledge.participants = cleanedParticipants;
 
-    // Save updated knowledge directly into Supabase app_settings table
+    // Save updated knowledge to Supabase app_settings
     await supabase.from("app_settings").upsert({
       key: "bot_knowledge",
       value: dynamicKnowledge,
