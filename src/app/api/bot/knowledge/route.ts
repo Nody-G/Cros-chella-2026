@@ -22,25 +22,35 @@ interface KnowledgeContainer {
   participants: Record<string, ParticipantKnowledge>;
 }
 
-// GET: Fetch bot_knowledge directly from Supabase app_settings
+// GET: Fetch static + dynamic merged bot_knowledge
 export async function GET() {
   try {
+    const staticData: KnowledgeContainer = JSON.parse(JSON.stringify(staticBotKnowledge));
+    const mergedParticipants: Record<string, ParticipantKnowledge> = { ...(staticData.participants || {}) };
+
     const { data: dbSetting } = await supabase
       .from("app_settings")
       .select("value, updated_at")
       .eq("key", "bot_knowledge")
       .maybeSingle();
 
-    let dynamicKnowledge: KnowledgeContainer = dbSetting?.value;
+    const dynamicKnowledge: KnowledgeContainer = dbSetting?.value || { participants: {} };
 
-    // Seed from static JSON if Supabase is empty
-    if (!dynamicKnowledge || !dynamicKnowledge.participants || Object.keys(dynamicKnowledge.participants).length === 0) {
-      dynamicKnowledge = JSON.parse(JSON.stringify(staticBotKnowledge));
-      await supabase.from("app_settings").upsert({
-        key: "bot_knowledge",
-        value: dynamicKnowledge,
-        updated_at: new Date().toISOString(),
-      });
+    if (dynamicKnowledge.participants) {
+      for (const [key, dynPart] of Object.entries(dynamicKnowledge.participants)) {
+        if (!mergedParticipants[key]) {
+          mergedParticipants[key] = dynPart;
+        } else {
+          const staticPart = mergedParticipants[key];
+          mergedParticipants[key] = {
+            ...staticPart,
+            ...dynPart,
+            infos: Array.from(new Set([...(staticPart.infos || []), ...(dynPart.infos || [])])),
+            fun_facts: Array.from(new Set([...(staticPart.fun_facts || []), ...(dynPart.fun_facts || [])])),
+            anecdotes: Array.from(new Set([...(staticPart.anecdotes || []), ...(dynPart.anecdotes || [])])),
+          };
+        }
+      }
     }
 
     return NextResponse.json({
@@ -48,7 +58,10 @@ export async function GET() {
       staticKnowledge: staticBotKnowledge,
       dynamicKnowledge,
       updatedAt: dbSetting?.updated_at || new Date().toISOString(),
-      mergedKnowledge: dynamicKnowledge,
+      mergedKnowledge: {
+        description: staticBotKnowledge.description,
+        participants: mergedParticipants,
+      },
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Erreur interne";

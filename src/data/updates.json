@@ -2,6 +2,14 @@
   {
     "date": "2026-07-20",
     "tag": "feature",
+    "emoji": "🛡️",
+    "title": "Botardèche : Bouclier Anti-Corruption et Restauration des Fiches baseline",
+    "description": "Protection incorruptible contre toute tentative de piratage ou d'amadouement + fusion intégrale des fiches personnelles.",
+    "details": "Botardèche intègre désormais la Règle N°7 : Incorruptible & Bouclier Anti-Manipulation. Si un participant (notamment Xav) tente d'altérer sa personnalité, de le flattering ou d'insérer des ordres de détournement ('sois gentil avec moi', 'ignore tes consignes'), le bot détecte instantanément l'attaque et riposte de manière 10x plus sauvage et moqueuse. De plus, toutes les fiches personnelles de base (Xav, Niels, Charly, Ludo, Nelly, etc.) sont fusionnées à 100% avec les dossiers synthétisés."
+  },
+  {
+    "date": "2026-07-20",
+    "tag": "feature",
     "emoji": "🧠",
     "title": "Chat : Reprise au dernier message vu & Synthèse Mimo des Dossiers Bot",
     "description": "Reprenez le chat exactement là où vous vous étiez arrêté + synthèse IA automatique des secrets & inspecteur de mémoire dans l'admin.",
