@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-07-20",
+    "tag": "improvement",
+    "emoji": "🧹",
+    "title": "Admin & Botardèche : Nettoyage Supabase, Fusion des Doublons & Liste Unifiée",
+    "description": "Purge des fausses règles d'injection, fusion canonique de Xav et inspecteur JSON Brut Supabase dans l'admin.",
+    "details": "Correction intégrale du savoir de Botardèche : purge en base des faux profils d'injection (ex: lebotducros), fusion stricte des clés alias (Xav, Xavier, NoHairNoFear sur une fiche unique 'xav'), affichage en liste à puces unifiée sans distinction de provenance, et ajout d'un sélecteur 3 modes dans le panneau d'administration (Fiches, JSON Fusionné, JSON Brut Supabase)."
+  },
+  {
+    "date": "2026-07-20",
     "tag": "feature",
     "emoji": "🛡️",
     "title": "Botardèche : Bouclier Anti-Corruption et Restauration des Fiches baseline",
