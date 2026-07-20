@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -22,6 +23,7 @@ interface KnowledgeParticipant {
 }
 
 interface KnowledgeContainer {
+  description?: string;
   participants: Record<string, KnowledgeParticipant>;
 }
 
@@ -44,44 +46,86 @@ function findParticipantKey(nameOrPseudo: string, participantsObj: Record<string
   return null;
 }
 
-export async function POST(req: NextRequest) {
+// Helper to commit and push updated bot-knowledge.json to GitHub
+async function commitBotKnowledgeToGithub(knowledgeContainer: KnowledgeContainer): Promise<{ success: boolean; method: string }> {
+  const cwd = process.cwd();
+  const jsonPath = path.join(cwd, "src", "data", "bot-knowledge.json");
+  let methodUsed = "none";
+
+  // 1. Write file to local disk first
   try {
-    const body = await req.json().catch(() => ({}));
-    const { dossierId, content: directContent, targetName: directTargetName } = body;
+    fs.writeFileSync(jsonPath, JSON.stringify(knowledgeContainer, null, 2), "utf-8");
+  } catch (fsErr) {
+    console.warn("Could not write to local bot-knowledge.json:", fsErr);
+  }
 
-    if (!MIMO_API_KEY) {
-      return NextResponse.json(
-        { error: "Clé API Mimo non configurée (MIMO_API_KEY manquant)" },
-        { status: 500 }
-      );
-    }
+  // 2. Try GitHub REST API if GITHUB_TOKEN is available
+  const githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (githubToken) {
+    try {
+      const repoPath = "Nody-G/Cros-chella-2026";
+      const filePath = "src/data/bot-knowledge.json";
+      const apiUrl = `https://api.github.com/repos/${repoPath}/contents/${filePath}`;
 
-    let dossierContent = directContent;
-    let targetName = directTargetName;
-    let category = "libre";
+      const getRes = await fetch(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
 
-    if (dossierId) {
-      const { data: dossier, error } = await supabase
-        .from("bot_dossiers")
-        .select("*, target:participants!target_participant_id(name, pseudo)")
-        .eq("id", dossierId)
-        .single();
-
-      if (error || !dossier) {
-        return NextResponse.json({ error: "Dossier introuvable" }, { status: 404 });
+      let sha: string | undefined;
+      if (getRes.ok) {
+        const fileData = await getRes.json();
+        sha = fileData.sha;
       }
 
-      dossierContent = dossier.content;
-      targetName = dossier.target?.pseudo || dossier.target?.name || "inconnu";
-      category = dossier.category || "libre";
-    }
+      const contentString = JSON.stringify(knowledgeContainer, null, 2);
+      const contentBase64 = Buffer.from(contentString, "utf-8").toString("base64");
 
-    if (!dossierContent || !targetName) {
-      return NextResponse.json({ error: "Contenu ou cible du dossier manquant" }, { status: 400 });
-    }
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "chore(bot-knowledge): auto-update bot_knowledge with Mimo synthesized dossiers 🤖",
+          content: contentBase64,
+          sha,
+        }),
+      });
 
-    // Call Mimo API to synthesize dossier into concise bot knowledge
-    const systemPrompt = `Tu es un assistant d'analyse d'information pour un bot nommé Botardèche.
+      if (putRes.ok) {
+        return { success: true, method: "github_api" };
+      }
+    } catch (apiErr) {
+      console.warn("GitHub REST API sync error:", apiErr);
+    }
+  }
+
+  // 3. Fallback: Local Git CLI execution
+  try {
+    execSync("git add src/data/bot-knowledge.json", { cwd, stdio: "ignore" });
+    execSync('git commit -m "chore(bot-knowledge): auto-update bot_knowledge with Mimo synthesized dossiers 🤖"', { cwd, stdio: "ignore" });
+    execSync("git push origin main", { cwd, stdio: "ignore" });
+    methodUsed = "git_cli";
+    return { success: true, method: methodUsed };
+  } catch (gitErr) {
+    console.warn("Git CLI commit notice:", (gitErr as Error).message?.substring(0, 100));
+  }
+
+  return { success: false, method: methodUsed };
+}
+
+// Single dossier synthesis function using Mimo API
+async function synthesizeSingleDossier(
+  targetName: string,
+  dossierContent: string,
+  category: string
+): Promise<string[]> {
+  const systemPrompt = `Tu es un assistant d'analyse d'information pour un bot nommé Botardèche.
 On vient de te transmettre une anecdote ou un dossier concernant le participant "${targetName}".
 Extrais et synthétise les points clés de cette anecdote sous forme de 1 à 2 phrases/faits concis (max 20 mots par fait, style direct et pertinent en français).
 
@@ -90,143 +134,205 @@ Réponds STRICTEMENT et UNIQUEMENT avec un objet JSON valide suivant ce schéma 
   "synthesized_facts": ["Fait 1", "Fait 2"]
 }`;
 
-    const userPrompt = `Dossier (${category}) sur ${targetName} : "${dossierContent}"`;
+  const userPrompt = `Dossier (${category}) sur ${targetName} : "${dossierContent}"`;
 
-    const mimoRes = await fetch(MIMO_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": MIMO_API_KEY,
-      },
-      body: JSON.stringify({
-        model: MIMO_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 300,
-      }),
-    });
+  const mimoRes = await fetch(MIMO_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": MIMO_API_KEY!,
+    },
+    body: JSON.stringify({
+      model: MIMO_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 300,
+    }),
+  });
 
-    if (!mimoRes.ok) {
-      const errText = await mimoRes.text();
-      console.error("Error from Mimo API during dossier synthesis:", mimoRes.status, errText);
+  if (!mimoRes.ok) {
+    const errText = await mimoRes.text();
+    throw new Error(`Erreur API Mimo (${mimoRes.status}): ${errText}`);
+  }
+
+  const mimoData = await mimoRes.json();
+  const rawReply = mimoData.choices?.[0]?.message?.content || "";
+
+  let synthesizedFacts: string[] = [];
+  try {
+    const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed.synthesized_facts)) {
+      synthesizedFacts = parsed.synthesized_facts;
+    }
+  } catch {
+    synthesizedFacts = rawReply
+      .split("\n")
+      .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
+      .filter((l: string) => l.length > 0);
+  }
+
+  if (synthesizedFacts.length === 0) {
+    synthesizedFacts = [dossierContent.substring(0, 100)];
+  }
+
+  return synthesizedFacts;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { dossierId, processPending, content: directContent, targetName: directTargetName } = body;
+
+    if (!MIMO_API_KEY) {
       return NextResponse.json(
-        { error: `Erreur API Mimo (${mimoRes.status}): ${errText}` },
-        { status: 502 }
+        { error: "Clé API Mimo non configurée (MIMO_API_KEY manquant)" },
+        { status: 500 }
       );
     }
 
-    const mimoData = await mimoRes.json();
-    const rawReply = mimoData.choices?.[0]?.message?.content || "";
-
-    let synthesizedFacts: string[] = [];
-    try {
-      // Clean code block ticks if Mimo returned markdown json
-      const cleaned = rawReply.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed.synthesized_facts)) {
-        synthesizedFacts = parsed.synthesized_facts;
-      }
-    } catch {
-      // Fallback: split lines
-      synthesizedFacts = rawReply
-        .split("\n")
-        .map((l: string) => l.replace(/^[-*•\d.]+\s*/, "").trim())
-        .filter((l: string) => l.length > 0);
-    }
-
-    if (synthesizedFacts.length === 0) {
-      synthesizedFacts = [dossierContent.substring(0, 100)];
-    }
-
-    // Update bot-knowledge.json file on disk if available
+    // Load existing bot-knowledge.json from disk or Supabase
     const jsonPath = path.join(process.cwd(), "src", "data", "bot-knowledge.json");
-    let fileUpdated = false;
     let botKnowledgeObj: KnowledgeContainer = { participants: {} };
-
-    try {
-      if (fs.existsSync(jsonPath)) {
-        const fileData = fs.readFileSync(jsonPath, "utf-8");
-        botKnowledgeObj = JSON.parse(fileData);
-        const participantKey = findParticipantKey(targetName, botKnowledgeObj.participants || {});
-
-        if (participantKey && botKnowledgeObj.participants[participantKey]) {
-          const p = botKnowledgeObj.participants[participantKey];
-          if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
-          for (const fact of synthesizedFacts) {
-            if (!p.anecdotes.includes(fact)) {
-              p.anecdotes.push(fact);
-            }
-          }
-          fs.writeFileSync(jsonPath, JSON.stringify(botKnowledgeObj, null, 2), "utf-8");
-          fileUpdated = true;
-        }
-      }
-    } catch (fsErr) {
-      console.error("Could not write to local bot-knowledge.json file:", fsErr);
-    }
-
-    // Also persist in Supabase app_settings table for dynamic runtime loading
-    try {
-      const { data: dbSetting } = await supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", "bot_knowledge")
-        .single();
-
-      const dynamicKnowledge: KnowledgeContainer = dbSetting?.value || botKnowledgeObj || { participants: {} };
-      if (!dynamicKnowledge.participants) dynamicKnowledge.participants = {};
-
-      const participantKey = findParticipantKey(targetName, dynamicKnowledge.participants) || targetName.toLowerCase().replace(/\s+/g, "");
-      if (!dynamicKnowledge.participants[participantKey]) {
-        dynamicKnowledge.participants[participantKey] = {
-          prenom: targetName,
-          pseudo: targetName,
-          infos: [],
-          fun_facts: [],
-          anecdotes: [],
-        };
-      }
-
-      const p = dynamicKnowledge.participants[participantKey];
-      if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
-      for (const fact of synthesizedFacts) {
-        if (!p.anecdotes.includes(fact)) {
-          p.anecdotes.push(fact);
-        }
-      }
-
-      await supabase.from("app_settings").upsert({
-        key: "bot_knowledge",
-        value: dynamicKnowledge,
-        updated_at: new Date().toISOString(),
-      });
-    } catch (dbErr) {
-      console.error("Error saving dynamic bot_knowledge to Supabase app_settings:", dbErr);
-    }
-
-    // Save synthesized facts on the bot_dossiers record if dossierId is present
-    if (dossierId) {
+    if (fs.existsSync(jsonPath)) {
       try {
+        botKnowledgeObj = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+      } catch (e) {
+        console.warn("Could not parse bot-knowledge.json:", e);
+      }
+    }
+
+    // Fetch dynamic knowledge from Supabase app_settings
+    const { data: dbSetting } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "bot_knowledge")
+      .single();
+
+    const dynamicKnowledge: KnowledgeContainer = dbSetting?.value || botKnowledgeObj || { participants: {} };
+    if (!dynamicKnowledge.participants) dynamicKnowledge.participants = {};
+
+    let totalProcessed = 0;
+    const allSynthesized: Array<{ targetName: string; facts: string[] }> = [];
+
+    // BATCH MODE: Process all pending/untreated dossiers
+    if (processPending) {
+      const { data: pendingDossiers, error: pendingErr } = await supabase
+        .from("bot_dossiers")
+        .select("*, target:participants!target_participant_id(name, pseudo)")
+        .order("created_at", { ascending: true });
+
+      if (pendingErr) {
+        return NextResponse.json({ error: "Erreur récupération des dossiers non traités" }, { status: 500 });
+      }
+
+      for (const dos of pendingDossiers || []) {
+        // Skip already synthesized dossiers if processPending is true (unless empty facts)
+        if (dos.synthesized_at && Array.isArray(dos.synthesized_facts) && dos.synthesized_facts.length > 0) {
+          continue;
+        }
+
+        const targetName = dos.target?.pseudo || dos.target?.name || "inconnu";
+        try {
+          const facts = await synthesizeSingleDossier(targetName, dos.content, dos.category || "libre");
+          
+          // Save on bot_dossiers row
+          await supabase
+            .from("bot_dossiers")
+            .update({
+              synthesized_facts: facts,
+              synthesized_at: new Date().toISOString(),
+            })
+            .eq("id", dos.id);
+
+          // Add to knowledge base
+          const pKey = findParticipantKey(targetName, dynamicKnowledge.participants) || targetName.toLowerCase().replace(/\s+/g, "");
+          if (!dynamicKnowledge.participants[pKey]) {
+            dynamicKnowledge.participants[pKey] = { prenom: targetName, pseudo: targetName, infos: [], fun_facts: [], anecdotes: [] };
+          }
+          const p = dynamicKnowledge.participants[pKey];
+          if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
+          for (const f of facts) {
+            if (!p.anecdotes.includes(f)) p.anecdotes.push(f);
+          }
+
+          totalProcessed++;
+          allSynthesized.push({ targetName, facts });
+        } catch (e) {
+          console.error(`Error processing dossier ${dos.id}:`, e);
+        }
+      }
+    } else {
+      // SINGLE DOSSIER MODE
+      let dossierContent = directContent;
+      let targetName = directTargetName;
+      let category = "libre";
+
+      if (dossierId) {
+        const { data: dossier, error } = await supabase
+          .from("bot_dossiers")
+          .select("*, target:participants!target_participant_id(name, pseudo)")
+          .eq("id", dossierId)
+          .single();
+
+        if (error || !dossier) {
+          return NextResponse.json({ error: "Dossier introuvable" }, { status: 404 });
+        }
+
+        dossierContent = dossier.content;
+        targetName = dossier.target?.pseudo || dossier.target?.name || "inconnu";
+        category = dossier.category || "libre";
+      }
+
+      if (!dossierContent || !targetName) {
+        return NextResponse.json({ error: "Contenu ou cible du dossier manquant" }, { status: 400 });
+      }
+
+      const facts = await synthesizeSingleDossier(targetName, dossierContent, category);
+
+      if (dossierId) {
         await supabase
           .from("bot_dossiers")
           .update({
-            synthesized_facts: synthesizedFacts,
+            synthesized_facts: facts,
             synthesized_at: new Date().toISOString(),
           })
           .eq("id", dossierId);
-      } catch (dosErr) {
-        console.error("Error updating bot_dossiers synthesized_facts:", dosErr);
       }
+
+      const pKey = findParticipantKey(targetName, dynamicKnowledge.participants) || targetName.toLowerCase().replace(/\s+/g, "");
+      if (!dynamicKnowledge.participants[pKey]) {
+        dynamicKnowledge.participants[pKey] = { prenom: targetName, pseudo: targetName, infos: [], fun_facts: [], anecdotes: [] };
+      }
+      const p = dynamicKnowledge.participants[pKey];
+      if (!Array.isArray(p.anecdotes)) p.anecdotes = [];
+      for (const f of facts) {
+        if (!p.anecdotes.includes(f)) p.anecdotes.push(f);
+      }
+
+      totalProcessed = 1;
+      allSynthesized.push({ targetName, facts });
     }
+
+    // Save updated knowledge to Supabase app_settings
+    await supabase.from("app_settings").upsert({
+      key: "bot_knowledge",
+      value: dynamicKnowledge,
+      updated_at: new Date().toISOString(),
+    });
+
+    // Commit and push updated bot-knowledge.json directly to GitHub repository
+    const githubResult = await commitBotKnowledgeToGithub(dynamicKnowledge);
 
     return NextResponse.json({
       success: true,
-      targetName,
-      synthesizedFacts,
-      fileUpdated,
+      totalProcessed,
+      allSynthesized,
+      githubUpdated: githubResult.success,
+      githubMethod: githubResult.method,
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Erreur interne";
